@@ -20,17 +20,14 @@ jobs:
         run: npm install
       - name: Create version
         run: npm run release
-      - name: debug
-        run: ls -al && cat .version
       - name: Save version
         run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
-      - name: debug
-        run: echo $VERSION
       - name: Upload version artifact
         uses: actions/upload-artifact@v3
         with:
           name: version
           path: .version
+          include-hidden-files: 'true'
 
   build_frontend:
     name: Build Frontend
