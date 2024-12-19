@@ -133,8 +133,8 @@ echo "# MONGO" >> $ENV_PATH
 echo "NSC__MONGOOSE__URI=mongodb://db/deploy-party" >> $ENV_PATH
 
 echo "# WEB PUSH" >> $ENV_PATH
-echo "NSC__WEB_PUSH__PRIVATE_KEY=$(openssl rand -base64 32)" >> $ENV_PATH
-echo "NSC__WEB_PUSH__PUBLIC_KEY=$(openssl rand -base64 32)" >> $ENV_PATH
+echo "NSC__WEB_PUSH__PRIVATE_KEY=" >> $ENV_PATH
+echo "NSC__WEB_PUSH__PUBLIC_KEY=" >> $ENV_PATH
 
 echo "# GRAPHQL" >> $ENV_PATH
 echo "NCS__GRAPHQL__DRIVER__INTROSPECTION=true" >> $ENV_PATH
@@ -157,9 +157,18 @@ echo "NSC__EMAIL_DEFAULT_SENDER_EMAIL=" >> $ENV_PATH
 echo "NSC__EMAIL_DEFAULT_SENDER_NAME=" >> $ENV_PATH
 echo "NSC__EMAIL_PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
 
-echo "# Minio configuration" >> $ENV_PATH
-echo "MINIO_SERVER_URL=https://s3.$URL" >> $ENV_PATH
-echo "MINIO_BROWSER_REDIRECT_URL=https://s3.$URL"  >> $ENV_PATH
+if [ $LOCAL_SETUP != 0 ]; then
+  echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://localhost:3001/auth/password-set?token=" >> $ENV_PATH
+  echo "# Minio configuration" >> $ENV_PATH
+  echo "MINIO_SERVER_URL=" >> $ENV_PATH
+  echo "MINIO_BROWSER_REDIRECT_URL="  >> $ENV_PATH
+else
+  echo "NSC__EMAIL_PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
+  echo "# Minio configuration" >> $ENV_PATH
+  echo "MINIO_SERVER_URL=https://s3.$URL" >> $ENV_PATH
+  echo "MINIO_BROWSER_REDIRECT_URL=https://s3.$URL"  >> $ENV_PATH
+fi
+
 echo "MINIO_ROOT_USER=root" >> $ENV_PATH
 echo "MINIO_ROOT_PASSWORD=$(openssl rand -base64 32)"  >> $ENV_PATH
 
@@ -200,7 +209,7 @@ docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 echo "--------------------------------------------------------------------------------"
 if [ $LOCAL_SETUP != 0 ]; then
   echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
-  echo "\deploy.party is running on http://localhost:3001 \n"
+  echo "\ndeploy.party is running on http://[IP]:3001 \n"
 else
   echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
   echo "!!! IMPORTANT: Please configure firewall rules for your server:"
