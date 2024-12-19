@@ -201,7 +201,6 @@ echo "--------------------------------------------------------------------------
 if [ $LOCAL_SETUP != 0 ]; then
   echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
   echo "\deploy.party is running on http://localhost:3001 \n"
-  echo "\nTraefik dashboard is running on http://localhost:8080 \n"
 else
   echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
   echo "!!! IMPORTANT: Please configure firewall rules for your server:"
