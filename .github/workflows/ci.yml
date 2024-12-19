@@ -69,9 +69,11 @@ jobs:
           name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Build and push backend image
         env:
-          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           echo $VERSION
@@ -88,8 +90,17 @@ jobs:
     if: github.ref_name == 'main'
     needs: build_frontend
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push latest frontend image
         env:
           VERSION: $(cat .version)
@@ -105,8 +116,17 @@ jobs:
     if: github.ref_name == 'main'
     needs: build_backend
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push latest backend image
         env:
           VERSION: $(cat .version)
@@ -121,8 +141,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_frontend
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push branch frontend image
         env:
           VERSION: $(cat .version)
@@ -137,8 +166,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build_backend
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push branch backend image
         env:
           VERSION: $(cat .version)
