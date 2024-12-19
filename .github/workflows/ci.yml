@@ -54,7 +54,7 @@ jobs:
       - name: Build and push frontend image
         env:
           VERSION: $(cat .version)
-          FRONTEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/app
+          FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:latest || true
           docker build -f Dockerfile-app \
@@ -79,7 +79,7 @@ jobs:
       - name: Build and push backend image
         env:
           VERSION: $(cat .version)
-          BACKEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/api
+          BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           docker pull $BACKEND_IMAGE:latest || true
           docker build -f Dockerfile-api \
@@ -99,7 +99,7 @@ jobs:
       - name: Tag and push latest frontend image
         env:
           VERSION: $(cat .version)
-          FRONTEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/app
+          FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:$VERSION
           docker tag $FRONTEND_IMAGE:$VERSION $FRONTEND_IMAGE:latest
@@ -116,7 +116,7 @@ jobs:
       - name: Tag and push latest backend image
         env:
           VERSION: $(cat .version)
-          BACKEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/api
+          BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           docker pull $BACKEND_IMAGE:$VERSION
           docker tag $BACKEND_IMAGE:$VERSION $BACKEND_IMAGE:latest
@@ -132,7 +132,7 @@ jobs:
       - name: Tag and push branch frontend image
         env:
           VERSION: $(cat .version)
-          FRONTEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/app
+          FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:$VERSION
           docker tag $FRONTEND_IMAGE:$VERSION $FRONTEND_IMAGE:${{ github.ref_name }}
@@ -148,7 +148,7 @@ jobs:
       - name: Tag and push branch backend image
         env:
           VERSION: $(cat .version)
-          BACKEND_IMAGE: ghcr.io/${{ IMAGE_REPOSITORY }}/api
+          BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           docker pull $BACKEND_IMAGE:$VERSION
           docker tag $BACKEND_IMAGE:$VERSION $BACKEND_IMAGE:${{ github.ref_name }}
