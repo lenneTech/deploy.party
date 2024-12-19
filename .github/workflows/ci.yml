@@ -47,13 +47,14 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Build and push frontend image
         env:
+          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:latest || true
           docker build -f Dockerfile-app \
             --cache-from $FRONTEND_IMAGE:latest \
-            --tag $FRONTEND_IMAGE:${{ env.VERSION }} .
-          docker push $FRONTEND_IMAGE:${{ env.VERSION }}
+            --tag $FRONTEND_IMAGE:$VERSION .
+          docker push $FRONTEND_IMAGE:$VERSION
 
   build_backend:
     name: Build Backend
@@ -70,13 +71,16 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Build and push backend image
         env:
+          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
+          echo $VERSION
+          echo $BACKEND_IMAGE
           docker pull $BACKEND_IMAGE:latest || true
           docker build -f Dockerfile-api \
             --cache-from $BACKEND_IMAGE:latest \
-            --tag $BACKEND_IMAGE:${{ env.VERSION }} .
-          docker push $BACKEND_IMAGE:${{ env.VERSION }}
+            --tag $BACKEND_IMAGE:$VERSION .
+          docker push $BACKEND_IMAGE:$VERSION
 
   push_frontend_latest:
     name: Push Frontend Latest
@@ -88,10 +92,11 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Tag and push latest frontend image
         env:
+          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
-          docker pull $FRONTEND_IMAGE:${{ env.VERSION }}
-          docker tag $FRONTEND_IMAGE:${{ env.VERSION }} $FRONTEND_IMAGE:latest
+          docker pull $FRONTEND_IMAGE:$VERSION
+          docker tag $FRONTEND_IMAGE:$VERSION $FRONTEND_IMAGE:latest
           docker push $FRONTEND_IMAGE:latest
 
   push_backend_latest:
@@ -104,10 +109,11 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Tag and push latest backend image
         env:
+          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
-          docker pull $BACKEND_IMAGE:${{ env.VERSION }}
-          docker tag $BACKEND_IMAGE:${{ env.VERSION }} $BACKEND_IMAGE:latest
+          docker pull $BACKEND_IMAGE:$VERSION
+          docker tag $BACKEND_IMAGE:$VERSION $BACKEND_IMAGE:latest
           docker push $BACKEND_IMAGE:latest
 
   push_frontend_tag:
@@ -119,10 +125,11 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Tag and push branch frontend image
         env:
+          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
-          docker pull $FRONTEND_IMAGE:${{ env.VERSION }}
-          docker tag $FRONTEND_IMAGE:${{ env.VERSION }} $FRONTEND_IMAGE:${{ github.ref_name }}
+          docker pull $FRONTEND_IMAGE:$VERSION
+          docker tag $FRONTEND_IMAGE:$VERSION $FRONTEND_IMAGE:${{ github.ref_name }}
           docker push $FRONTEND_IMAGE:${{ github.ref_name }}
 
   push_backend_tag:
@@ -134,8 +141,9 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Tag and push branch backend image
         env:
+          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
-          docker pull $BACKEND_IMAGE:${{ env.VERSION }}
-          docker tag $BACKEND_IMAGE:${{ env.VERSION }} $BACKEND_IMAGE:${{ github.ref_name }}
+          docker pull $BACKEND_IMAGE:$VERSION
+          docker tag $BACKEND_IMAGE:$VERSION $BACKEND_IMAGE:${{ github.ref_name }}
           docker push $BACKEND_IMAGE:${{ github.ref_name }}
