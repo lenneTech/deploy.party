@@ -193,8 +193,8 @@ docker stack deploy -c $INSTALL_PATH/docker-compose.traefik.yml traefik
 echo "--------------------------------------------------------------------------------"
 echo "Start deploy.party"
 docker network create --driver=overlay deploy-party
-docker pull ghcr.io/lenneTech/deploy.party/app:latest
-docker pull ghcr.io/lenneTech/deploy.party/api:latest
+docker pull ghcr.io/lennetech/deploy.party/app:latest
+docker pull ghcr.io/lennetech/deploy.party/api:latest
 docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 
 echo "--------------------------------------------------------------------------------"
