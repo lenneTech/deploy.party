@@ -5,7 +5,7 @@ services:
     image: traefik:v2.10
     ports:
       - 80:80
-      - 443:443
+      - 8080:8080
       - 3000:3000
       - 3001:3001
       - 3002:3002
@@ -34,16 +34,12 @@ services:
       - --providers.docker.exposedbydefault=false
       - --providers.docker.swarmmode
       - --entrypoints.http.address=:80
-      - --entrypoints.https.address=:443
       - --entrypoints.3000.address=:3000
       - --entrypoints.3001.address=:3001
       - --entrypoints.3002.address=:3002
       - --entrypoints.3003.address=:3003
       - --entrypoints.3004.address=:3004
       - --entrypoints.8080.address=:8080
-      - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
-      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
-      - --certificatesresolvers.le.acme.tlschallenge=true
       - --accesslog
       - --log
       - --api
