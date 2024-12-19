@@ -15,7 +15,7 @@ services:
   app:
     restart: unless-stopped
     container_name: deploy-party-app
-    image: ghcr.io/lenneTech/deploy.party/app:latest
+    image: ghcr.io/lennetech/deploy.party/app:latest
     entrypoint: ['/bin/sh', '-c']
     depends_on:
       - api
@@ -68,7 +68,7 @@ services:
     depends_on:
       - db
       - redis
-    image: ghcr.io/lenneTech/deploy.party/api:latest
+    image: ghcr.io/lennetech/deploy.party/api:latest
     networks:
       - traefik-public
       - default
