@@ -1,0 +1,166 @@
+version: '3.7'
+
+networks:
+  traefik-public:
+    external: true
+  redis-network:
+    driver: bridge
+
+volumes:
+  data:
+  redis:
+  minio-data:
+
+services:
+  app:
+    restart: unless-stopped
+    container_name: deploy-party-app
+    image: ghcr.io/lenneTech/deploy.party/app:latest
+    entrypoint: ['/bin/sh', '-c']
+    depends_on:
+      - api
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    healthcheck:
+      test: curl --fail http://localhost:3000 || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.deploy-party-app-http.rule=Host(`localhost`)
+        - traefik.http.routers.deploy-party-app-http.entrypoints=3001
+        - traefik.http.services.deploy-party-app.loadbalancer.server.port=3000
+    command:
+      - |
+        npm run build
+        node .output/server/index.mjs
+
+  api:
+    restart: unless-stopped
+    container_name: deploy-party-api
+    depends_on:
+      - db
+      - redis
+    image: ghcr.io/lenneTech/deploy.party/api:latest
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/data:/data'
+    env_file:
+      - .env
+    healthcheck:
+      test: curl --fail http://localhost:3000/meta || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        # API Router
+        - traefik.http.routers.deploy-party-api-http.rule=Host(`localhost`)
+        - traefik.http.routers.deploy-party-api-http.service=deploy-party-api-service
+        - traefik.http.routers.deploy-party-app-http.entrypoints=3000
+        - traefik.http.services.deploy-party-api-service.loadbalancer.server.port=3000
+        # Terminal Router
+        - traefik.http.routers.deploy-party-terminal-http.rule=Host(`localhost`)
+        - traefik.http.routers.deploy-party-terminal-http.entrypoints=3002
+        - traefik.http.routers.deploy-party-terminal-http.service=deploy-party-terminal-service
+        - traefik.http.services.deploy-party-terminal-service.loadbalancer.server.port=4800
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        npm run migrate:prod:up
+        node ./dist/src/main.js
+
+  redis:
+    image: redis:7.2
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass 3b95761f78ef7112c3c881f72ea24d7a757b2f0a6e7efd03b05e056cc021c37b
+    env_file:
+      - .env
+    volumes:
+      - redis:/data
+
+  db:
+    image: mongo:5.0
+    networks:
+      - default
+    env_file:
+      - .env
+    volumes:
+      - data:/data/db
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: 'server /data --console-address ":9001"'
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    volumes:
+      - 'minio-data:/data'
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+        interval: 5s
+        timeout: 20s
+        retries: 10
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        # API Router
+        - traefik.http.routers.minio-3-api-http.rule=Host(`localhost`)
+        - traefik.http.routers.minio-3-api-http.entrypoints=3003
+        - traefik.http.routers.minio-3-api-http.service=minio-3-api-service
+        - traefik.http.services.minio-3-api-service.loadbalancer.server.port=9000
+        # Console Router
+        - traefik.http.routers.minio-3-ui-http.rule=Host(`localhost`)
+        - traefik.http.routers.minio-3-ui-http.entrypoints=3004
+        - traefik.http.routers.minio-3-ui-http.service=minio-3-ui-service
+        - traefik.http.services.minio-3-ui-service.loadbalancer.server.port=9001

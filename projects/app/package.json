@@ -1,0 +1,70 @@
+{
+  "name": "@lenne.tech/deploy-party-app",
+  "private": true,
+  "version": "1.39.0",
+  "scripts": {
+    "init": "npm install",
+    "reinit": "rm -rf node_modules && rm -rf package-lock.json && npx nuxt cleanup && npm cache clean --force && npm i",
+    "build": "nuxt build",
+    "postbuild": "cd .output/server/node_modules/tslib; npm pkg set 'exports[.].import.node'='./tslib.es6.mjs'",
+    "generate-types": "GENERATE_TYPES=1 nuxt dev",
+    "start": "nuxt dev",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest",
+    "lint": "eslint --ext .ts,.js,.vue .",
+    "lint:fix": "eslint --ext .ts,.js,.vue . --fix"
+  },
+  "dependencies": {
+    "@egoist/tailwindcss-icons": "1.7.4",
+    "@iconify-json/bi": "1.1.23",
+    "@lenne.tech/nuxt-base": "3.7.0",
+    "@tailwindcss/forms": "0.5.7",
+    "@tailwindcss/typography": "0.5.10",
+    "@vee-validate/yup": "4.12.5",
+    "@vueuse/math": "10.7.2",
+    "@xterm/addon-clipboard": "0.1.0",
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0",
+    "apexcharts": "3.45.2",
+    "buffer": "6.0.3",
+    "ios-pwa-splash": "1.0.0",
+    "pinia": "2.1.7",
+    "simple-code-editor": "2.0.9",
+    "socket.io-client": "4.8.1",
+    "tailwind-merge": "2.2.1",
+    "vee-validate": "4.12.5",
+    "vue3-lottie": "3.2.0"
+  },
+  "devDependencies": {
+    "@1password/save-button": "1.3.0",
+    "@kevinmarrec/nuxt-pwa": "0.17.0",
+    "@lenne.tech/eslint-config-vue": "0.0.16",
+    "@nuxt/test-utils": "3.11.0",
+    "@nuxtjs/google-fonts": "3.1.3",
+    "@nuxtjs/tailwindcss": "6.11.4",
+    "@vitejs/plugin-vue": "5.0.4",
+    "@vue/test-utils": "2.4.4",
+    "@vueuse/core": "10.7.2",
+    "@vueuse/nuxt": "10.7.2",
+    "eslint": "8.56.0",
+    "eslint-plugin-vitest": "0.3.22",
+    "husky": "9.0.11",
+    "jsdom": "24.0.0",
+    "nuxt": "3.10.2",
+    "nuxt-icon": "0.6.8",
+    "standard-version": "9.5.0",
+    "ts-loader": "9.5.1",
+    "typescript": "5.3.3",
+    "vitest": "1.2.2"
+  },
+  "overrides": {
+    "vue": "latest",
+    "@nuxt/test-utils": {
+      "vitest": "$vitest",
+      "happy-dom": "12.0.0"
+    }
+  }
+}

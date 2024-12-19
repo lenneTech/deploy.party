@@ -1,0 +1,199 @@
+version: '3.7'
+
+networks:
+  traefik-public:
+    external: true
+  redis-network:
+    driver: bridge
+
+volumes:
+  data:
+  redis:
+  minio-data:
+
+services:
+  app:
+    restart: unless-stopped
+    container_name: deploy-party-app
+    image: ghcr.io/lenneTech/deploy.party/app:latest
+    entrypoint: ['/bin/sh', '-c']
+    depends_on:
+      - api
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    healthcheck:
+      test: curl --fail http://localhost:3000 || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.deploy-party-app-http.rule=Host(`${APP_URL?Variable not set}`, `www.${APP_URL?Variable not set}`)
+        - traefik.http.routers.deploy-party-app-http.entrypoints=http
+        - traefik.http.routers.deploy-party-app-http.middlewares=https-redirect
+        - traefik.http.routers.deploy-party-app-https.rule=Host(`${APP_URL?Variable not set}`, `www.${APP_URL?Variable not set}`)
+        - traefik.http.routers.deploy-party-app-https.entrypoints=https
+        - traefik.http.routers.deploy-party-app-https.tls=true
+        - traefik.http.routers.deploy-party-app-https.tls.certresolver=le
+        - traefik.http.middlewares.deploy-party-redirect.redirectregex.regex=^https?://www.${APP_URL}/(.*)
+        - traefik.http.middlewares.deploy-party-redirect.redirectregex.replacement=https://${APP_URL}/$${1}
+        - traefik.http.routers.deploy-party-app-https.middlewares=deploy-party-redirect
+        - traefik.http.middlewares.deploy-party-redirect.redirectregex.permanent=true
+        - traefik.http.services.deploy-party-app.loadbalancer.server.port=3000
+    command:
+      - |
+        npm run build
+        node .output/server/index.mjs
+
+  api:
+    restart: unless-stopped
+    container_name: deploy-party-api
+    depends_on:
+      - db
+      - redis
+    image: ghcr.io/lenneTech/deploy.party/api:latest
+    networks:
+      - traefik-public
+      - default
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/data:/data'
+    env_file:
+      - .env
+    healthcheck:
+      test: curl --fail http://localhost:3000/meta || exit 1
+      interval: 60s
+      retries: 5
+      start_period: 20s
+      timeout: 10s
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        # API Router
+        - traefik.http.routers.deploy-party-api-http.rule=Host(`api.${APP_URL}`)
+        - traefik.http.routers.deploy-party-api-http.entrypoints=http
+        - traefik.http.routers.deploy-party-api-http.middlewares=https-redirect
+        - traefik.http.routers.deploy-party-api-https.rule=Host(`api.${APP_URL}`)
+        - traefik.http.routers.deploy-party-api-https.entrypoints=https
+        - traefik.http.routers.deploy-party-api-https.tls=true
+        - traefik.http.routers.deploy-party-api-https.tls.certresolver=le
+        - traefik.http.routers.deploy-party-api-http.service=deploy-party-api-service
+        - traefik.http.routers.deploy-party-api-https.service=deploy-party-api-service
+        - traefik.http.services.deploy-party-api-service.loadbalancer.server.port=3000
+        # Terminal Router
+        - traefik.http.routers.deploy-party-terminal-http.rule=Host(`api.terminal.${APP_URL}`)
+        - traefik.http.routers.deploy-party-terminal-http.entrypoints=http
+        - traefik.http.routers.deploy-party-terminal-http.middlewares=https-redirect
+        - traefik.http.routers.deploy-party-terminal-https.rule=Host(`api.terminal.${APP_URL}`)
+        - traefik.http.routers.deploy-party-terminal-https.entrypoints=https
+        - traefik.http.routers.deploy-party-terminal-https.tls=true
+        - traefik.http.routers.deploy-party-terminal-https.tls.certresolver=le
+        - traefik.http.routers.deploy-party-terminal-http.service=deploy-party-terminal-service
+        - traefik.http.routers.deploy-party-terminal-https.service=deploy-party-terminal-service
+        - traefik.http.services.deploy-party-terminal-service.loadbalancer.server.port=4800
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        npm run migrate:prod:up
+        node ./dist/src/main.js
+
+  redis:
+    image: redis:7.2
+    restart: always
+    command: redis-server --save 20 1 --loglevel warning --requirepass 3b95761f78ef7112c3c881f72ea24d7a757b2f0a6e7efd03b05e056cc021c37b
+    env_file:
+      - .env
+    volumes:
+      - redis:/data
+
+  db:
+    image: mongo:5.0
+    networks:
+      - default
+    env_file:
+      - .env
+    volumes:
+      - data:/data/db
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: 'server /data --console-address ":9001"'
+    networks:
+      - traefik-public
+    env_file:
+      - .env
+    volumes:
+      - 'minio-data:/data'
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+        interval: 5s
+        timeout: 20s
+        retries: 10
+    deploy:
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        # API Router
+        - traefik.http.routers.minio-3-api-http.rule=Host(`s3.${APP_URL}`)
+        - traefik.http.routers.minio-3-api-http.entrypoints=http
+        - traefik.http.routers.minio-3-api-http.middlewares=https-redirect
+        - traefik.http.routers.minio-3-api-https.rule=Host(`s3.${APP_URL}`)
+        - traefik.http.routers.minio-3-api-https.entrypoints=https
+        - traefik.http.routers.minio-3-api-https.tls=true
+        - traefik.http.routers.minio-3-api-https.tls.certresolver=le
+        - traefik.http.routers.minio-3-api-http.service=minio-3-api-service
+        - traefik.http.routers.minio-3-api-https.service=minio-3-api-service
+        - traefik.http.services.minio-3-api-service.loadbalancer.server.port=9000
+        # Console Router
+        - traefik.http.routers.minio-3-ui-http.rule=Host(`console.s3.${APP_URL}`)
+        - traefik.http.routers.minio-3-ui-http.entrypoints=http
+        - traefik.http.routers.minio-3-ui-http.middlewares=https-redirect
+        - traefik.http.routers.minio-3-ui-https.rule=Host(`console.s3.${APP_URL}`)
+        - traefik.http.routers.minio-3-ui-https.entrypoints=https
+        - traefik.http.routers.minio-3-ui-https.tls=true
+        - traefik.http.routers.minio-3-ui-https.tls.certresolver=le
+        - traefik.http.routers.minio-3-ui-http.service=minio-3-ui-service
+        - traefik.http.routers.minio-3-ui-https.service=minio-3-ui-service
+        - traefik.http.services.minio-3-ui-service.loadbalancer.server.port=9001

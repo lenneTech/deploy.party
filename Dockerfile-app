@@ -1,0 +1,14 @@
+FROM node:21-alpine3.19
+
+RUN mkdir -p /var/www
+
+RUN apk --no-cache add curl tzdata
+ENV TZ=Europe/Berlin
+
+COPY ./projects/app ./var/www/app
+
+WORKDIR /var/www/app
+
+RUN npm install && npm run build
+
+EXPOSE 3000

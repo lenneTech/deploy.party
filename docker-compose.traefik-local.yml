@@ -1,0 +1,58 @@
+version: '3.3'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    ports:
+      - 80:80
+      - 443:443
+      - 3000:3000
+      - 3001:3001
+      - 3002:3002
+      - 3003:3003
+      - 3004:3004
+      - 8080:8080
+    deploy:
+      placement:
+        constraints:
+          - node.labels.traefik-public.traefik-public-certificates == true
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.middlewares.secure-headers.headers.framedeny=true
+        - traefik.http.middlewares.traefik-compress.compress=true
+        - traefik.http.routers.traefik-public-http.rule=Host(`localhost`)
+        - traefik.http.routers.traefik-public-http.entrypoints=8080
+        - traefik.http.services.traefik-public.loadbalancer.server.port=8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-public-certificates:/certificates
+    command:
+      - --providers.docker
+      - --providers.docker.constraints=Label(`traefik.constraint-label`, `traefik-public`)
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.swarmmode
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --entrypoints.3000.address=:3000
+      - --entrypoints.3001.address=:3001
+      - --entrypoints.3002.address=:3002
+      - --entrypoints.3003.address=:3003
+      - --entrypoints.3004.address=:3004
+      - --entrypoints.8080.address=:8080
+      - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
+      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - --accesslog
+      - --log
+      - --api
+    networks:
+      - traefik-public
+
+volumes:
+  traefik-public-certificates:
+
+networks:
+  traefik-public:
+    external: true

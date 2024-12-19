@@ -1,0 +1,639 @@
+<script setup lang="ts">
+import { toTypedSchema } from '@vee-validate/yup';
+import { useForm } from 'vee-validate';
+import { boolean, object, string } from 'yup';
+
+import type { Container, ContainerInput } from '~/base/default';
+
+import { useFindRegistrysQuery, useFindSourcesQuery } from '~/base';
+import { useGithub } from '~/composables/use-github';
+import { useGitlab } from '~/composables/use-gitlab';
+
+const props = defineProps<{
+  container?: Container | undefined;
+  containerId?: string;
+  disabled: boolean;
+  projectId?: string;
+  tab?: string;
+}>();
+
+const loadingGitlab = ref(false);
+const basicAuth = ref(false);
+const containerType = ref();
+const projectsOptions = ref([]);
+const gitProjects = ref<{ id: number }[]>([]);
+const branchOptions = ref<{ label: string; value: string }[]>([]);
+const tagOptions = ref<{ label: string; value: string }[]>([]);
+const { data: sources } = await useFindSourcesQuery({}, ['id', 'name', 'token', 'url', 'type']);
+const sourceOptions = sources.value?.findSources.map((e) => {
+  return { label: e.name, value: e.id };
+});
+const { data: registries } = await useFindRegistrysQuery({}, ['id', 'name']);
+const registryOptions = registries.value?.findRegistrys.map((e) => {
+  return { label: e.name, value: e.id };
+});
+
+const typeOptions = [
+  { label: 'Node', value: 'NODE' },
+  { label: 'Static', value: 'STATIC' },
+  { label: 'Custom', value: 'CUSTOM' },
+];
+
+const deploymentTypeOptions = [
+  { label: 'Branch', value: 'BRANCH' },
+  { label: 'Tag', value: 'TAG' },
+];
+let selectedSourceId: string | undefined = '';
+let selectedRepositoryId: string | undefined = '';
+
+const basicAuthSchema = object({
+  basicAuth: object({
+    pw: string().required(),
+    username: string().required(),
+  }).nullable(),
+});
+
+const baseFormSchema = object({
+  autoDeploy: boolean().nullable().default(true),
+  baseDir: string().default('.').nullable(),
+  branch: string().when('deploymentType', {
+    is: 'BRANCH',
+    otherwise: (schema) => schema.nullable(),
+    then: (schema) => schema.required(),
+  }),
+  buildCmd: string().default('npm run build').nullable(),
+  buildImage: string().when('type', {
+    is: 'NODE',
+    otherwise: (schema) => schema.nullable(),
+    then: (schema) => schema.required(),
+  }),
+  compress: boolean().nullable().default(true),
+  customDockerfile: string().nullable(),
+  customImageCommands: string().nullable(),
+  deploymentType: string().required(),
+  env: string().nullable(),
+  exposedPort: string().nullable(),
+  healthCheckCmd: string().nullable(),
+  installCmd: string().default('npm install').nullable(),
+  isCustomRule: boolean().nullable().default(false),
+  name: string().required().max(14),
+  port: string().when('type', {
+    is: 'STATIC',
+    otherwise: (schema) => schema.required(),
+    then: (schema) => schema.nullable(),
+  }),
+  registry: object({
+    id: string().required(),
+  }).required(),
+  repositoryId: string().required(),
+  source: object({
+    id: string().required(),
+  }).required(),
+  ssl: boolean()
+    .nullable()
+    .when('exposedPort', {
+      is: (value: any) => value != null && value !== '',
+      otherwise: (schema) => schema.default(true),
+      then: (schema) => schema.default(false),
+    }),
+  startCmd: string().default('npm run start').nullable(),
+  tag: string().when('deploymentType', {
+    is: 'TAG',
+    otherwise: (schema) => schema.nullable(),
+    then: (schema) => schema.required(),
+  }),
+  type: string().default('NODE').required(),
+  url: string().required(),
+  www: boolean()
+    .nullable()
+    .when('exposedPort', {
+      is: (value: any) => value != null && value !== '',
+      otherwise: (schema) => schema.default(true),
+      then: (schema) => schema.default(false),
+    })
+    .default(true),
+});
+
+const formSchema = computed(() => {
+  return toTypedSchema(basicAuth.value ? baseFormSchema.concat(basicAuthSchema) : baseFormSchema);
+});
+
+const {
+  controlledValues: values,
+  meta,
+  resetForm,
+  setFieldTouched,
+  validate,
+} = useForm({
+  initialValues: props.container as any,
+  validationSchema: formSchema,
+});
+
+watch(
+  () => props.tab,
+  () => {
+    resetForm({ values: props.container });
+  },
+);
+
+watchDebounced(
+  () => values.value,
+  async () => {
+    await submit();
+  },
+  { debounce: 800, immediate: false },
+);
+
+watch(
+  () => basicAuth.value,
+  async () => {
+    setTimeout(async () => {
+      if (!basicAuth.value) {
+        setFieldTouched('name', true);
+        await submit();
+      }
+    }, 800);
+  },
+);
+
+watch(
+  () => values.value,
+  () => {
+    if (values.value?.type) {
+      containerType.value = values.value.type;
+    }
+
+    if (
+      values.value?.source?.id &&
+      (values.value.source.id !== selectedSourceId || selectedRepositoryId !== values.value.repositoryId)
+    ) {
+      selectedSourceId = values.value.source.id;
+      selectedRepositoryId = values.value.repositoryId;
+      onSourceChanged(values.value.source.id, values.value.repositoryId);
+    }
+  },
+);
+
+onMounted(() => {
+  if (props.container?.source?.id) {
+    onSourceChanged(props.container.source.id, props.container.repositoryId);
+  }
+
+  if (props.container?.basicAuth?.username || props.container?.basicAuth?.pw) {
+    basicAuth.value = true;
+  }
+});
+
+async function onSourceChanged(sourceId: string, repositoryId?: string, loading = true) {
+  loadingGitlab.value = loading;
+  await loadProjects(sourceId);
+  if (repositoryId) {
+    await loadBranches(sourceId, repositoryId);
+    await loadTags(sourceId, repositoryId);
+  }
+}
+
+async function loadBranches(sourceId: string, repositoryId: string) {
+  const source = sources.value?.findSources.find((e) => e.id === sourceId);
+  if (!source) {
+    return;
+  }
+
+  let branches: any[] = [];
+  if (source?.type === SourceType.GITLAB) {
+    const gitlab = useGitlab(source!, false);
+    const { data } = await gitlab.getBranches(repositoryId);
+    branches = (data.value as any[]) || [];
+  } else {
+    const github = useGithub(source!, false);
+    const { data } = await github.getBranches(repositoryId);
+    branches = (data.value as any[]) || [];
+  }
+
+  branchOptions.value = (branches as any)?.map((e: any) => {
+    return { label: e.name, value: e.name };
+  });
+
+  if (loadingGitlab.value) {
+    loadingGitlab.value = false;
+  }
+}
+
+async function loadTags(sourceId: string, repositoryId: string) {
+  const source = sources.value?.findSources.find((e) => e.id === sourceId);
+  if (!source) {
+    return;
+  }
+
+  let releases: any[] = [];
+  if (source?.type === SourceType.GITLAB) {
+    const gitlab = useGitlab(source!, false);
+    const { data } = await gitlab.getReleases(repositoryId);
+    releases = (data.value as any[]) || [];
+  } else {
+    const github = useGithub(source!, false);
+    const { data } = await github.getBranches(repositoryId);
+    releases = (data.value as any[]) || [];
+  }
+
+  tagOptions.value = (releases as any)?.map((e: any) => {
+    return { label: e.tag_name, value: e.tag_name };
+  });
+
+  if (loadingGitlab.value) {
+    loadingGitlab.value = false;
+  }
+}
+
+async function loadProjects(sourceId: string) {
+  if (!sourceId) {
+    return;
+  }
+
+  const source = sources.value?.findSources.find((e) => e.id === sourceId);
+
+  if (!source) {
+    return;
+  }
+
+  if (source?.type === SourceType.GITLAB) {
+    const gitlab = useGitlab(source!, false);
+    const { data: projects } = await gitlab.getProjects();
+
+    gitProjects.value = (projects.value as any[]) || null;
+
+    // e.web_url
+    projectsOptions.value = (projects.value as any)?.map((e: any) => {
+      return { label: e.name, value: e.id + '' };
+    });
+  } else {
+    const github = useGithub(source!, false);
+    const { data: projects } = await github.getRepos();
+
+    gitProjects.value = (projects.value as any[]) || null;
+
+    projectsOptions.value = (projects.value as any)?.map((e: any) => {
+      return { label: e.full_name, value: e.full_name };
+    });
+  }
+
+  if (loadingGitlab.value) {
+    loadingGitlab.value = false;
+  }
+}
+
+async function submit() {
+  await validate();
+
+  if (!values.value || !meta.value.touched || !meta.value.dirty) {
+    return;
+  }
+
+  const data: any = { ...values.value };
+  if (data && data.repositoryId) {
+    const source = sources.value?.findSources.find((e) => e.id === data.source.id);
+    if (source?.type === SourceType.GITLAB) {
+      const { addProjectWebhook } = useGitlab(source!, false);
+      const project = gitProjects.value.find((e) => Number(e.id) === Number(data.repositoryId));
+      if (project) {
+        data.repositoryUrl = (project as any)?.web_url;
+        const { data: webhookData } = await addProjectWebhook(data.repositoryId);
+        data.webhookId = (webhookData as any).value?.id + '';
+      }
+    } else {
+      const { addProjectWebhook } = useGithub(source!, false);
+      const project = gitProjects.value.find((e: any) => e.full_name === data.repositoryId);
+      if (project) {
+        data.repositoryUrl = (project as any)?.html_url;
+        const { data: webhookData } = await addProjectWebhook(data.repositoryId);
+        data.webhookId = (webhookData as any).value?.id + '';
+      }
+    }
+  }
+
+  if (data.registry && Object.keys(data.registry).length === 0) {
+    delete data.registry;
+  }
+
+  if (data.source && Object.keys(data.source).length === 0) {
+    delete data.source;
+  }
+
+  if (data.registry?.id) {
+    data.registry = data.registry.id;
+  }
+
+  if (data.source?.id) {
+    data.source = data.source.id;
+  }
+
+  if (!basicAuth.value) {
+    data.basicAuth = { pw: null, username: null };
+  }
+
+  const { mutate, onError } = await useUpdateContainerMutation(
+    {
+      id: props.containerId as string,
+      input: data as ContainerInput,
+    },
+    ['id'],
+  );
+  onError((e) => {
+    useNotification().notify({ text: e.message, title: 'error', type: 'error' });
+  });
+  await mutate();
+}
+</script>
+
+<template>
+  <form novalidate class="flex flex-wrap flex-col w-full" @submit.prevent="null">
+    <div class="w-full space-y-8 border-b border-white/10 pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:pb-0">
+      <template v-if="!tab">
+        <FormRow>
+          <template #label> Name </template>
+          <template #help> Enter a name for your container </template>
+          <template #default>
+            <FormInput name="name" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Registry </template>
+          <template #help> Please choose a registry where the docker image will be pushed. </template>
+          <template #default>
+            <FormSelect
+              name="registry.id"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a registry"
+              :options="registryOptions"
+              :disabled="disabled"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Type </template>
+          <template #help> Select a type for your application. </template>
+          <template #default>
+            <FormSelect name="type" class="w-full mx-auto max-w-2xl" :options="typeOptions" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow v-show="containerType === 'CUSTOM'">
+          <template #label> Dockerfile </template>
+          <template #help> Enter the path to your Dockerfile </template>
+          <template #default>
+            <FormCode
+              name="customDockerfile"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Enter custom Dockerfile"
+              :disabled="disabled"
+            />
+          </template>
+        </FormRow>
+
+        <div v-show="containerType !== 'CUSTOM'">
+          <FormRow v-show="containerType !== 'STATIC'">
+            <template #label> Base image </template>
+            <template #help> Select a base image for your application. Example node:20</template>
+            <template #default>
+              <FormInput name="buildImage" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow>
+            <template #label> Custom image commands </template>
+            <template #help>
+              Enter custom commands for your image. For example RUN apt-get update && apt-get install -y curl
+            </template>
+            <template #default>
+              <FormCode name="customImageCommands" class="w-full mx-auto max-w-2xl" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow>
+            <template #label> Base directory </template>
+            <template #help>
+              Enter the base directory. This is quite practical for monorepro. Example: ./projects/app</template
+            >
+            <template #default>
+              <FormInput name="baseDir" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow>
+            <template #label> Install command </template>
+            <template #help>
+              Enter the install command of your project. For example npm install or npm ci. Exmaple: npm
+              install</template
+            >
+            <template #default>
+              <FormInput name="installCmd" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow>
+            <template #label> Build command </template>
+            <template #help> Enter the build command. For example npm run build. </template>
+            <template #default>
+              <FormInput name="buildCmd" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow v-show="containerType !== 'STATIC'">
+            <template #label> Start command </template>
+            <template #help> Enter the start command. For example npm run start. </template>
+            <template #default>
+              <FormInput name="startCmd" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+
+          <FormRow>
+            <template #label> Healthcheck command </template>
+            <template #help>
+              Enter the command for the healthcheck. For example curl --fail http://localhost:4000/
+            </template>
+            <template #default>
+              <FormInput name="healthCheckCmd" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+        </div>
+      </template>
+
+      <template v-else-if="tab === 'source'">
+        <FormRow>
+          <template #label> Source </template>
+          <template #help> Select the source for your container </template>
+          <template #default>
+            <FormSelect
+              name="source.id"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a Source"
+              :options="sourceOptions"
+              :disabled="disabled"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Repository </template>
+          <template #help> Select the repository from your container </template>
+          <template #default>
+            <FormSelect
+              name="repositoryId"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a Repository"
+              :options="projectsOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Deployment type </template>
+          <template #help> Select the repository from your container </template>
+          <template #default>
+            <FormSelect
+              name="deploymentType"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a deployment type"
+              :options="deploymentTypeOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow v-if="values.deploymentType === 'BRANCH'">
+          <template #label> Branch </template>
+          <template #help> Select the branch to be deployed </template>
+          <template #default>
+            <FormSelect
+              name="branch"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a branch"
+              :options="branchOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow v-if="values.deploymentType === 'TAG'">
+          <template #label> Tag </template>
+          <template #help> Select the released tag to be deployed </template>
+          <template #default>
+            <FormSelect
+              name="tag"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a tag"
+              :options="tagOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Enable auto deploy </template>
+          <template #default>
+            <FormToggle name="autoDeploy" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+      </template>
+
+      <template v-else-if="tab === 'webserver'">
+        <FormRow>
+          <template #label> Url </template>
+          <template #help>
+            Enter a url for your container (choose localhost for local setup and exposed port)
+          </template>
+          <template #default>
+            <div class="w-full">
+              <FormInput name="url" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+              <div class="mx-auto max-w-2xl">
+                <FormToggle name="isCustomRule" label="Enable custom rule" class="mx-auto" :disabled="disabled" />
+              </div>
+            </div>
+          </template>
+        </FormRow>
+
+        <!-- Traefik fields -->
+        <FormRow v-show="containerType !== 'STATIC'">
+          <template #label> Port </template>
+          <template #help> Please enter the port of your application. For example 4000 for Angular SSR. </template>
+          <template #default>
+            <FormInput name="port" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Exposed port </template>
+          <template #help> Enter the port to be exposed, if you want (for local handling) </template>
+          <template #default>
+            <FormInput name="exposedPort" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Enable SSL </template>
+          <template #default>
+            <FormToggle name="ssl" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Enable Compress </template>
+          <template #default>
+            <FormToggle name="compress" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Enable WWW redirect </template>
+          <template #default>
+            <FormToggle name="www" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Basic Auth </template>
+          <template #help> Enable basic auth for your container </template>
+          <template #default>
+            <BaseToggle v-model:active="basicAuth" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <template v-if="basicAuth">
+          <FormRow>
+            <template #label> Username </template>
+            <template #help> Enter a username for your container </template>
+            <template #default>
+              <FormInput name="basicAuth.username" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> Password </template>
+            <template #help> Enter a password for your container </template>
+            <template #default>
+              <FormInput name="basicAuth.pw" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+            </template>
+          </FormRow>
+        </template>
+      </template>
+
+      <template v-else-if="tab === 'env'">
+        <div class="w-full">
+          <FormRow>
+            <template #label> .env file </template>
+            <template #help> Content of .env files </template>
+            <template #default>
+              <FormCode name="env" class="w-full mx-auto max-w-3xl" :disabled="disabled" />
+            </template>
+          </FormRow>
+        </div>
+      </template>
+    </div>
+  </form>
+</template>
