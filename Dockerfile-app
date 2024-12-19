@@ -3,12 +3,12 @@ FROM node:21
 RUN apt-get update && apt-get install -y \
     libvips-dev \
     build-essential \
-    python3
-
+    python3 \
+    curl \
+    tzdata
 
 RUN mkdir -p /var/www
 
-RUN apk --no-cache add curl tzdata
 ENV TZ=Europe/Berlin
 
 COPY ./projects/app ./var/www/app
