@@ -130,7 +130,7 @@ services:
   redis:
     image: redis:7.2
     restart: always
-    command: redis-server --save 20 1 --loglevel warning --requirepass 3b95761f78ef7112c3c881f72ea24d7a757b2f0a6e7efd03b05e056cc021c37b
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${NSC__REDIS__PASSWORD}
     env_file:
       - .env
     volumes:
