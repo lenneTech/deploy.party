@@ -1,3 +1,10 @@
+## [1.0.18](https://github.com/lenneTech/deploy.party/compare/v1.0.17...v1.0.18) (2024-12-19)
+
+
+### Bug Fixes
+
+* fix wrong images names ([6ec92a5](https://github.com/lenneTech/deploy.party/commit/6ec92a5b5a625a660f7eb58f839dc016118e0208))
+
 ## [1.0.17](https://github.com/lenneTech/deploy.party/compare/v1.0.16...v1.0.17) (2024-12-19)
 
 
