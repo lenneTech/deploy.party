@@ -47,7 +47,6 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
       - name: Build and push frontend image
         env:
-          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:latest || true
@@ -103,7 +102,6 @@ jobs:
         run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push latest frontend image
         env:
-          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:$VERSION
@@ -129,7 +127,6 @@ jobs:
         run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push latest backend image
         env:
-          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           docker pull $BACKEND_IMAGE:$VERSION
@@ -154,7 +151,6 @@ jobs:
         run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push branch frontend image
         env:
-          VERSION: $(cat .version)
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
         run: |
           docker pull $FRONTEND_IMAGE:$VERSION
@@ -179,7 +175,6 @@ jobs:
         run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Tag and push branch backend image
         env:
-          VERSION: $(cat .version)
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
           docker pull $BACKEND_IMAGE:$VERSION
