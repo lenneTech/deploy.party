@@ -1,3 +1,10 @@
+## [1.0.20](https://github.com/lenneTech/deploy.party/compare/v1.0.19...v1.0.20) (2024-12-19)
+
+
+### Bug Fixes
+
+* fix local handling ([4f2d2db](https://github.com/lenneTech/deploy.party/commit/4f2d2db768ed7d746f34ccf03c927db9ebcf803b))
+
 ## [1.0.19](https://github.com/lenneTech/deploy.party/compare/v1.0.18...v1.0.19) (2024-12-19)
 
 
