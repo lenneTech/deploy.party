@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/lenneTech/deploy.party/compare/v1.0.2...v1.0.3) (2024-12-19)
+
+
+### Bug Fixes
+
+* fix github ci ([ae94eae](https://github.com/lenneTech/deploy.party/commit/ae94eae1cba0ea8244ceb218b3b4d082fdf5c669))
+
 ## [1.0.2](https://github.com/lenneTech/deploy.party/compare/v1.0.1...v1.0.2) (2024-12-19)
 
 
