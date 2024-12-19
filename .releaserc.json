@@ -15,7 +15,7 @@
     "@semantic-release/changelog",
     "@semantic-release/npm",
     ["@semantic-release/exec", {
-      "prepareCmd": "echo  ${nextRelease.version} > .version"
+      "prepareCmd": "echo ${nextRelease.version} > .version"
     }],
     ["@semantic-release/exec", {
       "prepareCmd": "cd ./projects/app && npm --no-git-tag-version --no-commit-hooks --allow-same-version version ${nextRelease.version}"
