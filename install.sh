@@ -31,7 +31,7 @@ read -p "Please enter the username for traefik: " USERNAME
 read -p "Please enter the password for traefik: " PASSWORD
 
 echo "--------------------------------------------------------------------------------"
-echo "Welcome to deploy-party installer!"
+echo "Welcome to deploy.party installer!"
 echo "This script will install everything for you."
 echo "--------------------------------------------------------------------------------"
 
@@ -100,7 +100,7 @@ docker node update --label-add traefik-public.traefik-public-certificates=true $
 echo "Congratulations! Docker is installed."
 
 echo "--------------------------------------------------------------------------------"
-echo "Write .env file"
+echo "Write $INSTALL_PATH/.env file"
 echo "NODE_ENV=production" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
@@ -188,22 +188,28 @@ docker run -d -p 5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='
 echo "--------------------------------------------------------------------------------"
 echo "Start traefik"
 docker network create --driver=overlay traefik-public
-docker stack deploy -c docker-compose.traefik.yml traefik
+docker stack deploy -c $INSTALL_PATH/docker-compose.traefik.yml traefik
 
 echo "--------------------------------------------------------------------------------"
 echo "Start deploy.party"
 docker network create --driver=overlay deploy-party
 docker pull ghcr.io/lenneTech/deploy.party/app:latest
 docker pull ghcr.io/lenneTech/deploy.party/api:latest
-docker stack deploy -c docker-compose.yml deploy-party
+docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 
 echo "--------------------------------------------------------------------------------"
-echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
-echo "!!! IMPORTANT: Please configure firewall rules for your server:"
-echo "ufw allow 22"
-echo "ufw allow 80/tcp"
-echo "ufw allow 443/tcp"
-echo "ufw default allow outgoing"
-echo "ufw default deny incoming"
-echo "ufw deny 27017/tcp"
-echo "ufw enable"
+if [ $LOCAL_SETUP != 0 ]; then
+  echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
+  echo "\deploy.party is running on http://localhost:3001 \n"
+  echo "\nTraefik dashboard is running on http://localhost:8080 \n"
+else
+  echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
+  echo "!!! IMPORTANT: Please configure firewall rules for your server:"
+  echo "ufw allow 22"
+  echo "ufw allow 80/tcp"
+  echo "ufw allow 443/tcp"
+  echo "ufw default allow outgoing"
+  echo "ufw default deny incoming"
+  echo "ufw deny 27017/tcp"
+  echo "ufw enable"
+fi
