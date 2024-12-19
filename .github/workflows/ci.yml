@@ -45,6 +45,9 @@ jobs:
           name: version
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Load Version
+        id: load_version
+        run: echo "VERSION=$(cat .version)" >> $GITHUB_ENV
       - name: Build and push frontend image
         env:
           FRONTEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/app
@@ -75,8 +78,6 @@ jobs:
         env:
           BACKEND_IMAGE: ghcr.io/${{ env.IMAGE_REPOSITORY }}/api
         run: |
-          echo $VERSION
-          echo $BACKEND_IMAGE
           docker pull $BACKEND_IMAGE:latest || true
           docker build -f Dockerfile-api \
             --cache-from $BACKEND_IMAGE:latest \
