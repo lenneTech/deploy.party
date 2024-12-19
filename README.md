@@ -32,7 +32,7 @@ apt-get update && apt-get upgrade -y
 
 ### 2. Run install script
 ```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy-party/main/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
 ```
 
 ### 6. Configure ufw
