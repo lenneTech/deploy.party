@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Exit in case of error
 set -e
@@ -30,21 +30,21 @@ fi
 read -p "Please enter the username for traefik: " USERNAME
 read -p "Please enter the password for traefik: " PASSWORD
 
-echo -e "--------------------------------------------------------------------------------"
-echo -e "Welcome to deploy-party installer!"
-echo -e "This script will install everything for you."
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
+echo "Welcome to deploy-party installer!"
+echo "This script will install everything for you."
+echo "--------------------------------------------------------------------------------"
 
 echo "OS: $OS_TYPE $OS_VERSION"
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Installing required packages..."
 
 apt update -y >/dev/null 2>&1
 apt install -y curl wget git jq >/dev/null 2>&1
 
 if ! [ -x "$(command -v docker)" ]; then
-    echo -e "--------------------------------------------------------------------------------"
+    echo "--------------------------------------------------------------------------------"
     echo "Docker is not installed. Installing Docker..."
     sudo apt-get update
     sudo apt-get install -y ca-certificates curl gnupg
@@ -64,8 +64,8 @@ if ! [ -x "$(command -v docker)" ]; then
     echo "Docker installed successfully"
 fi
 
-echo -e "--------------------------------------------------------------------------------"
-echo -e "Check Docker Configuration..."
+echo "--------------------------------------------------------------------------------"
+echo "Check Docker Configuration..."
 
 mkdir -p /etc/docker
 mkdir -p $INSTALL_PATH
@@ -80,8 +80,8 @@ ENV_PATH="$INSTALL_PATH/.env"
 
 systemctl restart docker
 
-echo -e "--------------------------------------------------------------------------------"
-echo -e "Download config files for deploy-party..."
+echo "--------------------------------------------------------------------------------"
+echo "Download config files for deploy-party..."
 
 if [ $LOCAL_SETUP != 0 ]; then
   curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik-local.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
@@ -92,22 +92,26 @@ else
 fi
 
 curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/reconfigure.sh" >> $INSTALL_PATH/reconfigure.sh
-curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/.env-example" >> $ENV_PATH
-
-echo -e "--------------------------------------------------------------------------------"
-echo -e "Init docker swarm..."
+echo "--------------------------------------------------------------------------------"
+echo "Init docker swarm..."
 docker swarm init
 export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
 docker node update --label-add traefik-public.traefik-public-certificates=true $NODE_ID
-echo -e "\nCongratulations! Docker is installed.\n"
+echo "Congratulations! Docker is installed."
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Write .env file"
 echo "NODE_ENV=production" >> $ENV_PATH
 
+if [ $LOCAL_SETUP != 0 ]; then
+  echo "TERMINAL_HOST=ws://localhost:3002" >> $ENV_PATH
+  echo "API_URL=http://localhost:3000" >> $ENV_PATH
+else
+  echo "TERMINAL_HOST=wss://api.terminal.$URL" >> $ENV_PATH
+  echo "API_URL=https://api.$URL" >> $ENV_PATH
+fi
+
 echo "STORAGE_PREFIX=$NAME" >> $ENV_PATH
-echo "TERMINAL_HOST=wss://api.terminal.$URL" >> $ENV_PATH
-echo "API_URL=https://api.$URL" >> $ENV_PATH
 echo "GENERATE_TYPES=0" >> $ENV_PATH
 
 echo "NSC__ENV=production" >> $ENV_PATH
@@ -169,7 +173,7 @@ echo "HASHED_PASSWORD=$HASHED_PASSWORD" >> $ENV_PATH
 export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
 echo "NODE_ID=$NODE_ID" >> $ENV_PATH
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Load .env file for traefik"
 # Load local .env
 if [ -f $ENV_PATH ]; then
@@ -177,23 +181,23 @@ if [ -f $ENV_PATH ]; then
     export $(cat $ENV_PATH | grep -v '#' | awk '/=/ {print $1}')
 fi
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Start registry"
 docker run -d -p 5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='true' --name registry registry:2
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Start traefik"
 docker network create --driver=overlay traefik-public
 docker stack deploy -c docker-compose.traefik.yml traefik
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "Start deploy.party"
 docker network create --driver=overlay deploy-party
 docker pull ghcr.io/lenneTech/deploy.party/app:latest
 docker pull ghcr.io/lenneTech/deploy.party/api:latest
 docker stack deploy -c docker-compose.yml deploy-party
 
-echo -e "--------------------------------------------------------------------------------"
+echo "--------------------------------------------------------------------------------"
 echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
 echo "!!! IMPORTANT: Please configure firewall rules for your server:"
 echo "ufw allow 22"
