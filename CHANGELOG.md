@@ -1,3 +1,10 @@
+## [1.0.30](https://github.com/lenneTech/deploy.party/compare/v1.0.29...v1.0.30) (2024-12-20)
+
+
+### Bug Fixes
+
+* fixes ([7a78a65](https://github.com/lenneTech/deploy.party/commit/7a78a65e2ed37d48a47f8a4d6153c0989f3b66a5))
+
 ## [1.0.29](https://github.com/lenneTech/deploy.party/compare/v1.0.28...v1.0.29) (2024-12-20)
 
 
