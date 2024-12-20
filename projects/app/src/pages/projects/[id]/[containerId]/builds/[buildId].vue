@@ -14,7 +14,7 @@ definePageMeta({
 const route = useRoute();
 const buildId = ref<string>(route.params.buildId ? (route.params.buildId as string) : '');
 const { data: buildData, refresh: refreshBuild } = await useAsyncGetBuildQuery({ id: buildId.value }, null);
-const build = computed(() => buildData.value?.getBuild || null);
+const build = computed(() => buildData.value || null);
 
 const { pause } = useIntervalFn(() => {
   if (build) {
