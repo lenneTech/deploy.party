@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/lenneTech/deploy.party/compare/v1.1.4...v1.1.5) (2024-12-20)
+
+
+### Bug Fixes
+
+* fix wrong ports ([1452994](https://github.com/lenneTech/deploy.party/commit/145299451649dec41ca5444383eaa7d631636514))
+
 ## [1.1.4](https://github.com/lenneTech/deploy.party/compare/v1.1.3...v1.1.4) (2024-12-20)
 
 
