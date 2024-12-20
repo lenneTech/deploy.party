@@ -19,7 +19,7 @@ const projectOptions = data.value?.map((e) => {
 
 const formSchema = toTypedSchema(
   object({
-    kind: string().required(),
+    kind: string().required().default(ContainerKind.APPLICATION),
     name: string().required().max(14),
     projectId: string().required(),
   }),

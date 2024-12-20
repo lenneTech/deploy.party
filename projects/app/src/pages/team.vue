@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { User } from '~/base/default';
 
-import {useAsyncGetMembersOfTeamQuery, useGetMembersOfTeamQuery} from '~/base';
+import { useAsyncGetMembersOfTeamQuery, useGetMembersOfTeamQuery } from '~/base';
 import ModalInvite from '~/components/Modals/ModalInvite.vue';
 
 const { instanceName } = useRuntimeConfig().public;

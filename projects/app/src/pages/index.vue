@@ -19,30 +19,27 @@ definePageMeta({
   breadcrumbs: 'Projects',
 });
 
-const { data, refresh } = await useAsyncFindProjectsQuery(
-  [
-    'id',
-    'identifier',
-    'name',
-    'healthStatus',
-    { subscribers: ['id'] },
-    {
-      containers: [
-        'id',
-        'kind',
-        'name',
-        'updatedAt',
-        'branch',
-        'url',
-        'status',
-        'repositoryId',
-        'healthStatus',
-        { lastBuild: ['id', 'createdAt'] },
-      ],
-    },
-  ],
-  true,
-);
+const { data, refresh } = await useAsyncFindProjectsQuery([
+  'id',
+  'identifier',
+  'name',
+  'healthStatus',
+  { subscribers: ['id'] },
+  {
+    containers: [
+      'id',
+      'kind',
+      'name',
+      'updatedAt',
+      'branch',
+      'url',
+      'status',
+      'repositoryId',
+      'healthStatus',
+      { lastBuild: ['id', 'createdAt'] },
+    ],
+  },
+]);
 const projects = computed(() => data.value || []);
 const expanded = ref<string[]>([]);
 const { open } = useModal();

@@ -14,7 +14,7 @@ const props = withDefaults(
   {
     badgeStyle: 'DEFAULT',
     size: 'MD',
-    status: ContainerStatus.DRAFT as ContainerStatus & ContainerHealthStatus,
+    status: ContainerStatus.DRAFT as ContainerHealthStatus & ContainerStatus,
   },
 );
 

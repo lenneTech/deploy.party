@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     },
   },
 
+  compatibilityDate: '2024-12-20',
+
   devServer: {
     port: 3001,
   },
@@ -88,9 +90,7 @@ export default defineNuxtConfig({
       webPushKey: process.env['WEB_PUSH_PUBLIC_KEY'],
     },
   },
-
   spaLoadingTemplate: false,
   srcDir: './src',
   ssr: true,
-  compatibilityDate: '2024-12-20',
 });

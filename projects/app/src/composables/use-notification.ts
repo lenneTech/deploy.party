@@ -5,7 +5,7 @@ interface Notification {
   type: 'error' | 'info' | 'success' | 'warning';
 }
 
-const notificationState = () => useState<Array<Notification & { uuid: string }>>(() => []);
+const notificationState = () => useState<Array<{ uuid: string } & Notification>>(() => []);
 
 export function useNotification() {
   const notifications = notificationState();

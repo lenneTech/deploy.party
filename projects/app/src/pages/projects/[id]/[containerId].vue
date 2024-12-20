@@ -23,6 +23,29 @@ const projectName = computed(() => project.value?.name || null);
 const { data, refresh } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
 const container = computed(() => data.value || null);
 
+const stoppable = computed(
+  () =>
+    user.value?.roles?.includes('admin') &&
+    (container.value?.status === ContainerStatus.DEPLOYED ||
+      container.value?.status === ContainerStatus.DIED ||
+      container.value?.status === ContainerStatus.BUILDING),
+);
+
+const deployable = computed(
+  () =>
+    user.value?.roles?.includes('admin') &&
+    container.value?.status !== ContainerStatus.DEPLOYED &&
+    container.value?.status !== ContainerStatus.BUILDING,
+);
+
+const redeployable = computed(
+  () =>
+    user.value?.roles?.includes('admin') &&
+    container.value?.lastEditedAt &&
+    container.value?.lastDeployedAt &&
+    container.value?.lastEditedAt > container.value?.lastDeployedAt,
+);
+
 const tabs = computed(() => [
   {
     condition: true,
@@ -186,42 +209,13 @@ async function get1PasswordContent() {
                 : 'hidden md:flex'
             "
           >
-            <SmallButton
-              v-if="
-                user?.roles?.includes('admin')
-                && (container?.status === ContainerStatus.DEPLOYED
-                  || container?.status === ContainerStatus.DIED
-                  || container?.status === ContainerStatus.BUILDING)
-              "
-              tooltip="Stop"
-              placement="bottom"
-              @click="stop(container.id!)"
-            >
+            <SmallButton v-if="stoppable" tooltip="Stop" placement="bottom" @click="stop(container.id!)">
               <Icon name="ic:baseline-stop" class="text-red-500" size="20" />
             </SmallButton>
-            <SmallButton
-              v-if="
-                user?.roles?.includes('admin')
-                && container?.status !== ContainerStatus.DEPLOYED
-                && container?.status !== ContainerStatus.BUILDING
-              "
-              tooltip="Deploy"
-              placement="bottom"
-              @click="deploy(container.id!)"
-            >
+            <SmallButton v-if="deployable" tooltip="Deploy" placement="bottom" @click="deploy(container.id!)">
               <Icon name="ic:baseline-play-arrow" class="dark:text-primary-500" size="20" />
             </SmallButton>
-            <SmallButton
-              v-if="
-                user?.roles?.includes('admin')
-                && container?.lastEditedAt
-                && container?.lastDeployedAt
-                && container?.lastEditedAt > container?.lastDeployedAt
-              "
-              tooltip="Redeploy"
-              placement="bottom"
-              @click="deploy(container.id!)"
-            >
+            <SmallButton v-if="redeployable" tooltip="Redeploy" placement="bottom" @click="deploy(container.id!)">
               <Icon name="ic:baseline-restart-alt" class="dark:text-primary-500" size="20" />
             </SmallButton>
             <SmallButton

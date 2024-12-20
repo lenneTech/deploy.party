@@ -25,14 +25,14 @@
     "release:dry": "semantic-release --dry-run"
   },
   "devDependencies": {
-    "lerna": "7.0.2",
-    "eslint": "8.56.0",
-    "prettier": "2.8.8",
-    "semantic-release": "22.0.12",
+    "lerna": "8.1.9",
+    "eslint": "8.57.1",
+    "prettier": "3.4.2",
+    "semantic-release": "24.2.0",
     "@semantic-release/git": "10.0.1",
     "@semantic-release/exec": "6.0.3",
-    "@semantic-release/npm": "11.0.2",
+    "@semantic-release/npm": "12.0.1",
     "@semantic-release/changelog": "6.0.3",
-    "@semantic-release/github": "10.3.5"
+    "@semantic-release/github": "11.0.1"
   }
 }

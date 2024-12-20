@@ -62,7 +62,7 @@ watch(
       @change="handleChange"
     >
       <option :value="null" :disabled="meta.required" selected>{{ placeholder }}</option>
-      <option v-for="option of options" :value="option.value">{{ option.label }}</option>
+      <option v-for="option of options" :key="option.value" :value="option.value">{{ option.label }}</option>
     </select>
     <div v-show="loadingRef" class="absolute -right-10 top-1/2 transform -translate-y-1/2">
       <Spinner size="sm" />

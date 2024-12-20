@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {useAuthState} from '#imports';
+import { useAuthState } from '#imports';
 
-import {useBackgroundKeys} from '~/composables/use-background-keys';
+import { useBackgroundKeys } from '~/composables/use-background-keys';
 
 const isDark = usePreferredDark();
 const { currentUserState } = useAuthState();

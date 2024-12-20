@@ -188,7 +188,7 @@ export function useGitlab(source: Source, loading = true) {
     getGroups,
     getProjectById,
     getProjects,
-    removeProjectWebhook,
     getReleases,
+    removeProjectWebhook,
   };
 }

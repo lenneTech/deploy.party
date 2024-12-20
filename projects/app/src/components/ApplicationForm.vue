@@ -311,14 +311,6 @@ async function submit() {
     }
   }
 
-  if (data.registry && Object.keys(data.registry).length === 0) {
-    delete data.registry;
-  }
-
-  if (data.source && Object.keys(data.source).length === 0) {
-    delete data.source;
-  }
-
   if (data.registry?.id) {
     data.registry = data.registry.id;
   }
@@ -329,6 +321,14 @@ async function submit() {
 
   if (!basicAuth.value) {
     data.basicAuth = { pw: null, username: null };
+  }
+
+  if (data.registry && Object.keys(data.registry).length === 0) {
+    delete data.registry;
+  }
+
+  if (data.source && Object.keys(data.source).length === 0) {
+    delete data.source;
   }
 
   const { error } = await useUpdateContainerMutation(

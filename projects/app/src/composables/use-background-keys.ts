@@ -1,11 +1,11 @@
-import {logicAnd} from '@vueuse/math';
+import { logicAnd } from '@vueuse/math';
 
+import ModalApiKey from '~/components/Modals/ModalApiKey.vue';
 import ModalContainer from '~/components/Modals/ModalContainer.vue';
 import InviteModal from '~/components/Modals/ModalInvite.vue';
 import ModalNewProject from '~/components/Modals/ModalProject.vue';
 import ModalRegistry from '~/components/Modals/ModalRegistry.vue';
 import ModalSource from '~/components/Modals/ModalSource.vue';
-import ModalApiKey from "~/components/Modals/ModalApiKey.vue";
 
 export function useBackgroundKeys() {
   const { open } = useModal();
