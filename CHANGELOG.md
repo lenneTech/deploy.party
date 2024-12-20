@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/lenneTech/deploy.party/compare/v1.0.30...v1.1.0) (2024-12-20)
+
+
+### Features
+
+* update packages ([7f49961](https://github.com/lenneTech/deploy.party/commit/7f49961a2f952cdf1dbcbff5acb1d5d09403dc8a))
+
 ## [1.0.30](https://github.com/lenneTech/deploy.party/compare/v1.0.29...v1.0.30) (2024-12-20)
 
 
