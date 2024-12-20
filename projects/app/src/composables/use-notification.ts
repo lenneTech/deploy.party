@@ -18,10 +18,8 @@ export function useNotification() {
     });
   }
 
-  const generateUUID = typeof crypto?.randomUUID === 'function' ? crypto.randomUUID : generateUUIDLocal;
-
   const notify = (message: Notification) => {
-    const data = Object.assign(message, { uuid: generateUUID() });
+    const data = Object.assign(message, { uuid: generateUUIDLocal() });
     data.duration ??= 5000;
     notifications.value.push(data);
   };
