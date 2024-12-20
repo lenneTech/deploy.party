@@ -53,12 +53,11 @@ Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
 
 On **local setup**:
-- Traefik UI: [http://localhost:8080](http://localhost:8080)
-- Deploy Party API: [http://localhost:3000](http://localhost:3000)
-- Deploy Party: [http://localhost:3001](http://localhost:3001)
-- Deploy Party Terminal API: [http://localhost:3002](http://localhost:3002)
-- Minio API: [http://localhost:3003](http://localhost:3003)
-- Minio UI: [http://localhost:3004](http://localhost:3004)
+- Deploy Party: [http://[IP]:3001](http://[IP]:3001)
+- Minio UI: [http://[IP]:3004](http://[IP]:9000)
+- Deploy Party API: [http://[IP]:3000](http://[IP]:3000)
+- Deploy Party Terminal API: [http://[IP]:3002](http://[IP]:3002)
+- Minio API: [http://[IP]:3003](http://[IP]:9001)
 
 ## First steps
 Default credentails are:  

@@ -102,7 +102,7 @@ export class BuildResolver {
     @GraphQLUser() user: User,
     @Args('input') input: BuildCreateInput
   ): Promise<Build> {
-    return await this.buildService.create(input, {
+    return await this.buildService.create(input, null, {
       currentUser: user,
       fieldSelection: { info, select: 'createBuild' },
       inputType: BuildCreateInput

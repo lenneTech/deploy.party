@@ -3,7 +3,6 @@ import {Field, InputType} from '@nestjs/graphql';
 import {IsOptional} from 'class-validator';
 import {BuildStatus} from '../enums/build-status.enum';
 import {BuildInput} from './build.input';
-import {DeploymentType} from "../../container/enums/deployment-type.enum";
 
 /**
  * Build create input
@@ -46,12 +45,4 @@ export class BuildCreateInput extends BuildInput {
   })
   @IsOptional()
   override status?: BuildStatus = undefined;
-
-  callbackUrl?: string;
-
-  targetVersion?: string;
-
-  currentVersion?: string;
-
-  deploymentType?: DeploymentType;
 }

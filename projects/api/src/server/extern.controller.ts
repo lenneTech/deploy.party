@@ -64,6 +64,7 @@ export class ExternController {
       // create build (queue handler will start build)
       await this.buildService.create({
         container: container.id,
+      }, {
         callbackUrl: input.callbackUrl,
         targetVersion: input.targetVersion,
         deploymentType: input.deploymentType,

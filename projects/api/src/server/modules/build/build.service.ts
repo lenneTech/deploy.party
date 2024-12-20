@@ -72,7 +72,7 @@ export class BuildService extends CrudService<Build> {
     return this.buildQueue.resume();
   }
 
-  override async create(input: BuildCreateInput, serviceOptions?: ServiceOptions): Promise<Build> {
+  override async create(input: BuildCreateInput, additionalInfos?: AdditionalBuildInfos, serviceOptions?: ServiceOptions): Promise<Build> {
     const lastBuild = await this.getLastBuild(getStringIds(input.container));
 
     if (lastBuild && lastBuild?.status === BuildStatus.QUEUE) {
@@ -84,25 +84,18 @@ export class BuildService extends CrudService<Build> {
     const createdBuild = await super.create(input, serviceOptions);
     await this.containerService.update(getStringIds(createdBuild.container), {lastBuild: createdBuild.id})
 
-    if (input?.callbackUrl) {
-      await axios.post(input.callbackUrl, {
+    if (additionalInfos?.callbackUrl) {
+      await axios.post(additionalInfos.callbackUrl, {
         status: BuildStatus.QUEUE,
-        deploymentType: input?.deploymentType,
-        currentVersion: input?.currentVersion,
-        targetVersion: input?.targetVersion,
-        duration: 0
+        duration: 0,
+          ...additionalInfos
       });
     }
 
     await this.buildQueue.add({
       containerId: getStringIds(input.container),
       buildId: createdBuild.id,
-      additionalInfos: {
-        callbackUrl: input?.callbackUrl,
-        deploymentType: input?.deploymentType,
-        currentVersion: input?.currentVersion,
-        targetVersion: input?.targetVersion
-      }
+      additionalInfos
     }, {jobId: createdBuild.id});
 
     return createdBuild;
