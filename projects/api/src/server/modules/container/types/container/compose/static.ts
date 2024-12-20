@@ -52,7 +52,7 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
 
   if (container.exposedPort) {
     dockerCompose.push(`    ports:`);
-    dockerCompose.push(`      - "${container.port}:${container.exposedPort}"`);
+    dockerCompose.push(`      - "${container.exposedPort}:${container.port}"`);
   }
 
   dockerCompose.push(`    networks:`);

@@ -18,7 +18,7 @@ export async function getMongoCompose(container: Container): Promise<string> {
 
   if (container.exposedPort) {
     dockerCompose.push(`    ports:`);
-    dockerCompose.push(`      - "${container.port}:${container.exposedPort}"`);
+    dockerCompose.push(`      - "${container.exposedPort}:${container.port}"`);
   }
 
   if (container?.basicAuth?.username && container?.basicAuth?.pw) {
