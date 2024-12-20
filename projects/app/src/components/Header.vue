@@ -18,7 +18,7 @@ const { open } = useModal();
 const { version } = useRuntimeConfig().public;
 
 async function logout() {
-  await (await useLogoutMutation({}, [])).mutate();
+  await useLogoutMutation({});
   const { clearSession } = useAuth();
   const { reset } = useTeamState();
   clearSession();

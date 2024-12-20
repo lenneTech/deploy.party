@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { User } from '~/base/default';
 
-import { useGetMembersOfTeamQuery } from '~/base';
+import {useAsyncGetMembersOfTeamQuery, useGetMembersOfTeamQuery} from '~/base';
 import ModalInvite from '~/components/Modals/ModalInvite.vue';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -13,8 +13,8 @@ definePageMeta({
   breadcrumbs: 'Team',
 });
 
-const { data, refresh } = await useGetMembersOfTeamQuery(null);
-const members = computed(() => data?.value?.getMembersOfTeam || []);
+const { data, refresh } = await useAsyncGetMembersOfTeamQuery(null);
+const members = computed(() => data?.value || []);
 const { open: openMenu } = useContextMenu();
 const { open: openModal } = useModal();
 
@@ -41,9 +41,8 @@ function showContextMenu(member: User) {
       },
       {
         click: async () => {
-          const { mutate } = await useDeleteUserMutation({ id: member.id! }, ['id']);
-          const result = await mutate();
-          if (result?.data?.deleteUser) {
+          const { data } = await useDeleteUserMutation({ id: member.id! }, ['id']);
+          if (data) {
             useNotification().notify({
               text: 'Successfully deleted user from team.',
               title: 'Success',

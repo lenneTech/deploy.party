@@ -1,4 +1,4 @@
-const dockerEventsState = () => useState<Array<Notification>>('docker_events', () => []);
+const dockerEventsState = () => useState<Array<string>>('docker_events', () => []);
 
 export async function useDockerEvents() {
   const events = dockerEventsState();
@@ -9,13 +9,15 @@ export async function useDockerEvents() {
       return;
     }
 
-    const { onResult, start } = await useEventsSubscription(['log']);
-    onResult((value) => {
-      const payload = value.data?.events;
-      if (payload) {
-        events.value?.push(payload.log as never);
-      }
-    });
+    const { data, start } = await useEventsSubscription(['log']);
+    watch(
+      () => data.value,
+      () => {
+        if (data.value) {
+          events.value.push(data.value?.log);
+        }
+      },
+    );
     start();
     subscribed = true;
   }

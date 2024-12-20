@@ -37,21 +37,16 @@ const { handleSubmit, isSubmitting } = useForm({
 });
 
 const onSubmit = handleSubmit.withControlled(async (values) => {
-  const { mutate, onError } = await useResetPasswordMutation(
-    {
-      password: values.password,
-      token: route.query.token as string,
-    },
-    null,
-  );
-
-  onError((err) => {
-    notify({ text: err.message, title: 'Error', type: 'error' });
+  const { data, error } = await useResetPasswordMutation({
+    password: values.password,
+    token: route.query.token as string,
   });
 
-  const result = await mutate();
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.resetPassword) {
+  if (data) {
     notify({ text: 'Successfully set password.', title: 'Successfully', type: 'success' });
     navigateTo('/auth/login');
   }

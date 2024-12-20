@@ -6,15 +6,15 @@ import { boolean, object, string } from 'yup';
 import type { Backup, BackupCreateInput, BackupInput, Container } from '~/base/default';
 
 import {
+  useAsyncGetBackupByDatabaseQuery,
+  useAsyncGetContainerQuery,
   useCreateBackupMutation,
-  useGetBackupByDatabaseQuery,
   useRestoreBackupMutation,
   useUpdateBackupMutation,
 } from '~/base';
 import FormRow from '~/components/FormRow.vue';
 import ModalBackupLog from '~/components/Modals/ModalBackupLog.vue';
 import ModalRestoreLog from '~/components/Modals/ModalRestoreLog.vue';
-import { useAuthFetch } from '~/composables/use-auth-fetch';
 import { getCronExpressionOptions } from '~/vars/cron-expression.enum';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -28,19 +28,19 @@ definePageMeta({
 
 const route = useRoute();
 const { notify } = useNotification();
-const { data, refresh } = await useGetBackupByDatabaseQuery(
+const { data, refresh } = await useAsyncGetBackupByDatabaseQuery(
   {
     containerId: route.params.containerId as string,
   },
   null,
 );
-const { data: containerData } = await useGetContainerQuery({ id: route.params.containerId as string }, [
+const { data: containerData } = await useAsyncGetContainerQuery({ id: route.params.containerId as string }, [
   'id',
   'status',
   'kind',
 ]);
-const backup = computed<Backup>(() => data.value?.getBackupByDatabase);
-const container = computed<Container>(() => containerData.value?.getContainer);
+const backup = computed<Backup>(() => data.value);
+const container = computed<Container>(() => containerData.value);
 const selectedBackup = ref(undefined);
 const inputFile = ref<HTMLElement>();
 const backupOptions = ref<{ label: string; value: string }[]>([]);
@@ -112,8 +112,8 @@ watch(
   async () => {
     if (backup.value?.lastBackup) {
       const { data } = await useListBackupsQuery({ containerId: route.params.containerId as string }, null);
-      if (data.value?.listBackups) {
-        backupOptions.value = data.value?.listBackups.map((backup) => {
+      if (data) {
+        backupOptions.value = data.map((backup) => {
           return {
             label: backup.label,
             value: backup.key,
@@ -135,30 +135,25 @@ async function submit() {
   isSubmitting.value = true;
 
   if (backup.value?.id) {
-    const { mutate, onError } = await useUpdateBackupMutation(
+    const { data, error } = await useUpdateBackupMutation(
       {
         id: backup.value.id,
         input: values.value as BackupInput,
       },
       null,
     );
-    onError((error) => {
-      notify({
-        text: error.message,
-        title: 'Error',
-        type: 'error',
-      });
-    });
-    const result = await mutate();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (result?.data?.updateBackup) {
+    if (data) {
       notify({
         title: 'Backup updated',
         type: 'success',
       });
     }
   } else {
-    const { mutate, onError } = await useCreateBackupMutation(
+    const { data, error } = await useCreateBackupMutation(
       {
         input: {
           container: route.params.containerId as string,
@@ -167,16 +162,11 @@ async function submit() {
       },
       null,
     );
-    onError((error) => {
-      notify({
-        text: error.message,
-        title: 'Error',
-        type: 'error',
-      });
-    });
-    const result = await mutate();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (result?.data?.createBackup) {
+    if (data) {
       notify({
         title: 'Backup created',
         type: 'success',
@@ -197,23 +187,15 @@ async function restore() {
     return;
   }
 
-  const { mutate, onError } = await useRestoreBackupMutation(
-    {
-      containerId: route.params.containerId as string,
-      s3Key: selectedBackup.value,
-    },
-    null,
-  );
-  onError((error) => {
-    notify({
-      text: error.message,
-      title: 'Error',
-      type: 'error',
-    });
+  const { data, error } = await useRestoreBackupMutation({
+    containerId: route.params.containerId as string,
+    s3Key: selectedBackup.value,
   });
-  const result = await mutate();
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.restoreBackup) {
+  if (data) {
     notify({
       title: 'Backup restore started.',
       type: 'success',
@@ -227,23 +209,15 @@ async function restoreVolume() {
     return;
   }
 
-  const { mutate, onError } = await useRestoreBackupVolumeMutation(
-    {
-      containerId: route.params.containerId as string,
-      s3Key: selectedBackup.value,
-    },
-    null,
-  );
-  onError((error) => {
-    notify({
-      text: error.message,
-      title: 'Error',
-      type: 'error',
-    });
+  const { data, error } = await useRestoreBackupVolumeMutation({
+    containerId: route.params.containerId as string,
+    s3Key: selectedBackup.value,
   });
-  const result = await mutate();
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.restoreBackupVolume) {
+  if (data) {
     notify({
       title: 'Backup restore started.',
       type: 'success',

@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import type { ModalContext } from '~/composables/use-modal';
 
-import { useGetBackupByDatabaseQuery } from '~/base';
+import { useAsyncGetBackupByDatabaseQuery } from '~/base';
 
 const props = defineProps<{ context: ModalContext }>();
 const { close } = useModal();
 const route = useRoute();
 
-const { data, refresh } = await useGetBackupByDatabaseQuery(
+const { data, refresh } = await useAsyncGetBackupByDatabaseQuery(
   {
     containerId: route.params.containerId as string,
   },
   ['restoreLog'],
 );
-const log = computed<string[]>(() => data.value?.getBackupByDatabase?.restoreLog || []);
+const log = computed<string[]>(() => data.value?.restoreLog || []);
 
 const { pause } = useIntervalFn(() => {
   refresh();

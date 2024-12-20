@@ -8,13 +8,16 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no',
     },
   },
+
   devServer: {
     port: 3001,
   },
+
   experimental: {
     asyncContext: true,
     renderJsonPayloads: false,
   },
+
   googleFonts: {
     base64: true,
     download: true,
@@ -25,9 +28,11 @@ export default defineNuxtConfig({
     },
     stylePath: '~/assets/css/fonts.css',
   },
+
   imports: {
     dirs: ['./states', './stores', './forms', './base'],
   },
+
   modules: [
     '@kevinmarrec/nuxt-pwa',
     '@nuxtjs/tailwindcss',
@@ -36,12 +41,15 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-icon',
   ],
+
   nuxtBase: {
     generateTypes: process.env['GENERATE_TYPES'] === '1',
-    host: process.env['API_URL'] ? process.env['API_URL'] + '/graphql' : 'http://localhost:3000/graphql',
-    schema: process.env['API_SCHEMA'] || '../api/schema.gql',
-    storagePrefix: process.env['STORAGE_PREFIX'] || 'dp-dev',
+    gqlHost: process.env.API_URL + '/graphql',
+    host: process.env.API_URL,
+    schema: process.env.API_SCHEMA,
+    storagePrefix: process.env.STORAGE_PREFIX,
   },
+
   pwa: {
     icon: {
       fileName: 'icon_1080.png',
@@ -68,17 +76,21 @@ export default defineNuxtConfig({
       templatePath: './public/service-worker.js',
     },
   },
+
   runtimeConfig: {
     public: {
-      apiUrl: process.env['API_URL'] || 'http://localhost:3000',
       env: process.env['NODE_ENV'] || 'development',
+      gqlHost: process.env.API_URL + '/graphql',
+      host: process.env.API_URL,
       instanceName: process.env['INSTANCE_NAME'],
       terminalHost: process.env['TERMINAL_HOST'] || 'ws://localhost:3002/terminal',
       version: pkg.version,
       webPushKey: process.env['WEB_PUSH_PUBLIC_KEY'],
     },
   },
+
   spaLoadingTemplate: false,
   srcDir: './src',
   ssr: true,
+  compatibilityDate: '2024-12-20',
 });

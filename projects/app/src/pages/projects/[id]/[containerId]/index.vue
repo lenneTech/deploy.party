@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { AllContainerTypes, useAuthState } from '#imports';
 
+import { useAsyncGetContainerQuery } from '~/base';
 import { ContainerKind } from '~/base/default';
 import CustomForm from '~/components/CustomForm.client.vue';
 import ServiceForm from '~/components/ServiceForm.vue';
@@ -13,8 +14,8 @@ useSeoMeta({
 const route = useRoute();
 const { currentUserState: user } = useAuthState();
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
-const { data } = await useGetContainerQuery({ id: containerId.value }, null);
-const container = computed(() => data.value?.getContainer || null);
+const { data } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
+const container = computed(() => data.value || null);
 const dbUrl = computed(
   () => `mongodb://${container.value.id}_${container.value.name.replace(/\s/g, '_')}:27017/YOUR_DB_NAME`,
 );

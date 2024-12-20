@@ -5,15 +5,15 @@ import { object, string } from 'yup';
 
 import type { ModalContext } from '~/composables/use-modal';
 
-import { useCreateContainerMutation } from '~/base';
+import { useAsyncFindProjectsQuery, useCreateContainerMutation } from '~/base';
 import { getKindsOptions } from '~/vars/container-kinds';
 
 const props = defineProps<{ context: ModalContext<{ projectId?: string }> }>();
 const { close } = useModal();
 const { notify } = useNotification();
 
-const { data } = await useFindProjectsQuery(['id', 'name']);
-const projectOptions = data.value?.findProjects.map((e) => {
+const { data } = await useAsyncFindProjectsQuery(['id', 'name']);
+const projectOptions = data.value?.map((e) => {
   return { label: e.name, value: e.id };
 });
 
@@ -37,13 +37,12 @@ onMounted(() => {
 
 const onSubmit = handleSubmit(async (values) => {
   const { kind, name, projectId } = values;
-  const { mutate } = await useCreateContainerMutation({ input: { kind, name }, projectId: projectId }, ['id']);
-  const result = await mutate();
+  const { data } = await useCreateContainerMutation({ input: { kind, name }, projectId: projectId }, ['id']);
 
-  if (result?.data?.createContainer) {
+  if (data) {
     close();
     notify({ text: 'Successfully create a new container.', title: 'Well done', type: 'success' });
-    navigateTo(`/projects/${projectId}/${result.data.createContainer.id}`);
+    navigateTo(`/projects/${projectId}/${data.id}`);
   }
 });
 </script>

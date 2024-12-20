@@ -33,26 +33,30 @@ const { handleSubmit, isSubmitting } = useForm({
 const onSubmit = handleSubmit(async (values) => {
   if (source.value) {
     const { name, token, type, url } = values;
-    const result = await useUpdateSourceMutation(
-      { id: props.context.data?.source.id as string, input: { name, token, type, url } },
-      null,
+    const { data, error } = await useUpdateSourceMutation(
+      { id: props.context.data?.source.id as string, input: { name, token, type, url } as any },
+      ['id'],
     );
-    const mutation = await result.mutate();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (mutation?.data?.updateSource) {
+    if (data) {
       close();
       useNotification().notify({ text: 'Successfully updated this source.', title: 'Well done', type: 'success' });
     }
   } else {
     const { name, token, type, url } = values;
     const { teamState } = useTeamState();
-    const result = await useCreateSourceMutation(
-      { input: { name, team: teamState.value.id as string, token, type, url } },
+    const { data, error } = await useCreateSourceMutation(
+      { input: { name, team: teamState.value.id as string, token, type, url } as any },
       ['id'],
     );
-    const data = await result.mutate();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (data?.data?.createSource) {
+    if (data) {
       close();
       useNotification().notify({ text: 'Successfully created this app.', title: 'Well done', type: 'success' });
     }

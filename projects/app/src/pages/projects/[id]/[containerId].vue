@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAsyncGetContainerHealthStatusQuery, useAsyncGetContainerQuery, useAsyncGetProjectQuery } from '~/base';
 import { type Container, ContainerKind, ContainerStatus } from '~/base/default';
 import HealthyBadge from '~/components/HealthyBadge.vue';
 import ModalConfirm from '~/components/Modals/ModalConfirm.vue';
@@ -16,11 +17,11 @@ const containerId = ref<string>(route.params.containerId ? (route.params.contain
 const showActions = ref(false);
 const { currentUserState: user } = useAuthState();
 
-const { data: project } = await useGetProjectQuery({ id: projectId.value }, ['name']);
-const projectName = computed(() => project.value?.getProject?.name || null);
+const { data: project } = await useAsyncGetProjectQuery({ id: projectId.value }, ['name']);
+const projectName = computed(() => project.value?.name || null);
 
-const { data, refresh } = await useGetContainerQuery({ id: containerId.value }, null);
-const container = computed(() => data.value?.getContainer || null);
+const { data, refresh } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
+const container = computed(() => data.value || null);
 
 const tabs = computed(() => [
   {
@@ -59,8 +60,8 @@ const tabs = computed(() => [
 
 let healthyState: any = null;
 if (container.value?.healthCheckCmd || container.value?.customDockerfile?.includes('HEALTHCHECK')) {
-  const { data: healthData } = await useGetContainerHealthStatusQuery({ id: containerId.value });
-  healthyState = computed(() => healthData.value?.getContainerHealthStatus);
+  const { data: healthData } = await useAsyncGetContainerHealthStatusQuery({ id: containerId.value });
+  healthyState = computed(() => healthData.value);
 }
 
 useIntervalFn(async () => {
@@ -76,18 +77,14 @@ onMounted(async () => {
 });
 
 async function deploy(id: string) {
-  const { mutate, onError } = await useDeployContainerMutation({ id }, ['id', { lastBuild: ['id'] }]);
-  onError((e) => {
-    useNotification().notify({ text: e.message, title: 'Error', type: 'error' });
-  });
-
-  const result = await mutate();
+  const { data, error } = await useDeployContainerMutation({ id }, ['id', { lastBuild: ['id'] }]);
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
   if (container.value?.kind === ContainerKind.APPLICATION || container.value?.kind === ContainerKind.CUSTOM) {
-    if (result?.data?.deployContainer.lastBuild?.id) {
-      await navigateTo(
-        `/projects/${projectId.value}/${containerId.value}/builds/${result?.data?.deployContainer.lastBuild.id}`,
-      );
+    if (data.lastBuild?.id) {
+      await navigateTo(`/projects/${projectId.value}/${containerId.value}/builds/${data.lastBuild.id}`);
     } else {
       await navigateTo(`/projects/${projectId.value}/${containerId.value}/builds`);
     }
@@ -104,14 +101,12 @@ async function stop(id: string) {
         return;
       }
 
-      const { mutate, onError } = await useStopContainerMutation({ id }, ['id']);
-      onError((e) => {
-        useNotification().notify({ text: e.message, title: 'Error', type: 'error' });
-      });
+      const { data, error } = await useStopContainerMutation({ id }, ['id']);
+      if (error) {
+        useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+      }
 
-      const result = await mutate();
-
-      if (result?.data?.stopContainer.id) {
+      if (data?.id) {
         useNotification().notify({ text: 'Container successfully stopped', title: 'Success', type: 'success' });
         await navigateTo(`/projects/${projectId.value}/${containerId.value}`);
       }

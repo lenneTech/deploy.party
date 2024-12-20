@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {toTypedSchema} from '@vee-validate/yup';
-import {useForm} from 'vee-validate';
-import {object, string} from 'yup';
+import { toTypedSchema } from '@vee-validate/yup';
+import { useForm } from 'vee-validate';
+import { object, string } from 'yup';
 
-import type {ModalContext} from '~/composables/use-modal';
+import type { ModalContext } from '~/composables/use-modal';
 
 const props = defineProps<{ context: ModalContext }>();
 const { close } = useModal();
@@ -25,19 +25,25 @@ const { handleSubmit, isSubmitting } = useForm({
 
 const onSubmit = handleSubmit(async (values) => {
   if (registry.value) {
-    const result = await useUpdateRegistryMutation({ id: registry.value?.id, input: values }, ['id']);
-    const mutation = await result.mutate();
+    const { data, error } = await useUpdateRegistryMutation({ id: registry.value?.id, input: values }, ['id']);
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (mutation?.data?.updateRegistry) {
+    if (data) {
       close();
       useNotification().notify({ text: 'Successfully updated this registry.', title: 'Well done', type: 'success' });
     }
   } else {
     const { teamState } = useTeamState();
-    const result = await useCreateRegistryMutation({ input: values, teamId: teamState.value?.id }, ['id']);
-    const test = await result.mutate();
+    const { data, error } = await useCreateRegistryMutation({ input: values as any, teamId: teamState.value?.id }, [
+      'id',
+    ]);
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+    }
 
-    if (test?.data?.createRegistry) {
+    if (data) {
       close();
       useNotification().notify({ text: 'Successfully created this registry.', title: 'Well done', type: 'success' });
     }
@@ -45,10 +51,12 @@ const onSubmit = handleSubmit(async (values) => {
 });
 
 async function deleteRegistry() {
-  const mutation = await useDeleteRegistryMutation({ id: registry.value?.id as string }, ['id']);
-  const result = await mutation.mutate();
+  const { data, error } = await useDeleteRegistryMutation({ id: registry.value?.id as string }, ['id']);
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.deleteRegistry) {
+  if (data) {
     close();
     useNotification().notify({ text: 'Successfully deleted this registry.', title: 'Well done', type: 'success' });
   }

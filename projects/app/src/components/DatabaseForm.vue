@@ -91,19 +91,18 @@ async function submit() {
     data.basicAuth = { pw: null, username: null };
   }
 
-  const { mutate, onError } = await useUpdateContainerMutation(
+  const { data: result, error } = await useUpdateContainerMutation(
     {
       id: props.containerId as string,
       input: data as unknown as ContainerInput,
     },
     ['id'],
   );
-  onError((e) => {
-    useNotification().notify({ text: e.message, title: 'error', type: 'error' });
-  });
-  const result = await mutate();
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.updateContainer) {
+  if (result) {
     useNotification().notify({ text: 'Successfully updated the container.', title: 'Well done', type: 'success' });
   }
 

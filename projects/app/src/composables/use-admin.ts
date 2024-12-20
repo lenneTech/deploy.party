@@ -2,33 +2,29 @@ import { useStartAllStoppedContainersMutation, useStopAllContainersMutation } fr
 
 export function useAdmin() {
   async function stopAllContainer() {
-    const { mutate, onError } = await useStopAllContainersMutation(null);
-    onError((e) => {
-      useNotification().notify({ text: e.message, title: 'error', type: 'error' });
-    });
+    const { data, error } = await useStopAllContainersMutation();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'error', type: 'error' });
+    }
 
-    const result = await mutate();
-
-    if (result?.data?.stopAllContainers) {
+    if (data) {
       useNotification().notify({ text: 'All containers stopped', title: 'Successfully', type: 'success' });
     }
 
-    return result?.data?.stopAllContainers;
+    return data;
   }
 
   async function startAllStoppedContainers() {
-    const { mutate, onError } = await useStartAllStoppedContainersMutation(null);
-    onError((e) => {
-      useNotification().notify({ text: e.message, title: 'error', type: 'error' });
-    });
+    const { data, error } = await useStartAllStoppedContainersMutation();
+    if (error) {
+      useNotification().notify({ text: error?.message, title: 'error', type: 'error' });
+    }
 
-    const result = await mutate();
-
-    if (result?.data?.startAllStoppedContainers) {
+    if (data) {
       useNotification().notify({ text: 'All containers stopped', title: 'Successfully', type: 'success' });
     }
 
-    return result?.data?.startAllStoppedContainers;
+    return data;
   }
 
   return {

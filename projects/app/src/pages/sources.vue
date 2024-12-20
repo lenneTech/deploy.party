@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Source } from '~/base/default';
 
-import { useDeleteSourceMutation, useFindSourcesQuery } from '~/base';
+import { useAsyncFindSourcesQuery, useDeleteSourceMutation } from '~/base';
 import ModalSource from '~/components/Modals/ModalSource.vue';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -14,8 +14,8 @@ definePageMeta({
 });
 
 const { open: openMenu } = useContextMenu();
-const { data, pending, refresh } = await useFindSourcesQuery({}, null, true);
-const sources = computed<Source[]>(() => data.value?.findSources || []);
+const { data, pending, refresh } = await useAsyncFindSourcesQuery({}, null);
+const sources = computed<Source[]>(() => data.value || []);
 
 function select(source: Source) {
   useModal().open({
@@ -37,9 +37,8 @@ function showContextMenu(source: Source) {
       },
       {
         click: async () => {
-          const { mutate } = await useDeleteSourceMutation({ id: source.id! }, ['id']);
-          const result = await mutate();
-          if (result?.data?.deleteSource) {
+          const { data } = await useDeleteSourceMutation({ id: source.id! }, ['id']);
+          if (data) {
             useNotification().notify({ text: 'Source deleted', title: 'Success', type: 'success' });
           } else {
             useNotification().notify({ text: 'Source could not be deleted', title: 'Error', type: 'error' });

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAsyncGetBuildQuery } from '~/base';
 import { BuildStatus } from '~/base/default';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -12,7 +13,7 @@ definePageMeta({
 
 const route = useRoute();
 const buildId = ref<string>(route.params.buildId ? (route.params.buildId as string) : '');
-const { data: buildData, refresh: refreshBuild } = await useGetBuildQuery({ id: buildId.value }, null);
+const { data: buildData, refresh: refreshBuild } = await useAsyncGetBuildQuery({ id: buildId.value }, null);
 const build = computed(() => buildData.value?.getBuild || null);
 
 const { pause } = useIntervalFn(() => {

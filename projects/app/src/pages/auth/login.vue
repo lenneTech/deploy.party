@@ -30,20 +30,18 @@ const { handleSubmit, isSubmitting } = useForm({
 });
 
 const onSubmit = handleSubmit.withControlled(async (values) => {
-  const { mutate, onError } = await useSignInMutation({ input: values }, [
+  const { data, error } = await useSignInMutation({ input: values }, [
     'token',
     'refreshToken',
     { user: ['id', 'email', 'firstName', 'lastName', 'avatar', 'roles', { team: ['id'] }] },
   ]);
 
-  onError((error) => {
-    useNotification().notify({ text: error.message, title: 'Error', type: 'error' });
-  });
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  const result = await mutate();
-
-  if (result?.data?.signIn) {
-    const signIn = result?.data?.signIn;
+  if (data) {
+    const signIn = data;
     const { setCurrentUser, setTokens } = useAuth();
     const { teamState } = useTeamState();
     teamState.value = signIn.user.team;

@@ -11,7 +11,7 @@ if [ -f .env ]; then
 fi
 
 docker stack rm deploy-party
-sleep 20
+sleep 10
 docker pull ghcr.io/lennetech/deploy.party/app:latest
 docker pull ghcr.io/lennetech/deploy.party/api:latest
 docker stack deploy -c docker-compose.yml deploy-party

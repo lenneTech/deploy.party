@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import type { ApiKey } from '~/base/default';
 
-import { useDeleteApiKeyMutation, useFindApiKeysQuery } from '~/base';
+import { useAsyncFindApiKeysQuery, useDeleteApiKeyMutation } from '~/base';
 
 definePageMeta({
   breadcrumbs: 'API-Keys',
 });
 
 const { open: openMenu } = useContextMenu();
-const { data, refresh } = await useFindApiKeysQuery({}, null);
-const keys = computed(() => data.value?.findApiKeys || []);
+const { data, refresh } = await useAsyncFindApiKeysQuery({}, null);
+const keys = computed(() => data.value || []);
 
 function showContextMenu(key: ApiKey) {
   openMenu({
@@ -23,9 +23,8 @@ function showContextMenu(key: ApiKey) {
       },
       {
         click: async () => {
-          const { mutate } = await useDeleteApiKeyMutation({ id: key.id! }, ['id']);
-          const result = await mutate();
-          if (result?.data?.deleteApiKey) {
+          const { data } = await useDeleteApiKeyMutation({ id: key.id! }, ['id']);
+          if (data) {
             useNotification().notify({ text: 'API-Key deleted', title: 'Success', type: 'success' });
           } else {
             useNotification().notify({ text: 'API-Key could not be deleted', title: 'Error', type: 'error' });

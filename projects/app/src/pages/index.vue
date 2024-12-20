@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { useDeleteContainerMutation, useDeleteProjectMutation, useDuplicateContainerMutation } from '~/base';
+import {
+  useAsyncFindProjectsQuery,
+  useDeleteContainerMutation,
+  useDeleteProjectMutation,
+  useDuplicateContainerMutation,
+} from '~/base';
 import { type Container, ContainerStatus, type Project } from '~/base/default';
 import ModalContainer from '~/components/Modals/ModalContainer.vue';
 import ModalDeleteConfirm from '~/components/Modals/ModalDeleteConfirm.vue';
@@ -14,7 +19,7 @@ definePageMeta({
   breadcrumbs: 'Projects',
 });
 
-const { data, refresh } = await useFindProjectsQuery(
+const { data, refresh } = await useAsyncFindProjectsQuery(
   [
     'id',
     'identifier',
@@ -38,7 +43,7 @@ const { data, refresh } = await useFindProjectsQuery(
   ],
   true,
 );
-const projects = computed(() => data.value?.findProjects || []);
+const projects = computed(() => data.value || []);
 const expanded = ref<string[]>([]);
 const { open } = useModal();
 const { open: openMenu } = useContextMenu();
@@ -105,9 +110,8 @@ function openContainerUrl(container: Container) {
 }
 
 async function duplicateContainer(container: Container) {
-  const { mutate } = await useDuplicateContainerMutation({ containerId: container.id! }, ['id']);
-  const result = await mutate();
-  if (result?.data?.duplicateContainer) {
+  const { data } = await useDuplicateContainerMutation({ containerId: container.id! }, ['id']);
+  if (data) {
     useNotification().notify({
       text: 'Successfully duplicated container.',
       title: 'Success',
@@ -140,12 +144,10 @@ function showContextMenu(project: Project, container: Container) {
       },
       {
         click: async () => {
-          const { mutate, onError } = await useDeployContainerMutation({ id: container.id! }, ['id']);
-          onError((e) => {
-            useNotification().notify({ text: e.message, title: 'Error', type: 'error' });
-          });
-
-          await mutate();
+          const { data, error } = await useDeployContainerMutation({ id: container.id! }, ['id']);
+          if (error) {
+            useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+          }
         },
         condition: () => container.status !== ContainerStatus.DEPLOYED,
         label: 'Deploy',
@@ -165,9 +167,8 @@ function showContextMenu(project: Project, container: Container) {
                 return;
               }
 
-              const { mutate } = await useDeleteContainerMutation({ id: container.id! }, ['id']);
-              const result = await mutate();
-              if (result?.data?.deleteContainer) {
+              const { data } = await useDeleteContainerMutation({ id: container.id! }, ['id']);
+              if (data) {
                 useNotification().notify({
                   text: 'Successfully deleted container.',
                   title: 'Success',
@@ -224,9 +225,8 @@ function showProjectContextMenu(project: Project) {
                 return;
               }
 
-              const { mutate } = await useDeleteProjectMutation({ id: project.id! }, ['id']);
-              const result = await mutate();
-              if (result?.data?.deleteProject) {
+              const { data } = await useDeleteProjectMutation({ id: project.id! }, ['id']);
+              if (data) {
                 useNotification().notify({ text: 'Successfully deleted project.', title: 'Success', type: 'success' });
               } else {
                 useNotification().notify({ text: 'Project could not be deleted', title: 'Error', type: 'error' });

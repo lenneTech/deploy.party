@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Registry } from '~/base/default';
 
+import { useAsyncFindRegistrysQuery } from '~/base';
 import ModalRegistry from '~/components/Modals/ModalRegistry.vue';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -12,8 +13,8 @@ definePageMeta({
   breadcrumbs: 'Registry',
 });
 
-const { data, pending } = await useFindRegistrysQuery({}, ['id', 'name', 'url', 'username', 'pw'], true);
-const registries = computed(() => data.value?.findRegistrys || []);
+const { data, pending } = await useAsyncFindRegistrysQuery({}, ['id', 'name', 'url', 'username', 'pw']);
+const registries = computed(() => data.value || []);
 
 async function select(registry: Registry) {
   useModal().open({ component: ModalRegistry, data: { registry } });

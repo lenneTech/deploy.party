@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import {ContainerKind} from "~/base/default";
+import { ContainerKind } from '~/base/default';
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 const props = defineProps<{
   kind: ContainerKind;
 }>();
 
-defineOptions({
-  inheritAttrs: false
-})
-
-const attrs = useAttrs()
+const attrs = useAttrs();
 </script>
 
 <template>

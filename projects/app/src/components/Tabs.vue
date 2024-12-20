@@ -1,19 +1,13 @@
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    tabs: {
-      beta?: boolean;
-      condition?: boolean;
-      exactActive?: boolean;
-      label: string;
-      to: string;
-    }[];
-  }>(),
-  {
-    beta: false,
-    exactActive: false,
-  },
-);
+const props = defineProps<{
+  tabs: {
+    beta?: boolean;
+    condition?: boolean;
+    exactActive?: boolean;
+    label: string;
+    to: string;
+  }[];
+}>();
 </script>
 
 <template>

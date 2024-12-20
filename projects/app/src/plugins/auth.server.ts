@@ -4,27 +4,27 @@ import { ofetch } from 'ofetch';
 import { useTeamState } from '~/states/team';
 
 export default defineNuxtPlugin({
-  enforce: 'post',
+  dependsOn: ['cookies', 'graphql-meta'], // from nuxt-base
   name: 'auth-server',
   async setup() {
     const _nuxt = useNuxtApp();
-    const { accessTokenState, refreshTokenState } = await callWithNuxt(_nuxt, useAuthState);
+    const config = await callWithNuxt(_nuxt, useRuntimeConfig);
+    const { accessTokenState, currentUserState, refreshTokenState } = await callWithNuxt(_nuxt, useAuthState);
+    const { clearSession, getDecodedAccessToken, isTokenExpired, setCurrentUser, setTokens } = await callWithNuxt(
+      _nuxt,
+      useAuth,
+    );
 
     if (!accessTokenState.value || !refreshTokenState.value) {
       return;
     }
 
-    const config = await callWithNuxt(_nuxt, useRuntimeConfig);
-    const { clearSession, getDecodedAccessToken, isTokenExpired, setCurrentUser, setTokens } = await callWithNuxt(
-      _nuxt,
-      useAuth,
-    );
     const { teamState } = await callWithNuxt(_nuxt, useTeamState);
     const payload = accessTokenState.value ? getDecodedAccessToken(accessTokenState.value) : null;
 
     let token = accessTokenState.value;
     if (isTokenExpired(accessTokenState.value)) {
-      const refreshTokenResult = await ofetch(config.public.host, {
+      const refreshTokenResult = await ofetch(config.public.gqlHost, {
         body: JSON.stringify({
           query: 'mutation refreshToken {refreshToken {token, refreshToken}}',
           variables: {},
@@ -50,7 +50,7 @@ export default defineNuxtPlugin({
     }
 
     if (token && payload?.id) {
-      const userResult = await ofetch(config.public.host, {
+      const userResult = await ofetch(config.public.gqlHost, {
         body: JSON.stringify({
           query: 'query getUser($id: String!){getUser(id: $id){id firstName lastName email avatar verified roles}}',
           variables: {
@@ -71,7 +71,7 @@ export default defineNuxtPlugin({
         setCurrentUser(userResult?.data?.getUser);
       }
 
-      const data = await ofetch(config.public.host, {
+      const data = await ofetch(config.public.gqlHost, {
         body: JSON.stringify({
           query: 'query getTeamByCurrentUser { getTeamByCurrentUser { id name } }',
           variables: {},

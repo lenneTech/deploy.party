@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useStopBuildMutation } from '~/base';
+import { useAsyncFindBuildsForContainerQuery, useStopBuildMutation } from '~/base';
 import { BuildStatus } from '~/base/default';
 import SmallButton from '~/components/SmallButton.vue';
 import Spinner from '~/components/Spinner.vue';
@@ -17,11 +17,11 @@ const route = useRoute();
 const projectId = ref<string>(route.params.id ? (route.params.id as string) : '');
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
 
-const { data: buildData, refresh: refreshBuilds } = await useFindBuildsForContainerQuery(
+const { data: buildData, refresh: refreshBuilds } = await useAsyncFindBuildsForContainerQuery(
   { containerId: containerId.value },
   null,
 );
-const builds = computed(() => buildData.value?.findBuildsForContainer || []);
+const builds = computed(() => buildData.value || []);
 
 const { pause } = useIntervalFn(() => {
   refreshBuilds();
@@ -49,14 +49,12 @@ function getDuration(date1: Date, date2: Date) {
 }
 
 async function restart(id: string) {
-  const { mutate } = await useRestartBuildMutation({ id: id });
-  await mutate();
+  await useRestartBuildMutation({ id: id });
   await refreshBuilds();
 }
 
 async function stop(id: string) {
-  const { mutate } = await useStopBuildMutation({ id: id });
-  await mutate();
+  await useStopBuildMutation({ id: id });
   await refreshBuilds();
 }
 </script>

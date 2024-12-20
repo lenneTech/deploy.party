@@ -22,11 +22,11 @@ const loadingGitlab = ref(false);
 const gitProjects = ref<{ id: number }[]>([]);
 const branchOptions = ref<{ label: string; value: string }[]>([]);
 const { data: sources } = await useFindSourcesQuery({}, ['id', 'name', 'token', 'url', 'type']);
-const sourceOptions = sources.value?.findSources.map((e) => {
+const sourceOptions = sources?.map((e) => {
   return { label: e.name, value: e.id };
 });
 const { data: registries } = await useFindRegistrysQuery({}, ['id', 'name']);
-const registryOptions = registries.value?.findRegistrys.map((e) => {
+const registryOptions = registries?.map((e) => {
   return { label: e.name, value: e.id };
 });
 
@@ -96,7 +96,7 @@ async function onSourceChanged(sourceId: string, repositoryId?: string) {
 }
 
 async function loadBranches(sourceId: string, repositoryId: string) {
-  const source = sources.value?.findSources.find((e) => e.id === sourceId);
+  const source = sources?.find((e) => e.id === sourceId);
   if (!source) {
     return;
   }
@@ -126,7 +126,7 @@ async function loadProjects(sourceId: string) {
     return;
   }
 
-  const source = sources.value?.findSources.find((e) => e.id === sourceId);
+  const source = sources?.find((e) => e.id === sourceId);
 
   if (!source) {
     return;
@@ -168,7 +168,7 @@ async function submit() {
   const data: any = { ...values.value };
 
   if (data && data.repositoryId) {
-    const source = sources.value?.findSources.find((e) => e.id === data.source.id);
+    const source = sources?.find((e) => e.id === data.source.id);
     if (source?.type === SourceType.GITLAB) {
       const { addProjectWebhook } = useGitlab(source!, false);
       const project = gitProjects.value.find((e) => Number(e.id) === Number(data.repositoryId));
@@ -196,19 +196,17 @@ async function submit() {
     data.source = data.source.id;
   }
 
-  const { mutate, onError } = await useUpdateContainerMutation(
+  const { data: result, error } = await useUpdateContainerMutation(
     {
       id: props.containerId as string,
       input: data as ContainerInput,
     },
     ['id'],
   );
-  onError((e) => {
-    useNotification().notify({ text: e.message, title: 'error', type: 'error' });
-  });
-  const result = await mutate();
-
-  if (result?.data?.updateContainer) {
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
+  if (result) {
     useNotification().notify({ text: 'Successfully updated the container.', title: 'Well done', type: 'success' });
   }
 

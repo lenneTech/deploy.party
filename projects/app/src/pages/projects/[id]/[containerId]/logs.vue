@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAsyncGetContainerQuery } from '~/base';
+
 const { instanceName } = useRuntimeConfig().public;
 useSeoMeta({
   title: `Logs | ${instanceName}`,
@@ -10,8 +12,8 @@ definePageMeta({
 
 const route = useRoute();
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
-const { data: logData, refresh: refreshLogs } = await useGetContainerQuery({ id: containerId.value }, ['logs']);
-const logs = computed(() => (logData.value?.getContainer.logs as string[]) || null);
+const { data: logData, refresh: refreshLogs } = await useAsyncGetContainerQuery({ id: containerId.value }, ['logs']);
+const logs = computed(() => (logData.value?.logs as string[]) || null);
 
 const { pause } = useIntervalFn(() => {
   refreshLogs();

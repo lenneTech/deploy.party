@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type {Container, ContainerInput} from '~/base/default';
-import {toTypedSchema} from "@vee-validate/yup";
-import {object, string} from 'yup';
-import {useForm} from "vee-validate";
+import { toTypedSchema } from '@vee-validate/yup';
+import { useForm } from 'vee-validate';
+import { object, string } from 'yup';
+
+import type { Container, ContainerInput } from '~/base/default';
 
 const props = defineProps<{
   container?: Container | undefined;
@@ -18,15 +19,18 @@ const typeOptions = [
 ];
 
 const formSchema = toTypedSchema(
-    object({
-      url: string().required(),
-      name: string().required().max(14),
-      type: string().required(),
-      customDockerCompose: string().nullable().optional().when('type', {
+  object({
+    customDockerCompose: string()
+      .nullable()
+      .optional()
+      .when('type', {
         is: 'CUSTOM',
         then: (schema) => schema.required(),
       }),
-    }),
+    name: string().required().max(14),
+    type: string().required(),
+    url: string().required(),
+  }),
 );
 
 const {
@@ -36,16 +40,16 @@ const {
   validate,
 } = useForm({
   initialValues: props.container as any,
-  validationSchema: formSchema,
   validateOnMount: false,
+  validationSchema: formSchema,
 });
 
 watchDebounced(
-    () => values.value,
-    async () => {
-        await submit();
-    },
-    { debounce: 800 },
+  () => values.value,
+  async () => {
+    await submit();
+  },
+  { debounce: 800 },
 );
 
 async function submit() {
@@ -57,19 +61,18 @@ async function submit() {
 
   isSubmitting.value = true;
 
-  const { mutate, onError } = await useUpdateContainerMutation(
+  const { data, error } = await useUpdateContainerMutation(
     {
       id: props.containerId as string,
       input: values.value as ContainerInput,
     },
     ['id'],
   );
-  onError((e) => {
-    useNotification().notify({ text: e.message, title: 'error', type: 'error' });
-  });
-  const result = await mutate();
+  if (error) {
+    useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
+  }
 
-  if (result?.data?.updateContainer) {
+  if (data) {
     useNotification().notify({ text: 'Successfully updated the container.', title: 'Well done', type: 'success' });
   }
 
@@ -93,11 +96,11 @@ async function submit() {
         <template #help> Select a type for your database. </template>
         <template #default>
           <FormSelect
-              name="type"
-              class="w-full mx-auto max-w-2xl"
-              placeholder="Select a type"
-              :options="typeOptions"
-              :disabled="disabled"
+            name="type"
+            class="w-full mx-auto max-w-2xl"
+            placeholder="Select a type"
+            :options="typeOptions"
+            :disabled="disabled"
           />
         </template>
       </FormRow>

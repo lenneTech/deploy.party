@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAsyncGetSystemStatsQuery } from '~/base';
 import Chart from '~/components/Chart.client.vue';
 
 const { instanceName } = useRuntimeConfig().public;
@@ -178,7 +179,7 @@ const chartMemoryOptions = computed<ApexCharts.ApexOptions>(() => {
   };
 });
 
-const { data, pending, refresh } = await useGetSystemStatsQuery(
+const { data, pending, refresh } = await useAsyncGetSystemStatsQuery(
   { id: teamState.value.id },
   [
     'cpu',
@@ -189,7 +190,7 @@ const { data, pending, refresh } = await useGetSystemStatsQuery(
   ],
   true,
 );
-const stats = computed(() => data?.value?.getSystemStats);
+const stats = computed(() => data?.value);
 
 useIntervalFn(async () => {
   await refresh();
