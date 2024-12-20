@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/lenneTech/deploy.party/compare/v1.1.0...v1.1.1) (2024-12-20)
+
+
+### Bug Fixes
+
+* format code ([9d7ffd2](https://github.com/lenneTech/deploy.party/commit/9d7ffd26e65cb4602f1c01dba77d84b62a2b5ebe))
+
 # [1.1.0](https://github.com/lenneTech/deploy.party/compare/v1.0.30...v1.1.0) (2024-12-20)
 
 
