@@ -20,7 +20,7 @@
   "dependencies": {
     "@egoist/tailwindcss-icons": "1.8.2",
     "@iconify-json/bi": "1.2.2",
-    "@lenne.tech/nuxt-base": "3.23.2-dev.0",
+    "@lenne.tech/nuxt-base": "3.24.1-dev.0",
     "@tailwindcss/forms": "0.5.9",
     "@tailwindcss/typography": "0.5.15",
     "@vee-validate/yup": "4.14.7",
@@ -31,6 +31,7 @@
     "apexcharts": "4.3.0",
     "buffer": "6.0.3",
     "ios-pwa-splash": "1.0.0",
+    "js-sha256": "^0.11.0",
     "pinia": "2.3.0",
     "simple-code-editor": "2.0.9",
     "socket.io-client": "4.8.1",

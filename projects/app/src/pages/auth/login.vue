@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuth, useBackgroundKeys, useTeamState } from '#imports';
 import { toTypedSchema } from '@vee-validate/yup';
-import { Form, useForm } from 'vee-validate';
+import { useForm } from 'vee-validate';
 import { object, string } from 'yup';
 
 import FormSubmit from '~/components/Form/FormSubmit.vue';
@@ -68,7 +68,7 @@ const onSubmit = handleSubmit.withControlled(async (values) => {
     </div>
 
     <div class="mt-5 sm:mx-auto sm:w-full sm:max-w-sm">
-      <form @submit="onSubmit">
+      <form novalidate @submit="onSubmit">
         <FormInput label="E-Mail" name="email" type="email" />
         <FormPassword label="Password" name="password" />
 

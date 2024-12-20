@@ -3,12 +3,11 @@ import {forwardRef, Inject, Injectable} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
 import {execa} from 'execa';
 import {PubSub} from 'graphql-subscriptions';
-import {Model} from 'mongoose';
+import {Model, Types} from 'mongoose';
 import {Container} from '../container/container.model';
 import {ContainerService} from '../container/container.service';
 import {Build, BuildDocument} from './build.model';
 import {BuildStatus} from './enums/build-status.enum';
-import {ObjectId} from "mongodb";
 import {ContainerStatus} from "../container/enums/container-status.enum";
 import {WebPushService} from "../web-push/web-push.service";
 import {ProjectService} from "../project/project.service";
@@ -20,6 +19,7 @@ import {Queue} from "bull";
 import axios from 'axios';
 import {AdditionalBuildInfos} from "../../common/interfaces/additional-build-infos.interface";
 import {DeploymentType} from "../container/enums/deployment-type.enum";
+import * as console from "node:console";
 
 /**
  * Build service
@@ -59,7 +59,7 @@ export class BuildService extends CrudService<Build> {
   // ===================================================================================================================
   async findForContainer(containerId: string, serviceOptions?: ServiceOptions) {
     return this.find({
-      filterQuery: {container: new ObjectId(containerId)},
+      filterQuery: {container: new Types.ObjectId(containerId)},
       queryOptions: {sort: [{createdAt: -1}]}
     }, serviceOptions);
   }
@@ -88,7 +88,7 @@ export class BuildService extends CrudService<Build> {
       await axios.post(additionalInfos.callbackUrl, {
         status: BuildStatus.QUEUE,
         duration: 0,
-          ...additionalInfos
+        ...additionalInfos
       });
     }
 

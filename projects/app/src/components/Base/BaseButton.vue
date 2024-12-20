@@ -2,11 +2,17 @@
 import { NuxtLink } from '#components';
 import { twMerge } from 'tailwind-merge';
 
-const props = defineProps<{
-  to?: string;
-  type?: string;
-  variant: 'danger' | 'outline' | 'primary';
-}>();
+const props = withDefaults(
+  defineProps<{
+    to?: string;
+    type?: string;
+    variant?: 'danger' | 'outline' | 'primary';
+  }>(),
+  {
+    type: 'button',
+    variant: 'primary',
+  },
+);
 
 const variantClasses: Record<typeof props.variant, string> = {
   danger: '!bg-red-600 hover:!bg-red-700 focus:!ring-4 focus:!ring-red-300 !text-foreground',
