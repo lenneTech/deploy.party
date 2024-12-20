@@ -102,7 +102,7 @@ echo "Congratulations! Docker is installed."
 echo "--------------------------------------------------------------------------------"
 echo "Generate keys..."
 KEY_FILE="web-push-keys.json"
-docker run --rm node:20-alpine sh -c "npm install -g web-push && npx web-push generate-vapid-keys --json" > $KEY_FILE
+docker run --rm node:20-alpine sh -c "npx web-push generate-vapid-keys --json" > $KEY_FILE
 PUBLIC_KEY=$(jq -r '.publicKey' "$KEY_FILE")
 PRIVATE_KEY=$(jq -r '.privateKey' "$KEY_FILE")
 
