@@ -109,6 +109,7 @@ PRIVATE_KEY=$(jq -r '.privateKey' "$KEY_FILE")
 
 echo "--------------------------------------------------------------------------------"
 echo "Write $INSTALL_PATH/.env file"
+echo "# GENERAL" >> $ENV_PATH
 echo "NODE_ENV=production" >> $ENV_PATH
 echo "INSTANCE_NAME=$NAME" >> $ENV_PATH
 echo "HOST_IP=$HOST_IP" >> $ENV_PATH
@@ -124,6 +125,7 @@ fi
 echo "STORAGE_PREFIX=$NAME" >> $ENV_PATH
 echo "GENERATE_TYPES=0" >> $ENV_PATH
 
+echo "\n# SERVER" >> $ENV_PATH
 echo "NSC__ENV=production" >> $ENV_PATH
 echo "NSC__INSTANCE_NAME=$NAME" >> $ENV_PATH
 echo "NSC__PORT=3000" >> $ENV_PATH
@@ -132,32 +134,32 @@ echo "NSC__DOCKER_SWARM=true" >> $ENV_PATH
 echo "NSC__BUILD_CONCURRENCY=3" >> $ENV_PATH
 echo "NSC__ENABLE_METRICS=false" >> $ENV_PATH
 
-echo "# JWT" >> $ENV_PATH
+echo "\n# JWT" >> $ENV_PATH
 echo "NSC__JWT__SECRET=$(openssl rand -base64 32)" >> $ENV_PATH
 echo "NSC__JWT__SIGN_IN_OPTIONS__EXPIRES_IN=1d" >> $ENV_PATH
 echo "NSC__JWT__REFRESH__RENEWAL=true" >> $ENV_PATH
 echo "NSC__JWT__REFRESH__SECRET=$(openssl rand -base64 32)" >> $ENV_PATH
 echo "NSC__JWT__REFRESH__SIGN_IN_OPTIONS__EXPIRES_IN=1d" >> $ENV_PATH
 
-echo "# MONGO" >> $ENV_PATH
+echo "\n# MONGO" >> $ENV_PATH
 echo "NSC__MONGOOSE__URI=mongodb://db/deploy-party" >> $ENV_PATH
 
-echo "# WEB PUSH" >> $ENV_PATH
+echo "\n# WEB PUSH" >> $ENV_PATH
 echo "NSC__WEB_PUSH__PRIVATE_KEY=$PRIVATE_KEY" >> $ENV_PATH
 echo "NSC__WEB_PUSH__PUBLIC_KEY=$PUBLIC_KEY" >> $ENV_PATH
 
-echo "# GRAPHQL" >> $ENV_PATH
+echo "\n# GRAPHQL" >> $ENV_PATH
 echo "NCS__GRAPHQL__DRIVER__INTROSPECTION=true" >> $ENV_PATH
 echo "NCS__GRAPHQL__DRIVER__PLAYGROUND=false" >> $ENV_PATH
 echo "NCS__GRAPHQL__MAX_COMPLEXITY=60" >> $ENV_PATH
 
-echo "# REDIS" >> $ENV_PATH
+echo "\n# REDIS" >> $ENV_PATH
 echo "NSC__REDIS__HOST=redis" >> $ENV_PATH
 echo "NSC__REDIS__PORT=6379" >> $ENV_PATH
 echo "NSC__REDIS__USERNAME=default" >> $ENV_PATH
 echo "NSC__REDIS__PASSWORD=$(openssl rand -base64 32)" >> $ENV_PATH
 
-echo "# SMTP" >> $ENV_PATH
+echo "\n# SMTP" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__HOST=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__PORT=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__SECURE=" >> $ENV_PATH
@@ -168,12 +170,12 @@ echo "NSC__EMAIL_DEFAULT_SENDER_NAME=" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
   echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH
-  echo "# Minio configuration" >> $ENV_PATH
+  echo "\n# Minio configuration" >> $ENV_PATH
   echo "MINIO_SERVER_URL=" >> $ENV_PATH
   echo "MINIO_BROWSER_REDIRECT_URL="  >> $ENV_PATH
 else
   echo "NSC__EMAIL_PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
-  echo "# Minio configuration" >> $ENV_PATH
+  echo "\n# Minio configuration" >> $ENV_PATH
   echo "MINIO_SERVER_URL=https://s3.$URL" >> $ENV_PATH
   echo "MINIO_BROWSER_REDIRECT_URL=https://s3.$URL"  >> $ENV_PATH
 fi
@@ -181,7 +183,7 @@ fi
 echo "MINIO_ROOT_USER=root" >> $ENV_PATH
 echo "MINIO_ROOT_PASSWORD=$(openssl rand -base64 32)"  >> $ENV_PATH
 
-echo "# TRAEFIK" >> $ENV_PATH
+echo "\n# TRAEFIK" >> $ENV_PATH
 echo "EMAIL=$EMAIL" >> $ENV_PATH
 echo "APP_URL=$URL" >> $ENV_PATH
 echo "DOMAIN=lb.$URL" >> $ENV_PATH
@@ -218,15 +220,18 @@ docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 echo "--------------------------------------------------------------------------------"
 if [ $LOCAL_SETUP != 0 ]; then
   echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
-  echo "\ndeploy.party is running on http://[IP]:3001 \n"
+  echo "deploy.party is running on http://$HOST_IP:3001 \n"
+  echo "Minio is running on http://$HOST_IP:9000 \n"
 else
-  echo "\nCongratulations! Your deploy.party instance is ready to use. Open https://$URL in your browser. \n"
-  echo "!!! IMPORTANT: Please configure firewall rules for your server:"
-  echo "ufw allow 22"
-  echo "ufw allow 80/tcp"
-  echo "ufw allow 443/tcp"
-  echo "ufw default allow outgoing"
-  echo "ufw default deny incoming"
-  echo "ufw deny 27017/tcp"
-  echo "ufw enable"
+  echo "--------------------------------------------------------------------------------"
+  echo "Setup firewall..."
+  ufw allow 22
+  ufw allow 80/tcp
+  ufw allow 443/tcp
+  ufw default allow outgoing
+  ufw default deny incoming
+  ufw deny 27017/tcp
+  ufw enable
+  echo "--------------------------------------------------------------------------------"
+  echo "\nCongratulations! Your deploy.party instance is ready to use.\nOpen https://$URL in your browser. \n"
 fi
