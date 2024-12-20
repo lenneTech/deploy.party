@@ -17,9 +17,6 @@ async function bootstrap() {
   const server = await NestFactory.create<NestExpressApplication>(
     // Include server module, with all necessary modules for the project
     ServerModule,
-    {
-      httpsOptions: null,
-    }
   );
 
   // Log exceptions
@@ -56,11 +53,7 @@ async function bootstrap() {
   server.setViewEngine(envConfig.templates.engine);
 
   // Enable cors to allow requests from other domains
-  server.enableCors({
-    origin: '*', // Erlaube alle Ursprünge (nur für Entwicklung!)
-    methods: 'GET,POST,PUT,DELETE,OPTIONS',
-    credentials: true, // Falls Cookies verwendet werden
-  });
+  server.enableCors();
 
   // the next two lines did the trick
   server.use(bodyParser.json({limit: '900mb'}));

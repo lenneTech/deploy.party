@@ -26,60 +26,31 @@ Replace follow placeholders with your values:
 ```bash
 ssh root@SERVER_IP
 ```
-```bash
-apt-get update && apt-get upgrade -y
-```
 
 ### 2. Run install script
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
 ```
 
-### 6. Configure ufw
-```bash
-ufw allow 22
-```  
-```bash
-ufw allow ssh
-```  
-```bash
-ufw allow 80/tcp
-```  
-```bash
-ufw allow 443/tcp
-```  
-```bash
-ufw default allow outgoing
-```  
-```bash
-ufw default deny incoming
-```  
-```bash
-ufw deny 27017/tcp
-```  
-```bash
-ufw enable
-```
-
-### 7. Install fail2ban (optional)
+### 3. Install fail2ban (optional)
 https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-fail2ban-on-ubuntu-22-04
 
-### 8. Configure deploy.party in .env file (optional)
+## Configuration
 ```bash
 nano /var/opt/deploy-party/data/.env
 ```
 
-### 9. Reconfigure deploy.party
+After you have configured the `.env` file, you can reconfigure the deploy.party with the following command:
 ```bash
 sh /var/opt/deploy-party/reconfigure.sh
 ```
 
-### 10. Check container are running
+## Update
 ```bash
-docker ps
+sh /var/opt/deploy-party/update.sh
 ```
 
-### 12. Check urls
+## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
 
@@ -91,14 +62,14 @@ On **local setup**:
 - Minio API: [http://localhost:3003](http://localhost:3003)
 - Minio UI: [http://localhost:3004](http://localhost:3004)
 
-### 13. Login to deploy.party  
+## First steps
 Default credentails are:  
 `admin@deploy.party`  
 `deploy-party`  
 
 **Please create a new admin account and delete the old one.**
 
-# Configuration of deploy-party
+## Usage
 
 ### Create new admin account or invite new users
 1. Click on plus in topbar and create new member
@@ -137,27 +108,7 @@ Default credentails are:
 
 ## Helpful commands
 
-## Update deploy.party
-```bash
-sh /var/opt/deploy-party/update.sh
-```
-
-## Show all containers
-```bash
-docker ps
-```
-
-## Find deploy party containers by name and show logs
-```bash
-docker logs DOCKER_ID_OF_CONTAINER
-```
-
-## Restart container of deploy.party
-```bash
-docker stop DOCKER_ID_OF_CONTAINER && docker rm DOCKER_ID_OF_CONTAINER
-```
-
-## Restart traefik
+### Restart traefik
 ```bash
 docker stack rm traefik
 ```
@@ -168,21 +119,13 @@ docker stack rm traefik
 cd /var/opt/deploy-party
 ```
 ```bash
-export $(cat /data/.env | grep -v '#' | awk '/=/ {print $1}') && docker stack deploy -c docker-compose.traefik.yml traefik
+export $(cat .env | grep -v '#' | awk '/=/ {print $1}') && docker stack deploy -c docker-compose.traefik.yml traefik
 ```
 
 ## Restart deploy.party
 ```bash
-docker stack rm deploy-party
-```
-
-**Wait if traefik container not shown under `docker ps`** before you run the next command.
-
-```bash
 cd /var/opt/deploy-party
 ```
-**Replace `$URL` with your URL.**
-
 ```bash
-docker stack deploy -c docker-compose.yml deploy-party
+sh reconfigure.sh
 ```

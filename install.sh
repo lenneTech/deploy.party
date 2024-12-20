@@ -93,6 +93,7 @@ else
 fi
 
 curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/reconfigure.sh" >> $INSTALL_PATH/reconfigure.sh
+curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/update.sh" >> $INSTALL_PATH/update.sh
 echo "--------------------------------------------------------------------------------"
 echo "Init docker swarm..."
 docker swarm init
@@ -149,9 +150,9 @@ echo "NSC__WEB_PUSH__PRIVATE_KEY=$PRIVATE_KEY" >> $ENV_PATH
 echo "NSC__WEB_PUSH__PUBLIC_KEY=$PUBLIC_KEY" >> $ENV_PATH
 
 echo "\n# GRAPHQL" >> $ENV_PATH
-echo "NCS__GRAPHQL__DRIVER__INTROSPECTION=true" >> $ENV_PATH
-echo "NCS__GRAPHQL__DRIVER__PLAYGROUND=false" >> $ENV_PATH
-echo "NCS__GRAPHQL__MAX_COMPLEXITY=60" >> $ENV_PATH
+echo "NSC__GRAPHQL__DRIVER__INTROSPECTION=true" >> $ENV_PATH
+echo "NSC__GRAPHQL__DRIVER__PLAYGROUND=false" >> $ENV_PATH
+echo "NSC__GRAPHQL__MAX_COMPLEXITY=60" >> $ENV_PATH
 
 echo "\n# REDIS" >> $ENV_PATH
 echo "NSC__REDIS__HOST=redis" >> $ENV_PATH
@@ -165,8 +166,8 @@ echo "NSC__EMAIL__SMTP__PORT=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__SECURE=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__AUTH__USER=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__AUTH__PASSWORD=" >> $ENV_PATH
-echo "NSC__EMAIL_DEFAULT_SENDER_EMAIL=" >> $ENV_PATH
-echo "NSC__EMAIL_DEFAULT_SENDER_NAME=" >> $ENV_PATH
+echo "NSC__EMAIL__DEFAULT_SENDER_EMAIL=" >> $ENV_PATH
+echo "NSC__EMAIL__DEFAULT_SENDER_NAME=" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
   echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH

@@ -30,6 +30,11 @@ export const config: { [env: string]: Partial<IServerOptions> } = {
         runOnInit: true,
       },
     },
+    graphQl: {
+      driver: {
+        introspection: true,
+      }
+    },
     staticAssets: {
       path: join(__dirname, '..', 'public'),
       options: {prefix: ''},
@@ -65,6 +70,11 @@ export const config: { [env: string]: Partial<IServerOptions> } = {
         timeZone: 'Europe/Berlin',
         runOnInit: true,
       },
+    },
+    graphQl: {
+      driver: {
+        introspection: true,
+      }
     },
     staticAssets: {
       path: join(__dirname, '..', 'public'),
