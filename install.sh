@@ -100,8 +100,16 @@ docker node update --label-add traefik-public.traefik-public-certificates=true $
 echo "Congratulations! Docker is installed."
 
 echo "--------------------------------------------------------------------------------"
+echo "Generate keys..."
+KEY_FILE="web-push-keys.json"
+docker run --rm node:20-alpine sh -c "npm install -g web-push && npx web-push generate-vapid-keys --json" > $KEY_FILE
+PUBLIC_KEY=$(jq -r '.publicKey' "$KEY_FILE")
+PRIVATE_KEY=$(jq -r '.privateKey' "$KEY_FILE")
+
+echo "--------------------------------------------------------------------------------"
 echo "Write $INSTALL_PATH/.env file"
 echo "NODE_ENV=production" >> $ENV_PATH
+echo "INSTANCE_NAME=$NAME" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
   echo "TERMINAL_HOST=ws://localhost:3002" >> $ENV_PATH
@@ -133,8 +141,8 @@ echo "# MONGO" >> $ENV_PATH
 echo "NSC__MONGOOSE__URI=mongodb://db/deploy-party" >> $ENV_PATH
 
 echo "# WEB PUSH" >> $ENV_PATH
-echo "NSC__WEB_PUSH__PRIVATE_KEY=" >> $ENV_PATH
-echo "NSC__WEB_PUSH__PUBLIC_KEY=" >> $ENV_PATH
+echo "NSC__WEB_PUSH__PRIVATE_KEY=$PRIVATE_KEY" >> $ENV_PATH
+echo "NSC__WEB_PUSH__PUBLIC_KEY=$PUBLIC_KEY" >> $ENV_PATH
 
 echo "# GRAPHQL" >> $ENV_PATH
 echo "NCS__GRAPHQL__DRIVER__INTROSPECTION=true" >> $ENV_PATH
