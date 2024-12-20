@@ -1,3 +1,10 @@
+## [1.0.26](https://github.com/lenneTech/deploy.party/compare/v1.0.25...v1.0.26) (2024-12-20)
+
+
+### Bug Fixes
+
+* fix errors in install.sh ([a2f7b95](https://github.com/lenneTech/deploy.party/commit/a2f7b95625c4284c7edd6684143b8a4d1a220973))
+
 ## [1.0.25](https://github.com/lenneTech/deploy.party/compare/v1.0.24...v1.0.25) (2024-12-20)
 
 
