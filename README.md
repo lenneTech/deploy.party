@@ -18,21 +18,19 @@ deploy.party is a simple and easy-to-use deployment tool for your applications.
 - Server access with root permissions
 - **Configure DNS** with A record for `YOUR_URL` and `*.YOUR_URL` to `SERVER_IP`.
 
-## Installation
+## Install
 Replace follow placeholders with your values:  
 `SERVER_IP`: IP of the server  
 
-### 1. Connect to server as root
 ```bash
 ssh root@SERVER_IP
 ```
 
-### 2. Run install script
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
 ```
 
-### 3. Install fail2ban (optional)
+#### Install fail2ban (optional)
 https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-fail2ban-on-ubuntu-22-04
 
 ## Configuration

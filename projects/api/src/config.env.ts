@@ -87,6 +87,4 @@ export const config: { [env: string]: Partial<IServerOptions> } = {
   },
 };
 
-const env = getEnvironmentConfig({ config });
-console.log('Environment', env);
-export default env;
+export default getEnvironmentConfig({ config });
