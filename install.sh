@@ -9,8 +9,7 @@ DATE=$(date +"%Y%m%d-%H%M%S")
 INSTALL_PATH="/var/opt/deploy-party"
 PROJECTS_PATH="/data"
 LOCAL_SETUP=0
-API_CONTAINER_NAME=deploy-party_api
-APP_CONTAINER_NAME=deploy-party_app
+HOST_IP=$(hostname -I | cut -d ' ' -f 1)
 
 if [ $OS_TYPE != "ubuntu" ] && [ $OS_TYPE != "debian" ]; then
     echo "This script only supports Ubuntu and Debian for now."
@@ -112,10 +111,11 @@ echo "--------------------------------------------------------------------------
 echo "Write $INSTALL_PATH/.env file"
 echo "NODE_ENV=production" >> $ENV_PATH
 echo "INSTANCE_NAME=$NAME" >> $ENV_PATH
+echo "HOST_IP=$HOST_IP" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
-  echo "TERMINAL_HOST=ws://$API_CONTAINER_NAME:3002" >> $ENV_PATH
-  echo "API_URL=http://$API_CONTAINER_NAME:3000" >> $ENV_PATH
+  echo "TERMINAL_HOST=ws://$HOST_IP:3002" >> $ENV_PATH
+  echo "API_URL=http://$HOST_IP:3000" >> $ENV_PATH
 else
   echo "TERMINAL_HOST=wss://api.terminal.$URL" >> $ENV_PATH
   echo "API_URL=https://api.$URL" >> $ENV_PATH
@@ -167,7 +167,7 @@ echo "NSC__EMAIL_DEFAULT_SENDER_EMAIL=" >> $ENV_PATH
 echo "NSC__EMAIL_DEFAULT_SENDER_NAME=" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
-  echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://$APP_CONTAINER_NAME:3001/auth/password-set?token=" >> $ENV_PATH
+  echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH
   echo "# Minio configuration" >> $ENV_PATH
   echo "MINIO_SERVER_URL=" >> $ENV_PATH
   echo "MINIO_BROWSER_REDIRECT_URL="  >> $ENV_PATH
