@@ -7,6 +7,7 @@ import {Project, ProjectSchema} from './project.model';
 import {ProjectResolver} from './project.resolver';
 import {ProjectService} from './project.service';
 import {ContainerModule} from "../container/container.module";
+import {ProjectController} from "./project.controller";
 
 /**
  * Project module
@@ -18,7 +19,9 @@ import {ContainerModule} from "../container/container.module";
     forwardRef(() => TeamModule),
     forwardRef(() => ContainerModule),
   ],
-  controllers: [],
+  controllers: [
+    ProjectController,
+  ],
   providers: [
     ProjectResolver,
     ProjectService,

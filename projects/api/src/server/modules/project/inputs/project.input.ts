@@ -1,4 +1,4 @@
-import { Restricted, RoleEnum } from '@lenne.tech/nest-server';
+import {CoreInput, Restricted, RoleEnum} from '@lenne.tech/nest-server';
 import { Field, InputType } from '@nestjs/graphql';
 import { IsOptional } from 'class-validator';
 
@@ -7,7 +7,7 @@ import { IsOptional } from 'class-validator';
  */
 @Restricted(RoleEnum.ADMIN)
 @InputType({ description: 'Input data to update an existing Project' })
-export class ProjectInput {
+export class ProjectInput extends CoreInput {
   // ===================================================================================================================
   // Properties
   // ===================================================================================================================

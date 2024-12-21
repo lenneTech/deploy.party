@@ -1,4 +1,4 @@
-import {Restricted, RoleEnum} from '@lenne.tech/nest-server';
+import {CoreInput, Restricted, RoleEnum} from '@lenne.tech/nest-server';
 import {Field, InputType} from '@nestjs/graphql';
 import {IsOptional} from 'class-validator';
 import {BasicAuthInput} from './basic-auth.input';
@@ -14,7 +14,7 @@ import {DeploymentType} from "../enums/deployment-type.enum";
  */
 @Restricted(RoleEnum.ADMIN)
 @InputType({ description: 'Input data to update an existing Container' })
-export class ContainerInput {
+export class ContainerInput extends CoreInput {
   @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => Boolean, {
     description: 'autoDeploy of Container',

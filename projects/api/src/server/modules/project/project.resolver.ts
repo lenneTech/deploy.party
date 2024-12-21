@@ -123,21 +123,4 @@ export class ProjectResolver {
       roles: [RoleEnum.ADMIN, RoleEnum.S_CREATOR],
     });
   }
-
-  // ===========================================================================
-  // Subscriptions
-  // ===========================================================================
-
-  /**
-   * Subscription for create Project
-   */
-  @Subscription(() => Project, {
-    filter(this: ProjectResolver, payload, variables, context) {
-      return context?.user?.hasRole?.(RoleEnum.ADMIN);
-    },
-    resolve: (value) => value,
-  })
-  async projectCreated() {
-    return this.pubSub.asyncIterableIterator('projectCreated');
-  }
 }

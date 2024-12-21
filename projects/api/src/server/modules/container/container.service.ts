@@ -130,11 +130,6 @@ export class ContainerService extends CrudService<Container> implements OnApplic
 
     await this.projectService.addContainer(projectId, createdContainer);
 
-    // Inform subscriber
-    if (serviceOptions?.pubSub === undefined || serviceOptions.pubSub) {
-      await this.pubSub.publish('containerCreated', Container.map(createdContainer));
-    }
-
     // Return created Container
     return createdContainer;
   }
@@ -161,7 +156,7 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     return this.createForProject(getStringIds(project.id), input);
   }
 
-  override async update(id: string, input: Partial<Container>, serviceOptions?: ServiceOptions): Promise<Container> {
+  override async update(id: string, input: any, serviceOptions?: ServiceOptions): Promise<Container> {
     if (!input.lastDeployedAt && !input.lastLogsFrom) {
       input.lastEditedAt = new Date();
     }

@@ -10,6 +10,7 @@ import {Project, ProjectDocument} from './project.model';
 import {ContainerService} from "../container/container.service";
 import {ContainerHealthStatus} from "../container/enums/container-health-status.enum";
 import {ContainerStatus} from "../container/enums/container-status.enum";
+import {ContainerCreateInput} from "../container/inputs/container-create.input";
 
 /**
  * Project service
@@ -98,10 +99,10 @@ export class ProjectService extends CrudService<Project> {
   async createProject(teamId: string, input: ProjectCreateInput, serviceOptions?: ServiceOptions): Promise<Project> {
     const team = await this.teamService.get(teamId);
 
-    const newInput: ProjectCreateInput = {
+    const newInput = ProjectCreateInput.map({
       ...input,
       subscribers: [getStringIds(serviceOptions.currentUser.id)]
-    }
+    });
 
     // Get new Project
     const createdProject = await super.create(newInput, serviceOptions);
@@ -150,5 +151,62 @@ export class ProjectService extends CrudService<Project> {
   async getSubscribersOfProject(projectId: string): Promise<string[]> {
     const project = await this.projectModel.findOne({ _id: projectId }).exec();
     return project.subscribers as string[];
+  }
+
+  async downloadProjectConfig(projectId: string, serviceOptions?: ServiceOptions) {
+    const project = await this.get(projectId, {...serviceOptions, populate: 'containers'});
+
+    if (!project) {
+      throw new NotFoundException(`Project with id ${projectId} not found`);
+    }
+
+    const result = project;
+    delete result.id;
+    delete result.createdAt;
+    delete result.updatedAt;
+    delete result.createdBy;
+    delete result.updatedBy;
+    result.subscribers = [];
+    result.containers = result.containers.map((container) => {
+      delete container.id;
+      delete container.createdAt;
+      delete container.updatedAt;
+      delete container.createdBy;
+      delete container.updatedBy;
+      delete container.lastBuild;
+      delete container.lastDeployedAt;
+      delete container.lastEditedAt;
+      delete container.lastLogsFrom;
+      delete container.registry;
+      delete container.source;
+      delete container.repositoryUrl;
+      delete container.repositoryId;
+      delete container.app;
+      delete container.webhookId;
+      container.logs = [];
+      container.status = ContainerStatus.DRAFT;
+      return container;
+    });
+
+    return result;
+  }
+
+  async importProjectConfig(object: any, serviceOptions?: ServiceOptions) {
+    const containers = object?.containers ?? [];
+    delete object.containers;
+
+    const project = await this.createProject(getStringIds(serviceOptions.currentUser.team), ProjectCreateInput.map(object), serviceOptions);
+    const newContainers = [];
+
+    for (const container of containers) {
+      container.project = getStringIds(project.id);
+      const input = ContainerCreateInput.map(container);
+      const result = await this.containerService.create(input, serviceOptions);
+      newContainers.push(result);
+    }
+
+    await this.update(project.id, { containers: newContainers.map((e) => e.id) }, serviceOptions);
+
+    return project;
   }
 }
