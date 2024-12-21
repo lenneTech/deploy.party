@@ -61,13 +61,13 @@ async function stop(id: string) {
 
 <template>
   <div class="w-full h-[78vh]">
-    <div v-if="builds?.length" class="w-full h-full grid grid-cols-1 lg:grid-cols-3 lg:gap-5">
+    <div v-if="builds?.length" class="w-full h-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
       <div class="flex flex-col gap-3 overflow-y-scroll mb-5 lg:mb-0">
         <NuxtLink
           v-for="(build, index) of builds"
           :key="build.id"
           :to="`/projects/${projectId}/${containerId}/builds/${build.id}`"
-          class="relative flex flex-col justify-center h-32 p-5 bg-background border border-border rounded-lg transition-all duration-200 shadow hover:bg-hover"
+          class="relative flex flex-col gap-1 justify-center h-32 p-5 bg-background border border-border rounded-lg transition-all duration-200 shadow hover:bg-hover"
           active-class="!border-primary-500"
         >
           <h5 class="text-lg font-semibold tracking-tight text-foreground">Build #{{ builds?.length - index }}</h5>
@@ -79,12 +79,14 @@ async function stop(id: string) {
             <template v-if="build.status === BuildStatus.SUCCESS"> ✅ Success </template>
             <template v-if="build.status === BuildStatus.QUEUE"> Waiting for processing </template>
           </p>
-          <small v-if="build?.createdAt && build?.finishedAt" class="text-foreground/50 mt-1">
-            <span class="i-bi-clock me-1"></span> {{ getDuration(build.createdAt, build.finishedAt) }} minutes
-          </small>
-          <small v-if="build?.createdAt" class="text-foreground/50 mt-1">
-            <span class="i-bi-calendar me-1"></span> {{ timeAgo(build.createdAt) }}
-          </small>
+          <div class="flex gap-5 items-center">
+            <small v-if="build?.createdAt && build?.finishedAt" class="text-foreground/50 mt-1">
+              <span class="i-bi-clock me-1"></span> {{ getDuration(build.createdAt, build.finishedAt) }} minutes
+            </small>
+            <small v-if="build?.createdAt" class="text-foreground/50 mt-1">
+              <span class="i-bi-calendar me-1"></span> {{ timeAgo(build.createdAt) }}
+            </small>
+          </div>
           <div class="absolute right-0 inset-y-0 p-5 flex items-center">
             <Spinner v-if="build.status === BuildStatus.RUNNING || build.status === BuildStatus.QUEUE" />
             <SmallButton
@@ -108,7 +110,7 @@ async function stop(id: string) {
           </div>
         </NuxtLink>
       </div>
-      <div class="w-full col-span-2">
+      <div class="w-full md:col-span-2 lg:col-span-3">
         <NuxtPage />
       </div>
     </div>
