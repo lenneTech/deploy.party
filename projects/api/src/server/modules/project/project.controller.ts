@@ -11,35 +11,35 @@ export class ProjectController {
     private projectService: ProjectService,
   ) {}
 
-  @Get(':projectId/download-config')
+  @Get(':projectId/download-template')
   @ApiOperation({
-    summary: 'Download project configuration',
-    description: 'Download the configuration of a project',
+    summary: 'Download project template',
+    description: 'Download the template of a project',
   })
   @ApiResponse({
     status: 200,
-    description: 'Project configuration downloaded successfully',
+    description: 'Project template downloaded successfully',
   })
-  async downloadProjectConfig(@Param('projectId') projectId: string, @CurrentUser() currentUser: User,@Res() res: any) {
-    const config = await this.projectService.downloadProjectConfig(getStringIds(projectId), {currentUser});
+  async downloadProjectTemplate(@Param('projectId') projectId: string, @CurrentUser() currentUser: User,@Res() res: any) {
+    const config = await this.projectService.downloadProjectTemplate(getStringIds(projectId), {currentUser});
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=${projectId}.json`);
     res.send(config);
   }
 
-  @Post('upload-config')
+  @Post('upload-template')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
-    summary: 'Upload project configuration',
-    description: 'Upload the configuration of a project',
+    summary: 'Upload project template',
+    description: 'Upload the template of a project',
   })
   @ApiResponse({
     status: 200,
-    description: 'Project configuration uploaded successfully',
+    description: 'Project template uploaded successfully',
   })
-  async uploadProjectConfig(@UploadedFile() file: any, @CurrentUser() currentUser: User, @Res() res: any) {
+  async uploadProjectTemplate(@UploadedFile() file: any, @CurrentUser() currentUser: User, @Res() res: any) {
     const configObject = JSON.parse(file.buffer.toString());
-    const project = await this.projectService.importProjectConfig(configObject, {currentUser});
+    const project = await this.projectService.importProjectTemplate(configObject, {currentUser});
     res.status(200).send(!!project);
     return !!project;
   }

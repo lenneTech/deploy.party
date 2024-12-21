@@ -29,7 +29,7 @@ async function logout() {
   await navigateTo('/auth/login');
 }
 
-function add(type: 'api-key' | 'container' | 'member' | 'project' | 'project-config' | 'registry' | 'source') {
+function add(type: 'api-key' | 'container' | 'member' | 'project' | 'project-template' | 'registry' | 'source') {
   switch (type) {
     case 'project':
       open({ component: ModalProject, size: 'auto' });
@@ -49,29 +49,29 @@ function add(type: 'api-key' | 'container' | 'member' | 'project' | 'project-con
     case 'api-key':
       open({ component: ModalApiKey, size: 'auto' });
       break;
-    case 'project-config':
+    case 'project-template':
       fileInput.value!.value = '';
       fileInput.value!.click();
       break;
   }
 }
 
-async function uploadConfig(e: any) {
+async function uploadTemplate(e: any) {
   if (!e.target.files?.length) {
     return;
   }
 
   const data = new FormData();
   data.append('file', e.target.files![0]);
-  const result = await useAuthFetch('/project/upload-config', {
+  const result = await useAuthFetch('/project/upload-template', {
     body: data,
     method: 'POST',
   });
 
   if (result) {
-    useNotification().notify({ text: 'Project config uploaded', title: 'Success', type: 'success' });
+    useNotification().notify({ text: 'Project template uploaded', title: 'Success', type: 'success' });
   } else {
-    useNotification().notify({ text: 'Failed to upload project config', title: 'Error', type: 'error' });
+    useNotification().notify({ text: 'Failed to upload project template', title: 'Error', type: 'error' });
   }
 
   fileInput.value!.value = null as any;
@@ -177,10 +177,10 @@ async function uploadConfig(e: any) {
                   class="w-full text-left text-foreground px-4 py-2 text-sm hover:bg-hover hover:text-foreground flex justify-between items-center"
                   role="menuitem"
                   tabindex="2"
-                  @click="add('project-config')"
+                  @click="add('project-template')"
                 >
-                  <input ref="fileInput" type="file" hidden @change="uploadConfig($event)" />
-                  Import project config <Key>I</Key>
+                  <input ref="fileInput" type="file" hidden @change="uploadTemplate($event)" />
+                  Import project template
                 </button>
               </div>
             </div>

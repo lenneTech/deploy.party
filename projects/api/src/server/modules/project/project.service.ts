@@ -153,7 +153,7 @@ export class ProjectService extends CrudService<Project> {
     return project.subscribers as string[];
   }
 
-  async downloadProjectConfig(projectId: string, serviceOptions?: ServiceOptions) {
+  async downloadProjectTemplate(projectId: string, serviceOptions?: ServiceOptions) {
     const project = await this.get(projectId, {...serviceOptions, populate: 'containers'});
 
     if (!project) {
@@ -191,11 +191,11 @@ export class ProjectService extends CrudService<Project> {
     return result;
   }
 
-  async importProjectConfig(object: any, serviceOptions?: ServiceOptions) {
-    const containers = object?.containers ?? [];
-    delete object.containers;
+  async importProjectTemplate(template: any, serviceOptions?: ServiceOptions) {
+    const containers = template?.containers ?? [];
+    delete template.containers;
 
-    const project = await this.createProject(getStringIds(serviceOptions.currentUser.team), ProjectCreateInput.map(object), serviceOptions);
+    const project = await this.createProject(getStringIds(serviceOptions.currentUser.team), ProjectCreateInput.map(template), serviceOptions);
     const newContainers = [];
 
     for (const container of containers) {

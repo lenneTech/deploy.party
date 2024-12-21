@@ -209,10 +209,10 @@ function showProjectContextMenu(project: Project) {
       },
       {
         click: async () => {
-          const config = await useAuthFetch(`/project/${project.id}/download-config`);
+          const config = await useAuthFetch(`/project/${project.id}/download-template`);
 
-          let text = JSON.stringify(config);
-          let filename = `${project.id}.json`;
+          const text = JSON.stringify(config);
+          const filename = `${project.name.toLowerCase().replaceAll(' ', '_')}.json`;
           let element = document.createElement('a');
           element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(text));
           element.setAttribute('download', filename);
@@ -223,7 +223,7 @@ function showProjectContextMenu(project: Project) {
           element.click();
           document.body.removeChild(element);
         },
-        label: 'Download config',
+        label: 'Download as template',
       },
       {
         click: () => {

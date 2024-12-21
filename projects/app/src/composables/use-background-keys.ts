@@ -9,7 +9,7 @@ import ModalSource from '~/components/Modals/ModalSource.vue';
 
 export function useBackgroundKeys() {
   const { open } = useModal();
-  const { a, c, current, d, m, p, r, s } = useMagicKeys();
+  const { a, c, current, m, p, r, s } = useMagicKeys();
   const activeElement = useActiveElement();
   const notUsingInput = computed(
     () => activeElement.value?.tagName !== 'INPUT' && activeElement.value?.tagName !== 'TEXTAREA',
