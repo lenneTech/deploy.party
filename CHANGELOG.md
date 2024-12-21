@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/lenneTech/deploy.party/compare/v1.2.0...v1.3.0) (2024-12-21)
+
+
+### Features
+
+* rename config to template ([af89ee7](https://github.com/lenneTech/deploy.party/commit/af89ee78a62cf1ae3533898feaaabd95526a65a6))
+
 # [1.2.0](https://github.com/lenneTech/deploy.party/compare/v1.1.5...v1.2.0) (2024-12-21)
 
 
