@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/lenneTech/deploy.party/compare/v1.3.1...v1.4.0) (2024-12-21)
+
+
+### Features
+
+* install script improvements ([113aa08](https://github.com/lenneTech/deploy.party/commit/113aa086e0b73bca8689dfb9598e3fd62eaf9c27))
+
 ## [1.3.1](https://github.com/lenneTech/deploy.party/compare/v1.3.0...v1.3.1) (2024-12-21)
 
 
