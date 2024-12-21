@@ -218,21 +218,51 @@ docker pull ghcr.io/lennetech/deploy.party/app:latest
 docker pull ghcr.io/lennetech/deploy.party/api:latest
 docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 
+
 echo "--------------------------------------------------------------------------------"
-if [ $LOCAL_SETUP != 0 ]; then
-  echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
-  echo "deploy.party is running on http://$HOST_IP:3001 \n"
-  echo "Minio is running on http://$HOST_IP:9000 \n"
-else
-  echo "--------------------------------------------------------------------------------"
-  echo "Setup firewall..."
-  ufw allow 22
-  ufw allow 80/tcp
-  ufw allow 443/tcp
-  ufw default allow outgoing
-  ufw default deny incoming
-  ufw deny 27017/tcp
-  ufw enable
-  echo "--------------------------------------------------------------------------------"
-  echo "\nCongratulations! Your deploy.party instance is ready to use.\nOpen https://$URL in your browser. \n"
-fi
+echo "Waiting for deploy.party to start..."
+
+TIMEOUT=180
+START_TIME=$(date +%s)
+
+while true; do
+    CONTAINER_ID=$(docker ps --filter "ancestor=ghcr.io/lennetech/deploy.party/app:latest" --format "{{.ID}}")
+    STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null)
+
+    if [ "$STATUS" == "healthy" ]; then
+        if [ $LOCAL_SETUP != 0 ]; then
+          echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
+          echo "deploy.party is running on http://$HOST_IP:3001 \n"
+          echo "Minio is running on http://$HOST_IP:9000 \n"
+        else
+          echo "--------------------------------------------------------------------------------"
+          echo "Setup firewall..."
+          ufw allow 22
+          ufw allow 80/tcp
+          ufw allow 443/tcp
+          ufw default allow outgoing
+          ufw default deny incoming
+          ufw deny 27017/tcp
+          ufw enable
+          echo "--------------------------------------------------------------------------------"
+          echo "\nCongratulations! Your deploy.party instance is ready to use.\nOpen https://$URL in your browser. \n"
+        fi
+        exit 0
+    fi
+
+    if [ -z "$STATUS" ]; then
+        echo "Something went wrong. The container does not exist."
+        exit 1
+    fi
+
+    CURRENT_TIME=$(date +%s)
+    ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+    if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+        echo "The container did not reach the 'healthy' status within the timeout period."
+        exit 1
+    fi
+
+    sleep 5
+done
+
+echo "--------------------------------------------------------------------------------"
