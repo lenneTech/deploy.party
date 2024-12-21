@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/lenneTech/deploy.party/compare/v1.1.5...v1.2.0) (2024-12-21)
+
+
+### Features
+
+* implement project config download and import ([2b8afbc](https://github.com/lenneTech/deploy.party/commit/2b8afbca412fc092cd5a816cc7a62c7473358c1d))
+
 ## [1.1.5](https://github.com/lenneTech/deploy.party/compare/v1.1.4...v1.1.5) (2024-12-20)
 
 
