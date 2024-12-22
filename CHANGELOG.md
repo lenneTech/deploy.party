@@ -1,3 +1,10 @@
+## [1.6.6](https://github.com/lenneTech/deploy.party/compare/v1.6.5...v1.6.6) (2024-12-22)
+
+
+### Bug Fixes
+
+* remove id from callback ([764a155](https://github.com/lenneTech/deploy.party/commit/764a1552452d476ac4bf4c8508050478bcff8e61))
+
 ## [1.6.5](https://github.com/lenneTech/deploy.party/compare/v1.6.4...v1.6.5) (2024-12-22)
 
 
