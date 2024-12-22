@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/lenneTech/deploy.party/compare/v1.6.1...v1.6.2) (2024-12-22)
+
+
+### Bug Fixes
+
+* fix build for new tag ([cd32cdc](https://github.com/lenneTech/deploy.party/commit/cd32cdcf3a01b27b2d6b2abfd6f34dd9a0510e73))
+
 ## [1.6.1](https://github.com/lenneTech/deploy.party/compare/v1.6.0...v1.6.1) (2024-12-22)
 
 
