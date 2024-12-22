@@ -85,11 +85,15 @@ export class BuildService extends CrudService<Build> {
     await this.containerService.update(getStringIds(createdBuild.container), {lastBuild: createdBuild.id})
 
     if (additionalInfos?.callbackUrl) {
-      await axios.post(additionalInfos.callbackUrl, {
-        status: BuildStatus.QUEUE,
-        duration: 0,
-        ...additionalInfos
-      });
+      try {
+        await axios.post(additionalInfos.callbackUrl, {
+          status: BuildStatus.QUEUE,
+          duration: 0,
+          ...additionalInfos
+        });
+      } catch (e) {
+        console.debug(`Callback for ${createdBuild.id} failed with error ${e}`);
+      }
     }
 
     await this.buildQueue.add({
@@ -135,10 +139,14 @@ export class BuildService extends CrudService<Build> {
 
     // Send callback
     if (additionalInfos?.callbackUrl) {
-      await axios.post(additionalInfos.callbackUrl, {
-        status: status,
-        ...additionalInfos
-      });
+      try {
+        await axios.post(additionalInfos.callbackUrl, {
+          status: status,
+          ...additionalInfos
+        });
+      } catch (e) {
+        console.debug(`Callback for ${id} failed with error ${e}`);
+      }
     }
 
     return this.buildModel.updateOne({_id: id}, {status, finishedAt}).exec();

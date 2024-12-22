@@ -220,11 +220,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     console.debug(`Backup for ${container.name} started at ${new Date().toISOString()}`);
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
-      axios.post(additionalInfos.callbackUrl, {
-        id: 'dp-' + backup.id,
-        status: BackupStatus.STARTED,
-        duration: endTime - startTime
-      });
+      try {
+        axios.post(additionalInfos.callbackUrl, {
+          id: 'dp-' + backup.id,
+          status: BackupStatus.STARTED,
+          duration: endTime - startTime
+        });
+      } catch (e) {
+        console.debug(`Callback for ${container.name} failed with error ${e}`);
+      }
     }
 
     const project = await this.projectService.getProjectByContainer(container);
@@ -297,11 +301,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       console.debug(`Backup for ${container.name} failed with code ${code}`);
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
-        axios.post(additionalInfos.callbackUrl, {
-          id: 'dp-' + backup.id,
-          status: BackupStatus.FAILED,
-          duration: endTime - startTime
-        });
+        try {
+          axios.post(additionalInfos.callbackUrl, {
+            id: 'dp-' + backup.id,
+            status: BackupStatus.FAILED,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
     });
 
@@ -312,14 +320,18 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         const backups = await this.listBackups(container.id, {force: true});
         const lastBackup = backups.find((b) => b.key.includes(fileName))
 
-        axios.post(additionalInfos.callbackUrl, {
-          id: 'dp-' + backup.id,
-          status: BackupStatus.SUCCEDDED,
-          duration: endTime - startTime,
-          size: lastBackup?.size || undefined,
-          name: lastBackup?.label || undefined,
-          key: lastBackup?.key || undefined
-        });
+        try {
+          axios.post(additionalInfos.callbackUrl, {
+            id: 'dp-' + backup.id,
+            status: BackupStatus.SUCCEDDED,
+            duration: endTime - startTime,
+            size: lastBackup?.size || undefined,
+            name: lastBackup?.label || undefined,
+            key: lastBackup?.key || undefined
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
     });
 
@@ -391,11 +403,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
-      axios.post(additionalInfos.callbackUrl, {
-        status: BackupStatus.STARTED,
-        key,
-        duration: endTime - startTime
-      });
+      try {
+        axios.post(additionalInfos.callbackUrl, {
+          status: BackupStatus.STARTED,
+          key,
+          duration: endTime - startTime
+        });
+      } catch (e) {
+        console.debug(`Callback for ${container.name} failed with error ${e}`);
+      }
     }
 
     await this.containerService.updateForce(containerId, {status: ContainerStatus.RESTORING});
@@ -406,11 +422,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
-        await axios.post(additionalInfos.callbackUrl, {
-          status: BackupStatus.FAILED,
-          key,
-          duration: endTime - startTime
-        });
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
 
       return;
@@ -423,11 +443,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
-        await axios.post(additionalInfos.callbackUrl, {
-          status: BackupStatus.FAILED,
-          key,
-          duration: endTime - startTime
-        });
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
 
       return;
@@ -569,11 +593,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     await this.containerService.updateForce(containerId, {status: ContainerStatus.DEPLOYED});
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
-      axios.post(additionalInfos.callbackUrl, {
-        status: BackupStatus.SUCCEDDED,
-        key,
-        duration: endTime - startTime
-      });
+      try {
+        axios.post(additionalInfos.callbackUrl, {
+          status: BackupStatus.SUCCEDDED,
+          key,
+          duration: endTime - startTime
+        });
+      } catch (e) {
+        console.debug(`Callback for ${container.name} failed with error ${e}`);
+      }
     }
 
     return true;
@@ -590,11 +618,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     await this.containerService.updateForce(containerId, {status: ContainerStatus.RESTORING});
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
-      axios.post(additionalInfos.callbackUrl, {
-        status: BackupStatus.STARTED,
-        key,
-        duration: endTime - startTime
-      });
+      try {
+        axios.post(additionalInfos.callbackUrl, {
+          status: BackupStatus.STARTED,
+          key,
+          duration: endTime - startTime
+        });
+      } catch (e) {
+        console.debug(`Callback for ${container.name} failed with error ${e}`);
+      }
     }
 
     const result = await this.findForce({filterQuery: {container: getStringIds(containerId)}});
@@ -604,11 +636,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
-        axios.post(additionalInfos.callbackUrl, {
-          status: BackupStatus.FAILED,
-          key,
-          duration: endTime - startTime
-        });
+        try {
+          axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
 
       throw new Error('No backup found');
@@ -622,11 +658,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
-        axios.post(additionalInfos.callbackUrl, {
-          status: BackupStatus.FAILED,
-          key,
-          duration: endTime - startTime
-        });
+        try {
+          axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
       }
       return;
     }
@@ -697,11 +737,15 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
-      axios.post(additionalInfos.callbackUrl, {
-        status: BackupStatus.SUCCEDDED,
-        key,
-        duration: endTime - startTime
-      });
+      try {
+        axios.post(additionalInfos.callbackUrl, {
+          status: BackupStatus.SUCCEDDED,
+          key,
+          duration: endTime - startTime
+        });
+      } catch (e) {
+        console.debug(`Callback for ${container.name} failed with error ${e}`);
+      }
     }
 
     return true;
