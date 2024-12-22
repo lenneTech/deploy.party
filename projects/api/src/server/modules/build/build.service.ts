@@ -245,7 +245,7 @@ export class BuildService extends CrudService<Build> {
                   await this.setBuildStatus(build.id, BuildStatus.SUCCESS, additionalInfos);
 
                   // update containers version if deployment type tag
-                  if (additionalInfos.deploymentType === DeploymentType.TAG) {
+                  if (additionalInfos?.deploymentType === DeploymentType.TAG) {
                     await this.containerService.updateForce(container.id, {tag: additionalInfos.targetVersion});
                   }
 
