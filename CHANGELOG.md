@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/lenneTech/deploy.party/compare/v1.6.0...v1.6.1) (2024-12-22)
+
+
+### Bug Fixes
+
+* fix build for new tag ([a41b1f6](https://github.com/lenneTech/deploy.party/commit/a41b1f6834d568cd8ba1d73556d8ec13daf0bb34))
+
 # [1.6.0](https://github.com/lenneTech/deploy.party/compare/v1.5.0...v1.6.0) (2024-12-22)
 
 
