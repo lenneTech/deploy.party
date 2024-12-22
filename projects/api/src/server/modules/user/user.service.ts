@@ -54,11 +54,6 @@ export class UserService extends CoreUserService<User, UserInput, UserCreateInpu
       user = await this.get(user.id, { ...serviceOptions, currentUser: serviceOptions?.currentUser || user });
     }
 
-    // Publish action
-    if (serviceOptions?.pubSub === undefined || serviceOptions.pubSub) {
-      await this.pubSub.publish('userCreated', User.map(user));
-    }
-
     // Return created user
     return user;
   }
@@ -70,16 +65,20 @@ export class UserService extends CoreUserService<User, UserInput, UserCreateInpu
     // Set password reset token
     const user = await super.setPasswordResetTokenForEmail(email, {...serviceOptions, prepareOutput: null});
 
-    // Send email
-    await this.emailService.sendMail(user.email, 'Invitation', {
-      htmlTemplate: 'password-reset',
-      senderName: this.configService.configFastButReadOnly.instanceName + ' - deploy.party',
-      templateData: {
-        name: user.username,
-        instanceName: this.configService.configFastButReadOnly.instanceName,
-        link: this.configService.configFastButReadOnly.email.passwordResetLink + user.passwordResetToken,
-      },
-    });
+    try {
+      // Send email
+      await this.emailService.sendMail(user.email, 'Invitation', {
+        htmlTemplate: 'password-reset',
+        senderName: this.configService.configFastButReadOnly.instanceName + ' - deploy.party',
+        templateData: {
+          name: user.username,
+          instanceName: this.configService.configFastButReadOnly.instanceName,
+          link: this.configService.configFastButReadOnly.email.passwordResetLink + user.passwordResetToken,
+        },
+      });
+    } catch (e) {
+      console.error('Error sending password reset mail', e);
+    }
 
     // Return user
     return user;

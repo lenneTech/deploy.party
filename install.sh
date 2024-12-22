@@ -166,16 +166,16 @@ echo "NSC__EMAIL__SMTP__PORT=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__SECURE=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__AUTH__USER=" >> $ENV_PATH
 echo "NSC__EMAIL__SMTP__AUTH__PASSWORD=" >> $ENV_PATH
-echo "NSC__EMAIL__DEFAULT_SENDER_EMAIL=" >> $ENV_PATH
-echo "NSC__EMAIL__DEFAULT_SENDER_NAME=" >> $ENV_PATH
+echo "NSC__EMAIL__DEFAULT_SENDER__EMAIL=" >> $ENV_PATH
+echo "NSC__EMAIL__DEFAULT_SENDER__NAME=" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
-  echo "NSC__EMAIL_PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH
+  echo "NSC__EMAIL__PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH
   echo "\n# Minio configuration" >> $ENV_PATH
   echo "MINIO_SERVER_URL=" >> $ENV_PATH
   echo "MINIO_BROWSER_REDIRECT_URL="  >> $ENV_PATH
 else
-  echo "NSC__EMAIL_PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
+  echo "NSC__EMAIL__PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
   echo "\n# Minio configuration" >> $ENV_PATH
   echo "MINIO_SERVER_URL=https://s3.$URL" >> $ENV_PATH
   echo "MINIO_BROWSER_REDIRECT_URL=https://s3.$URL"  >> $ENV_PATH
@@ -231,6 +231,14 @@ while true; do
     STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null)
 
     if [ "$STATUS" = "healthy" ]; then
+        PROGRESS=100
+        FILLED=$((PROGRESS * BAR_LENGTH / 100))
+        EMPTY=$((BAR_LENGTH - FILLED))
+        BAR=$(printf "%0.s#" $(seq 1 $FILLED))
+        SPACES=$(printf "%0.s " $(seq 1 $EMPTY))
+        printf "\r[%s%s] %d%%" "$BAR" "$SPACES" "$PROGRESS"
+        sleep 10
+
         if [ $LOCAL_SETUP != 0 ]; then
           echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
           echo "deploy.party is running on http://$HOST_IP:3001 \n"
