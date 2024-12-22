@@ -16,6 +16,7 @@ import {ContainerService} from "../../container/container.service";
 import {BuildStatus} from "../enums/build-status.enum";
 import {AdditionalBuildInfos} from "../../../common/interfaces/additional-build-infos.interface";
 import envConfig from "../../../../config.env";
+import {DeploymentType} from "../../container/enums/deployment-type.enum";
 
 @Processor('build')
 export class BuildProcessor {
@@ -63,10 +64,16 @@ export class BuildProcessor {
 
   @Process({concurrency: envConfig.buildConcurrency})
   async build(job: Job<{ containerId: string; buildId: string; additionalInfos?: AdditionalBuildInfos }>) {
-    const startTime = new Date().getTime();
     this.logger.debug(`Start processing job ${job.id} of type ${job.name} with data ${job.data}...`);
-    const container = await this.containerService.getForce(job.data.containerId, {populate: ['source']});
+    const startTime = new Date().getTime();
     const build = await this.buildService.getForce(job.data.buildId);
+
+    // update containers version if deployment type tag
+    if (job?.data?.additionalInfos?.deploymentType === DeploymentType.TAG) {
+      await this.containerService.updateForce(job?.data?.containerId, {tag: job?.data?.additionalInfos.targetVersion});
+    }
+
+    const container = await this.containerService.getForce(job.data.containerId, {populate: ['source']});
 
     if (!container.source) {
       await this.buildService.setBuildStatus(build.id, BuildStatus.FAILED, job.data.additionalInfos);
