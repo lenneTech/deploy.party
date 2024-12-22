@@ -28,6 +28,7 @@ const formSchema = toTypedSchema(
     password: string().required('Password is required.'),
     password_confirm: string()
       .required()
+      .min(6)
       .oneOf([ref('password')], 'Passwords must match.'),
   }),
 );
