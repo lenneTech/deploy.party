@@ -17,6 +17,8 @@ import {BuildStatus} from "../enums/build-status.enum";
 import {AdditionalBuildInfos} from "../../../common/interfaces/additional-build-infos.interface";
 import envConfig from "../../../../config.env";
 import {DeploymentType} from "../../container/enums/deployment-type.enum";
+import {DockerService} from "../../../common/services/docker.service";
+import {promises as fs} from 'fs';
 
 @Processor('build')
 export class BuildProcessor {
@@ -26,6 +28,8 @@ export class BuildProcessor {
     private buildService: BuildService,
     @Inject(forwardRef(() => ContainerService))
     private containerService: ContainerService,
+    @Inject(forwardRef(() => DockerService))
+    private dockerService: DockerService,
   ) {}
 
   @OnQueueActive()
@@ -67,13 +71,24 @@ export class BuildProcessor {
     this.logger.debug(`Start processing job ${job.id} of type ${job.name} with data ${job.data}...`);
     const startTime = new Date().getTime();
     const build = await this.buildService.getForce(job.data.buildId);
+    let container = await this.containerService.getForce(job.data.containerId, {populate: ['source']});
 
     // update containers version if deployment type tag
     if (job?.data?.additionalInfos?.deploymentType === DeploymentType.TAG) {
-      await this.containerService.updateForce(job?.data?.containerId, {tag: job?.data?.additionalInfos.targetVersion});
-    }
+      await fs.rm(`${this.dockerService.getPath(container)}`, { recursive: true, force: true });
+      container = await this.containerService.updateForce(job?.data?.containerId, {tag: job?.data?.additionalInfos.targetVersion});
 
-    const container = await this.containerService.getForce(job.data.containerId, {populate: ['source']});
+      if (container.env) {
+        await this.dockerService.createEnvFile(container);
+      }
+
+      if (container.registry) {
+        await this.dockerService.createDockerRegistryCredentials(container);
+      }
+
+      await this.dockerService.createDockerfile(container);
+      await this.dockerService.createDockerComposeFile(container);
+    }
 
     if (!container.source) {
       await this.buildService.setBuildStatus(build.id, BuildStatus.FAILED, job.data.additionalInfos);
