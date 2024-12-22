@@ -266,7 +266,7 @@ async function uploadBackup(e: any) {
       class="border-b border-white/10 pb-4 pt-4 text-sm text-light text-secondary-100/50 flex items-end justify-between"
     >
       <span v-if="backup?.lastBackup">Last backup at {{ timeAgo(backup?.lastBackup) }}</span>
-      <div v-if="container.status === ContainerStatus.DEPLOYED" class="flex items-end gap-2">
+      <div v-if="container?.status === ContainerStatus.DEPLOYED" class="flex items-end gap-2">
         <FormSelect
           v-if="backupOptions?.length"
           v-model="selectedBackup"
@@ -279,7 +279,7 @@ async function uploadBackup(e: any) {
           class="mb-2"
           variant="outline"
           :disabled="loading"
-          @click="container.kind === ContainerKind.DATABASE ? restore() : restoreVolume()"
+          @click="container?.kind === ContainerKind.DATABASE ? restore() : restoreVolume()"
         >
           Restore
         </BaseButton>
@@ -322,7 +322,7 @@ async function uploadBackup(e: any) {
             </div>
           </template>
         </FormRow>
-        <FormRow v-if="container.kind !== ContainerKind.DATABASE">
+        <FormRow v-if="container?.kind !== ContainerKind.DATABASE">
           <template #label> Path </template>
           <template #help> File path to backup </template>
           <template #default>

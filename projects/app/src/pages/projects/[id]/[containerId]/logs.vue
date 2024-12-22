@@ -17,7 +17,7 @@ const logs = computed(() => (logData.value?.logs as string[]) || null);
 
 const { pause } = useIntervalFn(() => {
   refreshLogs();
-}, 2000);
+}, 5000);
 
 onBeforeUnmount(() => {
   pause();

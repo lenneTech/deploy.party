@@ -106,12 +106,17 @@ export class ExternController {
       throw new Error('No database container found');
     }
 
-    const backup = await this.backupService.getByContainer(dbContainer.id);
+    let backup = await this.backupService.getByContainer(dbContainer.id);
     if (!backup) {
       throw new Error('No backup config found');
     }
 
-    return await this.backupService.updateForce(backup.id, { active: input.enableAutoBackup } as BackupInput);
+    if (backup.active === input.enableAutoBackup) {
+      return backup;
+    }
+
+    backup = await this.backupService.updateForce(backup.id, { active: input.enableAutoBackup } as BackupInput);
+    return backup;
   }
 
   @Post(':projectId/backup/create')
