@@ -20,6 +20,8 @@ import axios from 'axios';
 import {AdditionalBuildInfos} from "../../common/interfaces/additional-build-infos.interface";
 import {DeploymentType} from "../container/enums/deployment-type.enum";
 import * as console from "node:console";
+import {promises as fs} from "fs";
+import envConfig from "../../../config.env";
 
 /**
  * Build service
@@ -254,7 +256,11 @@ export class BuildService extends CrudService<Build> {
 
                   // update containers version if deployment type tag
                   if (additionalInfos?.deploymentType === DeploymentType.TAG) {
-                    await this.containerService.updateForce(container.id, {tag: additionalInfos.targetVersion});
+                    try {
+                      await fs.rm(`${envConfig.projectsDir}/${container.id}/${additionalInfos?.currentVersion}`, { recursive: true, force: true });
+                    } catch (e) {
+                      console.debug(`Error while removing old version: ${e}`);
+                    }
                   }
 
                   const projectIsRunning = await this.checkProjectIsBuilding(build);

@@ -77,7 +77,6 @@ export class BuildProcessor {
 
     // update containers version if deployment type tag
     if (job?.data?.additionalInfos?.deploymentType === DeploymentType.TAG) {
-      await fs.rm(`${this.dockerService.getPath(container)}`, { recursive: true, force: true });
       container = await this.containerService.updateForce(job?.data?.containerId, {tag: job?.data?.additionalInfos.targetVersion});
       await this.fileService.recreateFolder(`${this.dockerService.getPath(container)}/code`);
 
