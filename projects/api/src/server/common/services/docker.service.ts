@@ -252,7 +252,7 @@ export class DockerService {
     }
 
     const {stdout, stderr} = await execa(
-      `docker logs ${since ? `--since ${since}` : ''} --tail 5000 --timestamps ${dockerId}`,
+      `docker logs ${since ? `--since ${since}` : ''} --tail 2000 --timestamps ${dockerId}`,
       {
         shell: true,
       }

@@ -51,7 +51,7 @@ export const config: { [env: string]: Partial<IServerOptions> } = {
   production: {
     cronJobs: {
       containerLogs: {
-        cronTime: CronExpression.EVERY_5_SECONDS,
+        cronTime: CronExpression.EVERY_10_SECONDS,
         timeZone: 'Europe/Berlin',
         runOnInit: true,
       },

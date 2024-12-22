@@ -282,7 +282,7 @@ export class ContainerService extends CrudService<Container> implements OnApplic
   }
 
   async updateLog(id: string, logs: string[]) {
-    return this.containerModel.updateOne({ _id: id }, { $push: { logs: {$each: logs, $slice: -3000} } }).exec();
+    return this.containerModel.updateOne({ _id: id }, { $push: { logs: {$each: logs, $slice: -1000} } }).exec();
   }
 
   async getStats(containerId: string) {
