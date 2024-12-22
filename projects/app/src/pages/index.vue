@@ -202,7 +202,8 @@ function showProjectContextMenu(project: Project) {
       },
       {
         click: () => {
-          useClipboard({ source: project.id }).copy();
+          const { $copyToClipboard } = useNuxtApp();
+          $copyToClipboard(project.id);
           useNotification().notify({ text: 'Copied project id', title: 'Success', type: 'success' });
         },
         label: 'Copy project id',
@@ -212,7 +213,7 @@ function showProjectContextMenu(project: Project) {
           const config = await useAuthFetch(`/project/${project.id}/download-template`);
 
           const text = JSON.stringify(config);
-          const filename = `${project.name.toLowerCase().replaceAll(' ', '_')}.json`;
+          const filename = `dp-${project.name.toLowerCase().replaceAll(' ', '_')}.json`;
           let element = document.createElement('a');
           element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(text));
           element.setAttribute('download', filename);

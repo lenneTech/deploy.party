@@ -17,10 +17,10 @@ onMounted(() => {
   }
 });
 
-const { handleBlur, handleChange, setTouched, setValue, value } = useField(() => props.name);
+const { handleBlur, handleChange, resetField, setTouched, setValue, value } = useField(() => props.name);
 
 if (!value.value) {
-  value.value = '';
+  setValue('', false);
 }
 
 function textarea(node) {

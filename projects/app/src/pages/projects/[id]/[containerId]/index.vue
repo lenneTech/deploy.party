@@ -12,15 +12,16 @@ useSeoMeta({
 });
 
 const route = useRoute();
+const { $copyToClipboard } = useNuxtApp();
 const { currentUserState: user } = useAuthState();
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
 const { data } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
+
 const container = computed(() => data.value || null);
 const dbUrl = computed(
   () => `mongodb://${container.value.id}_${container.value.name.replace(/\s/g, '_')}:27017/YOUR_DB_NAME`,
 );
 const dbHost = computed(() => `${container.value.id}_${container.value.name.replace(/\s/g, '_')}`);
-const { copy } = useClipboard({ source: dbUrl });
 const disabled = computed<boolean>(() => !user.value.roles.includes('admin'));
 const tab = ref<string>('');
 
@@ -37,7 +38,7 @@ watch(
 );
 
 function copyUrl() {
-  copy();
+  $copyToClipboard(dbUrl.value);
   useNotification().notify({ text: 'Copied to clipboard', title: 'Success', type: 'success' });
 }
 </script>

@@ -16,7 +16,8 @@ function showContextMenu(key: ApiKey) {
     items: [
       {
         click: () => {
-          useClipboard({ source: key.key! }).copy();
+          const { $copyToClipboard } = useNuxtApp();
+          $copyToClipboard(key.key!);
           useNotification().notify({ text: 'API-Key copied to clipboard', title: 'Success', type: 'success' });
         },
         label: 'Copy API-Key',

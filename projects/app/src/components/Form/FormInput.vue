@@ -11,7 +11,6 @@ const props = defineProps<{
 const hover = ref(false);
 
 const { handleBlur, handleChange, meta, setTouched, value } = useField(() => props.name);
-const { text } = useClipboard();
 
 async function fillByClipboard() {
   value.value = await navigator.clipboard.readText();
@@ -25,7 +24,7 @@ async function fillByClipboard() {
     >
     <div class="relative mt-2 pb-2">
       <span
-        v-show="text && hover"
+        v-show="hover"
         class="absolute duration-200 right-0 -top-6 text-xs cursor-pointer font-light underline text-foreground/50 hover:text-primary"
         @click="fillByClipboard"
         >fill by clipboard</span

@@ -86,5 +86,6 @@ export class CronJobs extends CoreCronJobs {
         `docker system prune --force --all`,
         {shell: true}
     );
+    await execa('docker network create --driver=overlay deploy-party', {shell: true});
   }
 }

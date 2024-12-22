@@ -26,7 +26,8 @@ function confirm() {
 }
 
 function copyName(name: string) {
-  useClipboard({ source: name }).copy();
+  const { $copyToClipboard } = useNuxtApp();
+  $copyToClipboard(name);
   useNotification().notify({ text: 'Successfully copy name', title: 'Success', type: 'success' });
 }
 </script>
