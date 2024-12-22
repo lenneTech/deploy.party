@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/lenneTech/deploy.party/compare/v1.5.0...v1.6.0) (2024-12-22)
+
+
+### Features
+
+* add try catch for callback ([8a84d04](https://github.com/lenneTech/deploy.party/commit/8a84d0442193c81631b055873b9381dda3b8a6ff))
+
 # [1.5.0](https://github.com/lenneTech/deploy.party/compare/v1.4.10...v1.5.0) (2024-12-22)
 
 
