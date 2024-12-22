@@ -221,7 +221,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
       try {
-        axios.post(additionalInfos.callbackUrl, {
+        await axios.post(additionalInfos.callbackUrl, {
           id: 'dp-' + backup.id,
           status: BackupStatus.STARTED,
           duration: endTime - startTime
@@ -302,7 +302,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
         try {
-          axios.post(additionalInfos.callbackUrl, {
+          await axios.post(additionalInfos.callbackUrl, {
             id: 'dp-' + backup.id,
             status: BackupStatus.FAILED,
             duration: endTime - startTime
@@ -321,7 +321,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         const lastBackup = backups.find((b) => b.key.includes(fileName))
 
         try {
-          axios.post(additionalInfos.callbackUrl, {
+          await axios.post(additionalInfos.callbackUrl, {
             id: 'dp-' + backup.id,
             status: BackupStatus.SUCCEDDED,
             duration: endTime - startTime,
@@ -404,7 +404,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
       try {
-        axios.post(additionalInfos.callbackUrl, {
+        await axios.post(additionalInfos.callbackUrl, {
           status: BackupStatus.STARTED,
           key,
           duration: endTime - startTime
@@ -594,7 +594,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
       try {
-        axios.post(additionalInfos.callbackUrl, {
+        await axios.post(additionalInfos.callbackUrl, {
           status: BackupStatus.SUCCEDDED,
           key,
           duration: endTime - startTime
@@ -619,7 +619,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
       try {
-        axios.post(additionalInfos.callbackUrl, {
+        await axios.post(additionalInfos.callbackUrl, {
           status: BackupStatus.STARTED,
           key,
           duration: endTime - startTime
@@ -637,7 +637,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
         try {
-          axios.post(additionalInfos.callbackUrl, {
+          await axios.post(additionalInfos.callbackUrl, {
             status: BackupStatus.FAILED,
             key,
             duration: endTime - startTime
@@ -659,7 +659,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (additionalInfos?.callbackUrl) {
         const endTime = new Date().getTime();
         try {
-          axios.post(additionalInfos.callbackUrl, {
+          await axios.post(additionalInfos.callbackUrl, {
             status: BackupStatus.FAILED,
             key,
             duration: endTime - startTime
@@ -738,7 +738,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     if (additionalInfos?.callbackUrl) {
       const endTime = new Date().getTime();
       try {
-        axios.post(additionalInfos.callbackUrl, {
+        await axios.post(additionalInfos.callbackUrl, {
           status: BackupStatus.SUCCEDDED,
           key,
           duration: endTime - startTime
