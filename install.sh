@@ -224,6 +224,7 @@ echo "Waiting for deploy.party to start..."
 
 TIMEOUT=180
 START_TIME=$(date +%s)
+BAR_LENGTH=50
 
 while true; do
     CONTAINER_ID=$(docker ps --filter "ancestor=ghcr.io/lennetech/deploy.party/app:latest" --format "{{.ID}}")

@@ -136,7 +136,9 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
     middlewares.push('secure-headers');
     dockerCompose.push(`          - traefik.http.routers.${container.id}-https.middlewares=${middlewares.join(',')}`);
   } else {
-    dockerCompose.push(`          - traefik.http.routers.${container.id}-http.middlewares=${middlewares.join(',')}`);
+    if (middlewares.length) {
+      dockerCompose.push(`          - traefik.http.routers.${container.id}-http.middlewares=${middlewares.join(',')}`);
+    }
   }
 
   dockerCompose.push(`          - traefik.http.services.${container.id}.loadbalancer.server.port=80`);
