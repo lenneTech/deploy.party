@@ -10,7 +10,6 @@ import {BackupService} from "./modules/backup/backup.service";
 import {AutoBackupDto} from "./common/dto/auto-backup.dto";
 import {ContainerKind} from "./modules/container/enums/container-kind.enum";
 import {ApiBody, ApiOperation, ApiParam, ApiResponse} from "@nestjs/swagger";
-import {Backup} from "./modules/backup/backup.model";
 import {BackupInput} from "./modules/backup/inputs/backup.input";
 
 @Controller('extern')
@@ -86,7 +85,7 @@ export class ExternController {
   })
   @ApiParam({ name: 'projectId', type: 'string' })
   @ApiResponse({
-    type: Backup,
+    type: Boolean,
     status: 200,
     description: 'Auto backup activated or deactivated',
   })
@@ -112,11 +111,11 @@ export class ExternController {
     }
 
     if (backup.active === input.enableAutoBackup) {
-      return backup;
+      return !!backup.active;
     }
 
     backup = await this.backupService.updateForce(backup.id, { active: input.enableAutoBackup } as BackupInput);
-    return backup;
+    return !!backup.active;
   }
 
   @Post(':projectId/backup/create')
@@ -126,7 +125,7 @@ export class ExternController {
   })
   @ApiParam({ name: 'projectId', type: 'string' })
   @ApiResponse({
-    type: Backup,
+    type: Boolean,
     status: 200,
     description: 'Backup created successfully',
   })
@@ -151,7 +150,8 @@ export class ExternController {
       throw new Error('No backup config found');
     }
 
-    return await this.backupService.backup(backup, input);
+    await this.backupService.backup(backup, input);
+    return true;
   }
 
   @Post(':projectId/backup/:backupKey/restore')

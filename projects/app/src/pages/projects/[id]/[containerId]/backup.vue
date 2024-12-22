@@ -93,6 +93,7 @@ const {
   controlledValues: values,
   isSubmitting,
   meta,
+  resetForm,
   validate,
 } = useForm({
   initialValues: backup.value,
@@ -105,6 +106,13 @@ watchDebounced(
     await submit();
   },
   { debounce: 800 },
+);
+
+watch(
+  () => backup.value,
+  () => {
+    resetForm({ values: backup.value });
+  },
 );
 
 watch(
