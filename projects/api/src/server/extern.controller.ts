@@ -11,6 +11,8 @@ import {AutoBackupDto} from "./common/dto/auto-backup.dto";
 import {ContainerKind} from "./modules/container/enums/container-kind.enum";
 import {ApiBody, ApiOperation, ApiParam, ApiResponse} from "@nestjs/swagger";
 import {BackupInput} from "./modules/backup/inputs/backup.input";
+import {BackupStatus} from "./modules/backup/enum/backup-status.enum";
+import {BackupExternResult} from "./modules/build/outputs/backup-extern.result";
 
 @Controller('extern')
 export class ExternController {
@@ -125,7 +127,7 @@ export class ExternController {
   })
   @ApiParam({ name: 'projectId', type: 'string' })
   @ApiResponse({
-    type: Boolean,
+    type: BackupExternResult,
     status: 200,
     description: 'Backup created successfully',
   })
@@ -151,7 +153,11 @@ export class ExternController {
     }
 
     await this.backupService.backup(backup, input);
-    return true;
+
+    return {
+      id: 'dp-' + backup.id,
+      status: BackupStatus.STARTED,
+    };
   }
 
   @Post(':projectId/backup/:backupKey/restore')
@@ -162,7 +168,7 @@ export class ExternController {
   @ApiParam({ name: 'projectId', type: 'string' })
   @ApiParam({ name: 'backupKey', type: 'string' })
   @ApiResponse({
-    type: Boolean,
+    type: BackupExternResult,
     status: 200,
     description: 'Backup restored successfully',
   })
@@ -187,7 +193,12 @@ export class ExternController {
       throw new Error('No backup config found');
     }
 
-    return await this.backupService.restore(dbContainer.id, backupKey, input);
+    await this.backupService.restore(dbContainer.id, backupKey, input);
+
+    return {
+      status: BackupStatus.STARTED,
+      key: backupKey,
+    }
   }
 
   @Delete(':projectId/backup/:backupKey/delete')

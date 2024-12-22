@@ -217,20 +217,6 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       return;
     }
 
-    console.debug(`Backup for ${container.name} started at ${new Date().toISOString()}`);
-    if (additionalInfos?.callbackUrl) {
-      const endTime = new Date().getTime();
-      try {
-        await axios.post(additionalInfos.callbackUrl, {
-          id: 'dp-' + backup.id,
-          status: BackupStatus.STARTED,
-          duration: endTime - startTime
-        });
-      } catch (e) {
-        console.debug(`Callback for ${container.name} failed with error ${e}`);
-      }
-    }
-
     const project = await this.projectService.getProjectByContainer(container);
     const dockerId = await this.dockerService.getId(getStringIds(container.id));
     const fileName = `${getStringIds(container.id)}-${new Date().toISOString().replace(/[:|.]/g, "-")}`;
@@ -399,19 +385,6 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     if (!container || container.status !== ContainerStatus.DEPLOYED) {
       return;
-    }
-
-    if (additionalInfos?.callbackUrl) {
-      const endTime = new Date().getTime();
-      try {
-        await axios.post(additionalInfos.callbackUrl, {
-          status: BackupStatus.STARTED,
-          key,
-          duration: endTime - startTime
-        });
-      } catch (e) {
-        console.debug(`Callback for ${container.name} failed with error ${e}`);
-      }
     }
 
     await this.containerService.updateForce(containerId, {status: ContainerStatus.RESTORING});
