@@ -19,6 +19,7 @@ import envConfig from "../../../../config.env";
 import {DeploymentType} from "../../container/enums/deployment-type.enum";
 import {DockerService} from "../../../common/services/docker.service";
 import {promises as fs} from 'fs';
+import {FileService} from "../../../common/services/file.service";
 
 @Processor('build')
 export class BuildProcessor {
@@ -30,6 +31,7 @@ export class BuildProcessor {
     private containerService: ContainerService,
     @Inject(forwardRef(() => DockerService))
     private dockerService: DockerService,
+    private fileService: FileService,
   ) {}
 
   @OnQueueActive()
@@ -77,6 +79,7 @@ export class BuildProcessor {
     if (job?.data?.additionalInfos?.deploymentType === DeploymentType.TAG) {
       await fs.rm(`${this.dockerService.getPath(container)}`, { recursive: true, force: true });
       container = await this.containerService.updateForce(job?.data?.containerId, {tag: job?.data?.additionalInfos.targetVersion});
+      await this.fileService.recreateFolder(`${this.dockerService.getPath(container)}/code`);
 
       if (container.env) {
         await this.dockerService.createEnvFile(container);
