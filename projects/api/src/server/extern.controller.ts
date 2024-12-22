@@ -155,7 +155,6 @@ export class ExternController {
     await this.backupService.backup(backup, input);
 
     return {
-      id: 'dp-' + backup.id,
       status: BackupStatus.STARTED,
     };
   }
