@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/lenneTech/deploy.party/compare/v1.4.4...v1.4.5) (2024-12-22)
+
+
+### Bug Fixes
+
+* fixes ([0d23dae](https://github.com/lenneTech/deploy.party/commit/0d23dae475667914af1fe103163f788b5612579c))
+
 ## [1.4.4](https://github.com/lenneTech/deploy.party/compare/v1.4.3...v1.4.4) (2024-12-22)
 
 
