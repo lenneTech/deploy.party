@@ -3,7 +3,7 @@ import {registerEnumType} from "@nestjs/graphql";
 export enum BackupStatus {
   STARTED = 'STARTED',
   FAILED = 'FAILED',
-  SUCCEDDED = 'SUCCEDDED',
+  SUCCEEDED = 'SUCCEEDED',
 }
 
 registerEnumType(BackupStatus, {
