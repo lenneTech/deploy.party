@@ -880,6 +880,8 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       requestHandler: new Agent({ rejectUnauthorized: false }),
     } as any);
 
+    console.debug(`Deleting backup ${key} in S3`);
+
     await s3Client.send(new DeleteObjectCommand({
       Bucket: backup.bucket,
       Key: `${folderName}/${key}`,

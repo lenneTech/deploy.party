@@ -210,6 +210,7 @@ export class ExternController {
     description: 'Backup deleted successfully',
   })
   async deleteBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Body() input: CallbackInput) {
+    console.debug('deleteBackup', input);
     if (!apiToken) {
       return 'No API Token provided';
     }
@@ -224,6 +225,8 @@ export class ExternController {
     if (!dbContainer) {
       throw new Error('No database container found');
     }
+
+    console.debug('deleteBackup::container_id', dbContainer.id);
 
     const backup = await this.backupService.getByContainer(dbContainer.id);
     if (!backup) {
