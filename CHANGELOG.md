@@ -1,3 +1,10 @@
+## [1.6.7](https://github.com/lenneTech/deploy.party/compare/v1.6.6...v1.6.7) (2024-12-23)
+
+
+### Bug Fixes
+
+* fix typo in status ([f7ec166](https://github.com/lenneTech/deploy.party/commit/f7ec166c1ac697192fe411dd0b93ea3e1c26eb20))
+
 ## [1.6.6](https://github.com/lenneTech/deploy.party/compare/v1.6.5...v1.6.6) (2024-12-22)
 
 
