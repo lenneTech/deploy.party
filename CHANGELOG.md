@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/lenneTech/deploy.party/compare/v1.6.11...v1.7.0) (2024-12-23)
+
+
+### Features
+
+* Optimizations ([f2abb88](https://github.com/lenneTech/deploy.party/commit/f2abb883e8044c7c41a03ae0b8391e000ce47273))
+
 ## [1.6.11](https://github.com/lenneTech/deploy.party/compare/v1.6.10...v1.6.11) (2024-12-23)
 
 
