@@ -3,7 +3,7 @@ import { twMerge } from 'tailwind-merge';
 
 const props = withDefaults(
   defineProps<{
-    size: 'lg' | 'md' | 'sm';
+    size?: 'lg' | 'md' | 'sm';
   }>(),
   {
     size: 'lg',

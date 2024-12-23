@@ -242,7 +242,7 @@ async function get1PasswordContent() {
       </div>
       <Tabs :tabs="tabs" />
     </div>
-    <div class="flex-1 overflow-y-auto overflow-x-hidden p-5 mt-5">
+    <div class="h-full w-full overflow-hidden p-5 mt-5">
       <NuxtPage />
     </div>
   </div>
