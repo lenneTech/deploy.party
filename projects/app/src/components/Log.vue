@@ -17,10 +17,36 @@ let lastScrollPosition = 0;
 const preparedLogs = computed(() => {
   return props.log
     .map((logLine) => {
-      return {
-        logLine: replaceLogType(logLine),
-        type: getLogType(logLine),
-      };
+      const splits = logLine.split(' ');
+      if (splits.length > 1) {
+        const logWithoutType = replaceLogType(logLine);
+        let splits = logWithoutType.split(' ');
+        const time = splits[0];
+
+        if (new Date(time).toString() === 'Invalid Date') {
+          return {
+            logLine: replaceLogType(logLine),
+            type: getLogType(logLine),
+          };
+        }
+        const log = splits.slice(1).join(' ');
+        return {
+          logLine: replaceLogType(log),
+          time,
+          type: getLogType(logLine),
+        };
+      } else {
+        return {
+          logLine: replaceLogType(logLine),
+          type: getLogType(logLine),
+        };
+      }
+    })
+    .sort((a, b) => {
+      if (a?.time && b?.time) {
+        return new Date(a.time).getTime() - new Date(b.time).getTime();
+      }
+      return 0;
     })
     .filter((a) => a.logLine.trim() !== '');
 });
@@ -92,6 +118,9 @@ function scrollDown() {
         class="text-foreground/30 font-mono me-2 text-right w-[--cell-width] min-w-[--cell-width] tabular-nums"
         >{{ index }}</span
       >
+      <span v-if="prepareLog?.time" class="text-foreground/30 font-mono me-2">{{
+        $dayjs(prepareLog.time).format('DD.MM.YYYY - HH:mm:ss')
+      }}</span>
       <span
         class="font-mono"
         :class="
@@ -103,8 +132,8 @@ function scrollDown() {
                 ? 'text-primary-600'
                 : undefined
         "
-        >{{ prepareLog.logLine }}</span
-      >
+        v-html="prepareLog.logLine"
+      ></span>
     </span>
     <span v-if="running" class="ms-4 w-full flex gap-2">
       <span class="text-xl animate-pulse duration-200">.</span>

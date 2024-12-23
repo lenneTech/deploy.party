@@ -236,16 +236,19 @@ export class BuildService extends CrudService<Build> {
 
       await this.checkBuildIsCancel(build);
 
+      this.updateBuildLog(build.id, 'Start building docker image 🏗️', 'info');
       this.dockerService
         .buildImage(container, build.id)
         .then(async () => {
           await this.checkBuildIsCancel(build);
 
+          await this.updateBuildLog(build.id, 'Pushing image to registry 🚀', 'info');
           this.dockerService
             .pushImage(container, build.id)
             .then(async () => {
               await this.checkBuildIsCancel(build);
 
+              await this.updateBuildLog(build.id, 'Deploying container 🚢', 'info');
               this.dockerService
                 .deploy(container)
                 .then(async () => {
@@ -256,6 +259,7 @@ export class BuildService extends CrudService<Build> {
 
                   // update containers version if deployment type tag
                   if (additionalInfos?.deploymentType === DeploymentType.TAG) {
+                    await this.updateBuildLog(build.id, 'Remove old tag version from system', 'info');
                     try {
                       await fs.rm(`${envConfig.projectsDir}/${container.id}/${additionalInfos?.currentVersion}`, { recursive: true, force: true });
                     } catch (e) {

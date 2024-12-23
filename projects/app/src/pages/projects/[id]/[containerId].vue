@@ -6,7 +6,7 @@ import ModalConfirm from '~/components/Modals/ModalConfirm.vue';
 import SmallButton from '~/components/SmallButton.vue';
 import StatusBadge from '~/components/StatusBadge.vue';
 
-const { instanceName } = useRuntimeConfig().public;
+const { hostIp, instanceName } = useRuntimeConfig().public;
 useSeoMeta({
   title: `Container | ${instanceName}`,
 });
@@ -41,6 +41,7 @@ const deployable = computed(
 const redeployable = computed(
   () =>
     user.value?.roles?.includes('admin') &&
+    container.value?.status === ContainerStatus.DEPLOYED &&
     container.value?.lastEditedAt &&
     container.value?.lastDeployedAt &&
     container.value?.lastEditedAt > container.value?.lastDeployedAt,
@@ -145,6 +146,16 @@ async function stop(id: string) {
 }
 
 function openContainerUrl(container: Container) {
+  if (!container.url) {
+    return;
+  }
+
+  if (container.url === 'localhost') {
+    const url = `http://${hostIp}:${container.exposedPort}`;
+    window.open(url, url);
+    return;
+  }
+
   const url = `http${container.ssl ? 's' : ''}://${container.url}`;
   window.open(url, url);
 }
@@ -179,7 +190,7 @@ async function get1PasswordContent() {
 <template>
   <div class="w-full flex flex-col h-full">
     <div class="mt-10 w-full sticky top-[64px] bg-background z-[1]">
-      <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between px-4 sm:px-6 lg:px-5">
         <span class="line-clamp-1 text-secondary-100">{{ projectName }} / {{ container?.name }}</span>
         <div class="flex items-center gap-3">
           <div class="hidden md:inline">
@@ -231,7 +242,7 @@ async function get1PasswordContent() {
       </div>
       <Tabs :tabs="tabs" />
     </div>
-    <div class="flex-1 overflow-y-auto overflow-x-hidden p-5 mt-4">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden p-5 mt-5">
       <NuxtPage />
     </div>
   </div>

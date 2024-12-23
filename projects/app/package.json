@@ -50,6 +50,7 @@
     "@vue/test-utils": "2.4.6",
     "@vueuse/core": "12.0.0",
     "@vueuse/nuxt": "12.0.0",
+    "dayjs-nuxt": "^2.1.11",
     "eslint": "8.57.1",
     "eslint-plugin-vitest": "0.5.4",
     "husky": "9.1.7",

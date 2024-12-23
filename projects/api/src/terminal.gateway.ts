@@ -60,6 +60,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
         AttachStderr: true,
         Tty: true,
         Cmd: ['/bin/bash'],
+        Env: ['TERM=xterm'],
       };
 
       const exec = await container.exec(execOptions);
@@ -71,7 +72,15 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
 
       stream.on('data', (chunk: Buffer) => {
         const data = chunk.toString('utf-8');
-        client.emit('terminalOutput', data);
+
+        const stripAnsi = (input) =>
+          input.replace(
+            /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g,
+            ''
+          );
+
+        const cleanedData = stripAnsi(data);
+        client.emit('terminalOutput', cleanedData);
       });
 
       stream.on('end', () => {

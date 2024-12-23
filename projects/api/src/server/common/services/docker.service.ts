@@ -24,12 +24,16 @@ import {getStaticImage} from "../../modules/container/types/container/images/sta
 import {getMariaDBCompose} from "../../modules/container/types/database/compose/mariadb";
 import {ContainerService} from "../../modules/container/container.service";
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Docker = require('dockerode');
+
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault('Europe/Berlin');
 
 @Injectable()
 export class DockerService {
+  private docker = new Docker();
 
   constructor(
     @Inject(forwardRef(() => BuildService)) private buildService: BuildService,
@@ -332,5 +336,28 @@ export class DockerService {
   getPath(container: Container) {
     const source = this.containerService.getContainerSource(container);
     return `${envConfig.projectsDir}/${container.id}${source ? `/${source}` : ''}`;
+  }
+
+  /**
+   * Experimental function to listen to container logs
+   * @param containerId
+   */
+  async listenToContainerLogs(containerId: string) {
+    const dockerId = await this.getId(containerId);
+    const container = this.docker.getContainer(dockerId);
+    await container.logs({
+      follow: true,
+      stdout: true,
+      stderr: true,
+    }, (err, stream) => {
+      if (err) throw err;
+      stream.on('data', (data) => {
+        console.log(data.toString());
+        if (data.toString().includes('ERROR')) {
+          console.log('Fehler erkannt!');
+          // Trigger Aktion
+        }
+      });
+    });
   }
 }

@@ -10,7 +10,7 @@ import ModalContainer from '~/components/Modals/ModalContainer.vue';
 import ModalDeleteConfirm from '~/components/Modals/ModalDeleteConfirm.vue';
 import SidebarProject from '~/components/Sidebar/SidebarProject.vue';
 
-const { instanceName } = useRuntimeConfig().public;
+const { hostIp, instanceName } = useRuntimeConfig().public;
 useSeoMeta({
   title: `Projects | ${instanceName}`,
 });
@@ -102,6 +102,16 @@ function openProjectSidebar(project: Project) {
 }
 
 function openContainerUrl(container: Container) {
+  if (!container.url) {
+    return;
+  }
+
+  if (container.url === 'localhost') {
+    const url = `http://${hostIp}:${container.exposedPort}`;
+    window.open(url, url);
+    return;
+  }
+
   const url = `http${container.ssl ? 's' : ''}://${container.url}`;
   window.open(url, url);
 }

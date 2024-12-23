@@ -17,6 +17,9 @@ const props = defineProps<{
   tab?: string;
 }>();
 
+const emit = defineEmits(['refresh']);
+
+const lastSaved = ref<Date | null>(null);
 const loadingGitlab = ref(false);
 const basicAuth = ref(false);
 const containerType = ref();
@@ -56,62 +59,33 @@ const basicAuthSchema = object({
 const baseFormSchema = object({
   autoDeploy: boolean().nullable().default(true),
   baseDir: string().default('.').nullable(),
-  branch: string().when('deploymentType', {
-    is: 'BRANCH',
-    otherwise: (schema) => schema.nullable(),
-    then: (schema) => schema.required(),
-  }),
-  buildCmd: string().default('npm run build').nullable(),
-  buildImage: string().when('type', {
-    is: 'NODE',
-    otherwise: (schema) => schema.nullable(),
-    then: (schema) => schema.required(),
-  }),
+  branch: string().nullable(),
+  buildCmd: string().nullable().default('npm run build').nullable(),
+  buildImage: string().nullable(),
   compress: boolean().nullable().default(true),
   customDockerfile: string().nullable(),
   customImageCommands: string().nullable(),
-  deploymentType: string().required(),
+  deploymentType: string().nullable(),
   env: string().nullable(),
   exposedPort: string().nullable(),
   healthCheckCmd: string().nullable(),
   installCmd: string().default('npm install').nullable(),
   isCustomRule: boolean().nullable().default(false),
-  name: string().required().max(14),
-  port: string().when('type', {
-    is: 'STATIC',
-    otherwise: (schema) => schema.required(),
-    then: (schema) => schema.nullable(),
-  }),
+  name: string().nullable().max(14),
+  port: string().nullable(),
   registry: object({
-    id: string().required(),
-  }).required(),
-  repositoryId: string().required(),
+    id: string(),
+  }).nullable(),
+  repositoryId: string().nullable(),
   source: object({
-    id: string().required(),
-  }).required(),
-  ssl: boolean()
-    .nullable()
-    .when('exposedPort', {
-      is: (value: any) => value != null && value !== '',
-      otherwise: (schema) => schema.default(true),
-      then: (schema) => schema.default(false),
-    }),
+    id: string(),
+  }).nullable(),
+  ssl: boolean().nullable(),
   startCmd: string().default('npm run start').nullable(),
-  tag: string().when('deploymentType', {
-    is: 'TAG',
-    otherwise: (schema) => schema.nullable(),
-    then: (schema) => schema.required(),
-  }),
-  type: string().default('NODE').required(),
-  url: string().required(),
-  www: boolean()
-    .nullable()
-    .when('exposedPort', {
-      is: (value: any) => value != null && value !== '',
-      otherwise: (schema) => schema.default(true),
-      then: (schema) => schema.default(false),
-    })
-    .default(true),
+  tag: string().nullable(),
+  type: string().default('NODE'),
+  url: string().nullable(),
+  www: boolean().nullable().default(true),
 });
 
 const formSchema = computed(() => {
@@ -132,7 +106,7 @@ const {
 watch(
   () => props.tab,
   () => {
-    resetForm({ values: props.container });
+    resetForm({ touched: {}, values: props.container });
   },
 );
 
@@ -141,7 +115,7 @@ watchDebounced(
   async () => {
     await submit();
   },
-  { debounce: 800, immediate: false },
+  { debounce: 1000, immediate: false },
 );
 
 watch(
@@ -323,14 +297,15 @@ async function submit() {
     data.basicAuth = { pw: null, username: null };
   }
 
-  if (data.registry && Object.keys(data.registry).length === 0) {
+  if (!data.registry || (typeof data.registry === 'object' && Object.keys(data.registry).length === 0)) {
     delete data.registry;
   }
 
-  if (data.source && Object.keys(data.source).length === 0) {
+  if (!data.source || (typeof data.source === 'object' && Object.keys(data.source).length === 0)) {
     delete data.source;
   }
 
+  console.debug('Update container with data', data);
   const { error } = await useUpdateContainerMutation(
     {
       id: props.containerId as string,
@@ -338,6 +313,8 @@ async function submit() {
     },
     ['id'],
   );
+  lastSaved.value = new Date();
+  emit('refresh');
   if (error) {
     useNotification().notify({ text: error?.message, title: 'Error', type: 'error' });
   }
@@ -346,6 +323,11 @@ async function submit() {
 
 <template>
   <form novalidate class="flex flex-wrap flex-col w-full" @submit.prevent="null">
+    <div class="w-full flex justify-end text-xs text-white/10">
+      <span v-if="lastSaved">Changes saved {{ $dayjs(lastSaved).fromNow() }}</span>
+      <span v-else-if="meta.touched">You have unsaved changes</span>
+      <span v-else>No changes</span>
+    </div>
     <div class="w-full space-y-8 border-b border-white/10 pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:pb-0">
       <template v-if="!tab">
         <FormRow>

@@ -91,14 +91,6 @@ export class ContainerService extends CrudService<Container> implements OnApplic
         });
       }
     });
-
-    this.dockerEventsProcess.stderr.on('data', (data) => {
-      console.error(`Docker event error: ${data}`);
-    });
-
-    this.dockerEventsProcess.on('close', (code) => {
-      console.debug(`Docker event child process exited with code ${code}`);
-    });
   }
 
   beforeApplicationShutdown(): any {
@@ -185,6 +177,22 @@ export class ContainerService extends CrudService<Container> implements OnApplic
 
   async deploy(containerId: string, serviceOptions?: ServiceOptions): Promise<Container> {
     const container = await super.get(containerId, {...serviceOptions, ...{populate: [{path: 'registry'}, {path: 'source'}]}});
+
+
+    // check if name, type, registry, source, repositoryId, deploymentType, url and port is set
+    if (
+      !container.name ||
+      !container.registry ||
+      !container.type ||
+      !container.source ||
+      !container.repositoryId ||
+      !container.deploymentType ||
+      !container.port ||
+      !container.url ||
+      !container.port
+    ) {
+      throw new InternalServerErrorException('Container is missing required fields');
+    }
 
     if (!(await this.fileService.checkProjectExist(container))) {
       await this.fileService.createProjectFolder(container);

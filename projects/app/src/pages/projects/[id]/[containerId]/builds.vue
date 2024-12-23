@@ -60,7 +60,7 @@ async function stop(id: string) {
 </script>
 
 <template>
-  <div class="w-full h-[78vh]">
+  <div class="w-full h-full">
     <div v-if="builds?.length" class="w-full h-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
       <div class="flex flex-col gap-3 overflow-y-scroll mb-5 lg:mb-0">
         <NuxtLink

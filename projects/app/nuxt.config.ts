@@ -42,6 +42,7 @@ export default defineNuxtConfig({
     '@nuxtjs/google-fonts',
     '@vueuse/nuxt',
     'nuxt-icon',
+    'dayjs-nuxt',
   ],
 
   nuxtBase: {
@@ -84,6 +85,7 @@ export default defineNuxtConfig({
       env: process.env['NODE_ENV'] || 'development',
       gqlHost: process.env.API_URL + '/graphql',
       host: process.env.API_URL,
+      hostIp: process.env['HOST_IP'],
       instanceName: process.env['INSTANCE_NAME'],
       terminalHost: process.env['TERMINAL_HOST'] || 'ws://localhost:3002/terminal',
       version: pkg.version,

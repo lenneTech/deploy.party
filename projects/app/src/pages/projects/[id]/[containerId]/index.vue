@@ -15,7 +15,7 @@ const route = useRoute();
 const { $copyToClipboard } = useNuxtApp();
 const { currentUserState: user } = useAuthState();
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
-const { data } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
+const { data, refresh } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
 
 const container = computed(() => data.value || null);
 const dbUrl = computed(
@@ -92,6 +92,7 @@ function copyUrl() {
         :container-id="containerId"
         :disabled="disabled"
         :tab="tab"
+        @refresh="refresh()"
       />
       <DatabaseForm
         v-if="container?.kind === ContainerKind.DATABASE"

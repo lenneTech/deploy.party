@@ -28,5 +28,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Log :log="build?.log" :running="build?.status === BuildStatus.RUNNING" max-height="78vh" />
+  <Log :log="build?.log" :running="build?.status === BuildStatus.RUNNING" max-height="100%" />
 </template>
