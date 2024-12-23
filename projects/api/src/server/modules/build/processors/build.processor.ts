@@ -18,7 +18,6 @@ import {AdditionalBuildInfos} from "../../../common/interfaces/additional-build-
 import envConfig from "../../../../config.env";
 import {DeploymentType} from "../../container/enums/deployment-type.enum";
 import {DockerService} from "../../../common/services/docker.service";
-import {promises as fs} from 'fs';
 import {FileService} from "../../../common/services/file.service";
 
 @Processor('build')
@@ -73,7 +72,7 @@ export class BuildProcessor {
     this.logger.debug(`Start processing job ${job.id} of type ${job.name} with data ${job.data}...`);
     const startTime = new Date().getTime();
     const build = await this.buildService.getForce(job.data.buildId);
-    let container = await this.containerService.getForce(job.data.containerId, {populate: ['source']});
+    let container = await this.containerService.getForce(job.data.containerId, {populate: ['source', 'registry']});
 
     // update containers version if deployment type tag
     if (job?.data?.additionalInfos?.deploymentType === DeploymentType.TAG) {

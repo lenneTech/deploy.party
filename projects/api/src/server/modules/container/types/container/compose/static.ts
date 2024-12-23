@@ -11,7 +11,7 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
 
   const getImageUrl = (container: Container) => {
     let imageUrl;
-    if (container.repositoryUrl.includes('gitlab') && (container.registry as Registry).url.includes('gitlab')) {
+    if (container.repositoryUrl?.includes('gitlab') && (container.registry as Registry).url?.includes('gitlab')) {
       imageUrl = container.repositoryUrl.replace(/^https?:\/\//, '').replace(/([^\/]+)/, '$1:5050');
     } else {
       imageUrl = `${(container.registry as Registry).url}/${container.id}`;
