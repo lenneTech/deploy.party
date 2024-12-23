@@ -114,6 +114,7 @@ echo "# GENERAL" >> $ENV_PATH
 echo "NODE_ENV=production" >> $ENV_PATH
 echo "INSTANCE_NAME=$NAME" >> $ENV_PATH
 echo "HOST_IP=$HOST_IP" >> $ENV_PATH
+echo "TZ=Europe/Berlin" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
   echo "TERMINAL_HOST=ws://$HOST_IP:3002" >> $ENV_PATH
