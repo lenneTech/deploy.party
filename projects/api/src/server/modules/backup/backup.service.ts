@@ -882,9 +882,11 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     console.debug(`Deleting backup ${key} in S3`);
 
-    await s3Client.send(new DeleteObjectCommand({
+    s3Client.send(new DeleteObjectCommand({
       Bucket: backup.bucket,
       Key: `${folderName}/${key}`,
-    }));
+    }), (err, data) => {
+      console.debug('Deleted', err, data);
+    });
   }
 }
