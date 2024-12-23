@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/lenneTech/deploy.party/compare/v1.7.0...v1.7.1) (2024-12-23)
+
+
+### Bug Fixes
+
+* fix build ui ([cd55d25](https://github.com/lenneTech/deploy.party/commit/cd55d25cfba11dd3f50fb7ae502bc489e985e08d))
+
 # [1.7.0](https://github.com/lenneTech/deploy.party/compare/v1.6.11...v1.7.0) (2024-12-23)
 
 
