@@ -13,7 +13,6 @@ import {ApiBody, ApiOperation, ApiParam, ApiResponse} from "@nestjs/swagger";
 import {BackupInput} from "./modules/backup/inputs/backup.input";
 import {BackupStatus} from "./modules/backup/enum/backup-status.enum";
 import {BackupExternResult} from "./modules/build/outputs/backup-extern.result";
-import {DeleteBackupBody} from "./modules/build/inputs/delete-backup-body";
 
 @Controller('extern')
 export class ExternController {
@@ -160,19 +159,18 @@ export class ExternController {
     };
   }
 
-  @Post(':projectId/backup/:backupKey/restore')
+  @Post(':projectId/backup/restore')
   @ApiOperation({
     summary: 'Restore a backup',
     description: 'Restore a backup for a project by providing the project ID and backup key',
   })
   @ApiParam({ name: 'projectId', type: 'string' })
-  @ApiParam({ name: 'backupKey', type: 'string' })
   @ApiResponse({
     type: BackupExternResult,
     status: 200,
     description: 'Backup restored successfully',
   })
-  async restoreBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Param('backupKey') backupKey: string, @Body() input: CallbackInput) {
+  async restoreBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Body() input: CallbackInput) {
     if (!apiToken) {
       return 'No API Token provided';
     }
@@ -193,11 +191,11 @@ export class ExternController {
       throw new Error('No backup config found');
     }
 
-    await this.backupService.restore(dbContainer.id, backupKey, input);
+    await this.backupService.restore(dbContainer.id, input.backupKey, input);
 
     return {
       status: BackupStatus.STARTED,
-      key: backupKey,
+      key: input.backupKey,
     }
   }
 
@@ -211,7 +209,7 @@ export class ExternController {
     status: 200,
     description: 'Backup deleted successfully',
   })
-  async deleteBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Body() body: DeleteBackupBody) {
+  async deleteBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Body() input: CallbackInput) {
     if (!apiToken) {
       return 'No API Token provided';
     }
@@ -233,7 +231,7 @@ export class ExternController {
     }
 
     // delete backup by key
-    return this.backupService.deleteBackupInS3(dbContainer.id, body.backupKey);
+    return this.backupService.deleteBackupInS3(dbContainer.id, input.backupKey);
   }
 
   @Get(':projectId/backups')
