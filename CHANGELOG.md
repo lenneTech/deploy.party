@@ -1,3 +1,10 @@
+## [1.6.9](https://github.com/lenneTech/deploy.party/compare/v1.6.8...v1.6.9) (2024-12-23)
+
+
+### Bug Fixes
+
+* fix ([86e4144](https://github.com/lenneTech/deploy.party/commit/86e4144b384f8b3432b9c4615ac10e5a7fa5aba0))
+
 ## [1.6.8](https://github.com/lenneTech/deploy.party/compare/v1.6.7...v1.6.8) (2024-12-23)
 
 
