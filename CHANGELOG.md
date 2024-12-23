@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/lenneTech/deploy.party/compare/v1.8.1...v1.8.2) (2024-12-23)
+
+
+### Bug Fixes
+
+* fix log ui ([749fb07](https://github.com/lenneTech/deploy.party/commit/749fb07bb5eeb7498f521a616511cea1ce9fac84))
+
 ## [1.8.1](https://github.com/lenneTech/deploy.party/compare/v1.8.0...v1.8.1) (2024-12-23)
 
 
