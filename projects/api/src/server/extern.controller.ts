@@ -13,6 +13,7 @@ import {ApiBody, ApiOperation, ApiParam, ApiResponse} from "@nestjs/swagger";
 import {BackupInput} from "./modules/backup/inputs/backup.input";
 import {BackupStatus} from "./modules/backup/enum/backup-status.enum";
 import {BackupExternResult} from "./modules/build/outputs/backup-extern.result";
+import {DeleteBackupBody} from "./modules/build/inputs/delete-backup-body";
 
 @Controller('extern')
 export class ExternController {
@@ -200,18 +201,17 @@ export class ExternController {
     }
   }
 
-  @Delete(':projectId/backup/:backupKey/delete')
+  @Delete(':projectId/backup/delete')
   @ApiOperation({
     summary: 'Delete a backup',
     description: 'Delete a backup for a project by providing the project ID and backup key',
   })
   @ApiParam({ name: 'projectId', type: 'string' })
-  @ApiParam({ name: 'backupKey', type: 'string' })
   @ApiResponse({
     status: 200,
     description: 'Backup deleted successfully',
   })
-  async deleteBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Param('backupKey') backupKey: string) {
+  async deleteBackup(@Headers('dp-api-token') apiToken: string, @Param('projectId') projectId: string, @Body() body: DeleteBackupBody) {
     if (!apiToken) {
       return 'No API Token provided';
     }
@@ -233,7 +233,7 @@ export class ExternController {
     }
 
     // delete backup by key
-    return this.backupService.deleteBackupInS3(dbContainer.id, backupKey);
+    return this.backupService.deleteBackupInS3(dbContainer.id, body.backupKey);
   }
 
   @Get(':projectId/backups')
