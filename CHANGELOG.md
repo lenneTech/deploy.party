@@ -1,3 +1,10 @@
+## [1.8.5](https://github.com/lenneTech/deploy.party/compare/v1.8.4...v1.8.5) (2024-12-23)
+
+
+### Bug Fixes
+
+* debug delete backup extern ([f029be0](https://github.com/lenneTech/deploy.party/commit/f029be014a4e7bb674926b804df1dafb2953c57b))
+
 ## [1.8.4](https://github.com/lenneTech/deploy.party/compare/v1.8.3...v1.8.4) (2024-12-23)
 
 
