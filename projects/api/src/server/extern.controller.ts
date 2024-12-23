@@ -234,7 +234,7 @@ export class ExternController {
     }
 
     // delete backup by key
-    return this.backupService.deleteBackupInS3(dbContainer.id, input.backupKey);
+    return await this.backupService.deleteBackupInS3(dbContainer.id, input.backupKey);
   }
 
   @Get(':projectId/backups')
