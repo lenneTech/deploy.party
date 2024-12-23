@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/lenneTech/deploy.party/compare/v1.7.1...v1.8.0) (2024-12-23)
+
+
+### Features
+
+* add timezone in env ([8ef764f](https://github.com/lenneTech/deploy.party/commit/8ef764f06820477d29272d3cb3e10bdffaf2c8ab))
+
 ## [1.7.1](https://github.com/lenneTech/deploy.party/compare/v1.7.0...v1.7.1) (2024-12-23)
 
 
