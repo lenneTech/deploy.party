@@ -60,9 +60,9 @@ async function stop(id: string) {
 </script>
 
 <template>
-  <div class="w-full h-full">
+  <div class="w-full h-full overflow-hidden relative">
     <div v-if="builds?.length" class="w-full h-full grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-      <div class="flex flex-col gap-3 overflow-y-scroll mb-5 lg:mb-0">
+      <div class="flex flex-col gap-3 h-full overflow-y-scroll mb-5 lg:mb-0">
         <NuxtLink
           v-for="(build, index) of builds"
           :key="build.id"
@@ -110,7 +110,7 @@ async function stop(id: string) {
           </div>
         </NuxtLink>
       </div>
-      <div class="w-full md:col-span-2 lg:col-span-3">
+      <div class="flex-1 md:col-span-2 lg:col-span-3">
         <NuxtPage />
       </div>
     </div>
