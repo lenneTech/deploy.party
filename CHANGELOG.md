@@ -1,3 +1,11 @@
+## [1.8.6](https://github.com/lenneTech/deploy.party/compare/v1.8.5...v1.8.6) (2025-02-06)
+
+
+### Bug Fixes
+
+* Change order of custom docker image commands ([1a8f3e2](https://github.com/lenneTech/deploy.party/commit/1a8f3e288e5102fbdb1b1ee08e662a00d8b8e642))
+* fix pipeline ([1cf113e](https://github.com/lenneTech/deploy.party/commit/1cf113e99e242810067c012e0be2a53f6d56b558))
+
 ## [1.8.5](https://github.com/lenneTech/deploy.party/compare/v1.8.4...v1.8.5) (2024-12-23)
 
 
