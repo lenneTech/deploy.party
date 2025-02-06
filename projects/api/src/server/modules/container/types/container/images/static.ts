@@ -17,6 +17,13 @@ export async function getStaticImage(container: Container, build?: Build): Promi
   Dockerfile.push(`COPY ./code/${container.baseDir || ''} /tmp/code`);
   Dockerfile.push(`WORKDIR /tmp/code`);
 
+  if (container.customImageCommands) {
+    const customImageCommands = container.customImageCommands.split('\n');
+    for (const command of customImageCommands) {
+      Dockerfile.push(`${command}`);
+    }
+  }
+
   if (container.installCmd) {
     Dockerfile.push(`RUN ${container.installCmd}`);
   }
@@ -28,13 +35,6 @@ export async function getStaticImage(container: Container, build?: Build): Promi
   Dockerfile.push(`RUN cp -r /tmp/code/${container.baseDir}/* /usr/share/nginx/html`);
   Dockerfile.push(`RUN rm -rf /tmp/code`);
   Dockerfile.push(`WORKDIR /usr/share/nginx/html`);
-
-  if (container.customImageCommands) {
-    const customImageCommands = container.customImageCommands.split('\n');
-    for (const command of customImageCommands) {
-      Dockerfile.push(`${command}`);
-    }
-  }
 
   Dockerfile.push('RUN rm -rf .git');
   if (container.healthCheckCmd) {

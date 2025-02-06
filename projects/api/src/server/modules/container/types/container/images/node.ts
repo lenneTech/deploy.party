@@ -13,6 +13,13 @@ export async function getNodeImage(container: Container, build?: Build): Promise
   Dockerfile.push('WORKDIR /app');
   Dockerfile.push(`COPY ./code/${container.baseDir || ''} ./`);
 
+  if (container.customImageCommands) {
+    const customImageCommands = container.customImageCommands.split('\n');
+    for (const command of customImageCommands) {
+      Dockerfile.push(`${command}`);
+    }
+  }
+
   if (container.installCmd) {
     Dockerfile.push(`RUN ${container.installCmd}`);
   }
@@ -21,12 +28,6 @@ export async function getNodeImage(container: Container, build?: Build): Promise
     Dockerfile.push(`RUN ${container.buildCmd}`);
   }
 
-  if (container.customImageCommands) {
-    const customImageCommands = container.customImageCommands.split('\n');
-    for (const command of customImageCommands) {
-      Dockerfile.push(`${command}`);
-    }
-  }
 
   Dockerfile.push('RUN rm -rf .git');
   if (container.healthCheckCmd) {
