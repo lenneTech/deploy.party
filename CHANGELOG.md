@@ -1,3 +1,10 @@
+## [1.8.7](https://github.com/lenneTech/deploy.party/compare/v1.8.6...v1.8.7) (2025-02-06)
+
+
+### Bug Fixes
+
+* fix pipeline ([82f9a63](https://github.com/lenneTech/deploy.party/commit/82f9a63602c38d01cc59966762e466c6c40844c6))
+
 ## [1.8.6](https://github.com/lenneTech/deploy.party/compare/v1.8.5...v1.8.6) (2025-02-06)
 
 
