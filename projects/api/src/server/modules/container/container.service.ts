@@ -181,13 +181,13 @@ export class ContainerService extends CrudService<Container> implements OnApplic
 
     // check if name, type, registry, source, repositoryId, deploymentType, url and port is set
     if (
+      container.kind === ContainerKind.APPLICATION &&
       !container.name ||
       !container.registry ||
       !container.type ||
       !container.source ||
       !container.repositoryId ||
       !container.deploymentType ||
-      !container.port ||
       !container.url ||
       !container.port
     ) {
