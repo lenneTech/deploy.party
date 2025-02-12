@@ -182,14 +182,14 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     // check if name, type, registry, source, repositoryId, deploymentType, url and port is set
     if (
       container.kind === ContainerKind.APPLICATION &&
-      !container.name ||
+      (!container.name ||
       !container.registry ||
       !container.type ||
       !container.source ||
       !container.repositoryId ||
       !container.deploymentType ||
       !container.url ||
-      !container.port
+      !container.port)
     ) {
       throw new InternalServerErrorException('Container is missing required fields');
     }
