@@ -1,3 +1,10 @@
+## [1.8.9](https://github.com/lenneTech/deploy.party/compare/v1.8.8...v1.8.9) (2025-02-12)
+
+
+### Bug Fixes
+
+* fix bug in build list ([c175492](https://github.com/lenneTech/deploy.party/commit/c1754928f7b943ced738c00829df4ffa6e37bb5d))
+
 ## [1.8.8](https://github.com/lenneTech/deploy.party/compare/v1.8.7...v1.8.8) (2025-02-12)
 
 
