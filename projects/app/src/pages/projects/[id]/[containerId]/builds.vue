@@ -21,7 +21,7 @@ const { data: buildData, refresh: refreshBuilds } = await useAsyncFindBuildsForC
   { containerId: containerId.value },
   null,
 );
-const builds = computed(() => [...buildData.value, ...buildData.value, ...buildData.value] || []);
+const builds = computed(() => buildData.value || []);
 
 const { pause } = useIntervalFn(() => {
   refreshBuilds();
