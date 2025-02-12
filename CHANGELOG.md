@@ -1,3 +1,10 @@
+## [1.8.8](https://github.com/lenneTech/deploy.party/compare/v1.8.7...v1.8.8) (2025-02-12)
+
+
+### Bug Fixes
+
+* fix deploy of db ([5225c4e](https://github.com/lenneTech/deploy.party/commit/5225c4e4b53eb17e2c3267c8ba782b6bb1ede884))
+
 ## [1.8.7](https://github.com/lenneTech/deploy.party/compare/v1.8.6...v1.8.7) (2025-02-06)
 
 
