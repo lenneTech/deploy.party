@@ -10,6 +10,8 @@ export function getDirectus(container: Container): string {
     networks:
       traefik-public:
         external: true
+      deploy-party:
+        external: true
       directus-internal:
         driver: overlay
 
@@ -33,7 +35,7 @@ export function getDirectus(container: Container): string {
           - directus-internal
 
       directus:
-        image: directus/directus:10.8.2
+        image: directus/directus:11.3.5
         volumes:
           - uploads:/directus/uploads
           # If you want to load extensions from the host
@@ -65,6 +67,7 @@ export function getDirectus(container: Container): string {
         networks:
           - traefik-public
           - directus-internal
+          - deploy-party
         deploy:
           update_config:
             order: start-first
@@ -79,6 +82,7 @@ export function getDirectus(container: Container): string {
             max_attempts: 3
             window: 120s
         labels:
+          - deploy.party.id=${container.id}
           - traefik.enable=true
           - traefik.docker.network=traefik-public
           - traefik.constraint-label=traefik-public
