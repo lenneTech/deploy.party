@@ -10,6 +10,8 @@ export function getDirectus(container: Container): string {
     networks:
       traefik-public:
         external: true
+      directus-internal
+        driver: overlay
 
     services:
       database:
@@ -17,14 +19,18 @@ export function getDirectus(container: Container): string {
         # Required when running on platform other than amd64, like Apple M1/M2:
         # platform: linux/amd64
         volumes:
-          - ./data/database:/var/lib/postgresql/data
+          - directusDb:/var/lib/postgresql/data
         environment:
           POSTGRES_USER: "directus"
           POSTGRES_PASSWORD: "directus"
           POSTGRES_DB: "directus"
+        networks:
+          - directus-internal
 
       cache:
         image: redis:6
+        networks:
+          - directus-internal
 
       directus:
         image: directus/directus:10.8.2
@@ -58,6 +64,7 @@ export function getDirectus(container: Container): string {
           PUBLIC_URL: "https://${container.url}"
         networks:
           - traefik-public
+          - directus-internal
         deploy:
           update_config:
             order: start-first
@@ -86,9 +93,10 @@ export function getDirectus(container: Container): string {
           - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$${1}
           - traefik.http.routers.${container.id}-app-https.middlewares=${container.id}-redirect,secure-headers
           - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
-          - traefik.http.services.${container.id}-app.loadbalancer.server.port=80
+          - traefik.http.services.${container.id}-app.loadbalancer.server.port=8055
 
     volumes:
       uploads:
+      directusDb:
       `
 }
