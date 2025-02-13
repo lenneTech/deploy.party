@@ -10,7 +10,7 @@ export function getDirectus(container: Container): string {
     networks:
       traefik-public:
         external: true
-      directus-internal
+      directus-internal:
         driver: overlay
 
     services:
