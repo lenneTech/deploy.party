@@ -1,3 +1,10 @@
+## [1.8.14](https://github.com/lenneTech/deploy.party/compare/v1.8.13...v1.8.14) (2025-02-13)
+
+
+### Bug Fixes
+
+* fix directus service ([7029809](https://github.com/lenneTech/deploy.party/commit/7029809847a856f683f439ec8d866c3b78d5f570))
+
 ## [1.8.13](https://github.com/lenneTech/deploy.party/compare/v1.8.12...v1.8.13) (2025-02-13)
 
 
