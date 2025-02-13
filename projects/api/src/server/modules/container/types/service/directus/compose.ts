@@ -90,7 +90,7 @@ export function getDirectus(container: Container): string {
           - traefik.http.routers.${container.id}-app-https.tls=true
           - traefik.http.routers.${container.id}-app-https.tls.certresolver=le
           - traefik.http.middlewares.${container.id}-redirect.redirectregex.regex=^https?://www.${container.url}/(.*)
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$${1}
+          - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$$${1}
           - traefik.http.routers.${container.id}-app-https.middlewares=${container.id}-redirect,secure-headers
           - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
           - traefik.http.services.${container.id}-app.loadbalancer.server.port=8055
