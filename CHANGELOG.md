@@ -1,3 +1,10 @@
+## [1.8.13](https://github.com/lenneTech/deploy.party/compare/v1.8.12...v1.8.13) (2025-02-13)
+
+
+### Bug Fixes
+
+* **DEV-79:** Fix compose for directus ([422209c](https://github.com/lenneTech/deploy.party/commit/422209c5df278f360bbe24f4f7a2e015c917bcb4))
+
 ## [1.8.12](https://github.com/lenneTech/deploy.party/compare/v1.8.11...v1.8.12) (2025-02-13)
 
 
