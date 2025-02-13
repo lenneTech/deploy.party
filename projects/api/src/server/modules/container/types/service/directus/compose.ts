@@ -35,7 +35,7 @@ export function getDirectus(container: Container): string {
           - directus-internal
 
       directus:
-        image: directus/directus:11.3.5
+        image: directus/directus:11.4
         volumes:
           - uploads:/directus/uploads
           # If you want to load extensions from the host
@@ -69,6 +69,9 @@ export function getDirectus(container: Container): string {
           - directus-internal
           - deploy-party
         deploy:
+          placement:
+            constraints:
+              - node.labels.traefik-public.traefik-public-certificates == true
           update_config:
             order: start-first
             failure_action: rollback
@@ -78,7 +81,6 @@ export function getDirectus(container: Container): string {
             order: stop-first
           restart_policy:
             condition: any
-            delay: 5s
             max_attempts: 3
             window: 120s
         labels:
@@ -86,18 +88,14 @@ export function getDirectus(container: Container): string {
           - traefik.enable=true
           - traefik.docker.network=traefik-public
           - traefik.constraint-label=traefik-public
-          - traefik.http.routers.${container.id}-app-http.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
-          - traefik.http.routers.${container.id}-app-http.entrypoints=http
-          - traefik.http.routers.${container.id}-app-http.middlewares=https-redirect
-          - traefik.http.routers.${container.id}-app-https.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
-          - traefik.http.routers.${container.id}-app-https.entrypoints=https
-          - traefik.http.routers.${container.id}-app-https.tls=true
-          - traefik.http.routers.${container.id}-app-https.tls.certresolver=le
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.regex=^https?://www.${container.url}/(.*)
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$$${1}
-          - traefik.http.routers.${container.id}-app-https.middlewares=${container.id}-redirect,secure-headers
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
-          - traefik.http.services.${container.id}-app.loadbalancer.server.port=8055
+          - traefik.http.routers.${container.id}-http.rule=Host(\`${container.url}\`)
+          - traefik.http.routers.${container.id}-http.entrypoints=http
+          - traefik.http.routers.${container.id}-http.middlewares=https-redirect
+          - traefik.http.routers.${container.id}-https.rule=Host(\`${container.url}\`)
+          - traefik.http.routers.${container.id}-https.entrypoints=https
+          - traefik.http.routers.${container.id}-https.tls=true
+          - traefik.http.routers.${container.id}-https.tls.certresolver=le
+          - traefik.http.services.${container.id}.loadbalancer.server.port=8055
 
     volumes:
       uploads:
