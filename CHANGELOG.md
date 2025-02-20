@@ -1,3 +1,10 @@
+## [1.8.16](https://github.com/lenneTech/deploy.party/compare/v1.8.15...v1.8.16) (2025-02-20)
+
+
+### Bug Fixes
+
+* fix container static error ([6ff5a2d](https://github.com/lenneTech/deploy.party/commit/6ff5a2d0f3d73c36ef07574b5857fef6b7e4a9e0))
+
 ## [1.8.15](https://github.com/lenneTech/deploy.party/compare/v1.8.14...v1.8.15) (2025-02-13)
 
 
