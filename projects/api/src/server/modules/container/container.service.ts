@@ -189,7 +189,7 @@ export class ContainerService extends CrudService<Container> implements OnApplic
       !container.repositoryId ||
       !container.deploymentType ||
       !container.url ||
-      !container.port)
+        (container.type !== ContainerType.STATIC && !container.port))
     ) {
       throw new InternalServerErrorException('Container is missing required fields');
     }
