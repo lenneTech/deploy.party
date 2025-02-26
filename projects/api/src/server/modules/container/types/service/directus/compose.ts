@@ -83,19 +83,19 @@ export function getDirectus(container: Container): string {
             condition: any
             max_attempts: 3
             window: 120s
-        labels:
-          - deploy.party.id=${container.id}
-          - traefik.enable=true
-          - traefik.docker.network=traefik-public
-          - traefik.constraint-label=traefik-public
-          - traefik.http.routers.${container.id}-http.rule=Host(\`${container.url}\`)
-          - traefik.http.routers.${container.id}-http.entrypoints=http
-          - traefik.http.routers.${container.id}-http.middlewares=https-redirect
-          - traefik.http.routers.${container.id}-https.rule=Host(\`${container.url}\`)
-          - traefik.http.routers.${container.id}-https.entrypoints=https
-          - traefik.http.routers.${container.id}-https.tls=true
-          - traefik.http.routers.${container.id}-https.tls.certresolver=le
-          - traefik.http.services.${container.id}.loadbalancer.server.port=8055
+          labels:
+            - deploy.party.id=${container.id}
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+            - traefik.constraint-label=traefik-public
+            - traefik.http.routers.${container.id}-http.rule=Host(\`${container.url}\`)
+            - traefik.http.routers.${container.id}-http.entrypoints=http
+            - traefik.http.routers.${container.id}-http.middlewares=https-redirect
+            - traefik.http.routers.${container.id}-https.rule=Host(\`${container.url}\`)
+            - traefik.http.routers.${container.id}-https.entrypoints=https
+            - traefik.http.routers.${container.id}-https.tls=true
+            - traefik.http.routers.${container.id}-https.tls.certresolver=le
+            - traefik.http.services.${container.id}.loadbalancer.server.port=8055
 
     volumes:
       uploads:
