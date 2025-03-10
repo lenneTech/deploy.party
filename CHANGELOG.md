@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/lenneTech/deploy.party/compare/v1.9.0...v1.10.0) (2025-03-10)
+
+
+### Features
+
+* move environment variable generation for directus to docker service ([98b7abf](https://github.com/lenneTech/deploy.party/commit/98b7abf5b24a8382d5457b03b3fb0e5b7c524137))
+
 # [1.9.0](https://github.com/lenneTech/deploy.party/compare/v1.8.17...v1.9.0) (2025-03-10)
 
 
