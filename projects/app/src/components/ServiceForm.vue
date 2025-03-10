@@ -27,6 +27,7 @@ const formSchema = toTypedSchema(
         is: 'CUSTOM',
         then: (schema) => schema.required(),
       }),
+    env: string(),
     name: string().required().max(14),
     type: string().required(),
     url: string().required(),
@@ -118,6 +119,14 @@ async function submit() {
         <template #help> Enter your Docker Compose file </template>
         <template #default>
           <FormCode name="customDockerCompose" class="w-full mx-auto max-w-2xl" :disabled="disabled" />
+        </template>
+      </FormRow>
+
+      <FormRow v-if="container?.lastBuild">
+        <template #label> .env file </template>
+        <template #help> Content of .env file </template>
+        <template #default>
+          <FormCode name="env" class="w-full mx-auto max-w-3xl" :disabled="disabled" />
         </template>
       </FormRow>
     </div>

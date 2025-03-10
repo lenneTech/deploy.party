@@ -4,6 +4,32 @@ export function getDirectus(container: Container): string {
   // generate key and secret
   const key = Array.from({ length: 36 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
   const secret = Array.from({ length: 36 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+
+  if (!container.env) {
+    container.env = `
+          KEY: "${key}"
+          SECRET: "${secret}"
+
+          DB_CLIENT: "pg"
+          DB_HOST: "database"
+          DB_PORT: "5432"
+          DB_DATABASE: "directus"
+          DB_USER: "directus"
+          DB_PASSWORD: "directus"
+
+          CACHE_ENABLED: "true"
+          CACHE_STORE: "redis"
+          REDIS: "redis://cache:6379"
+
+          ADMIN_EMAIL: "admin@directus.com"
+          ADMIN_PASSWORD: "d1r3ctu5"
+
+          # Make sure to set this in production
+          # (see https://docs.directus.io/self-hosted/config-options#general)
+          PUBLIC_URL: "https://${container.url}"
+    `;
+  }
+
   return `
     version: "3.8"
 
@@ -35,7 +61,7 @@ export function getDirectus(container: Container): string {
           - directus-internal
 
       directus:
-        image: directus/directus:11.4
+        image: directus/directus:11.5
         volumes:
           - uploads:/directus/uploads
           # If you want to load extensions from the host
@@ -43,27 +69,8 @@ export function getDirectus(container: Container): string {
         depends_on:
           - cache
           - database
-        environment:
-          KEY: "${key}"
-          SECRET: "${secret}"
-
-          DB_CLIENT: "pg"
-          DB_HOST: "database"
-          DB_PORT: "5432"
-          DB_DATABASE: "directus"
-          DB_USER: "directus"
-          DB_PASSWORD: "directus"
-
-          CACHE_ENABLED: "true"
-          CACHE_STORE: "redis"
-          REDIS: "redis://cache:6379"
-
-          ADMIN_EMAIL: "admin@directus.com"
-          ADMIN_PASSWORD: "d1r3ctu5"
-
-          # Make sure to set this in production
-          # (see https://docs.directus.io/self-hosted/config-options#general)
-          PUBLIC_URL: "https://${container.url}"
+        env_file:
+          - .env
         networks:
           - traefik-public
           - directus-internal
