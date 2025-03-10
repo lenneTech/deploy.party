@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/lenneTech/deploy.party/compare/v1.8.17...v1.9.0) (2025-03-10)
+
+
+### Features
+
+* add environment variable configuration for directus container ([535ccd1](https://github.com/lenneTech/deploy.party/commit/535ccd1ad6d7d8212390f6353ec2a31873654681))
+
 ## [1.8.17](https://github.com/lenneTech/deploy.party/compare/v1.8.16...v1.8.17) (2025-02-26)
 
 
