@@ -122,7 +122,7 @@ async function submit() {
         </template>
       </FormRow>
 
-      <FormRow v-if="container?.lastBuild">
+      <FormRow v-if="container?.logs?.length">
         <template #label> .env file </template>
         <template #help> Content of .env file </template>
         <template #default>
