@@ -27,7 +27,7 @@ const formSchema = toTypedSchema(
         is: 'CUSTOM',
         then: (schema) => schema.required(),
       }),
-    env: string(),
+    env: string().nullable(),
     name: string().required().max(14),
     type: string().required(),
     url: string().required(),
