@@ -3,7 +3,7 @@ import { toTypedSchema } from '@vee-validate/yup';
 import { useForm } from 'vee-validate';
 import { object, string } from 'yup';
 
-import type { Container, ContainerInput } from '~/base/default';
+import { type Container, type ContainerInput, ContainerStatus } from '~/base/default';
 
 const props = defineProps<{
   container?: Container | undefined;
@@ -122,7 +122,7 @@ async function submit() {
         </template>
       </FormRow>
 
-      <FormRow v-if="container?.logs?.length">
+      <FormRow v-if="container?.status !== ContainerStatus.DRAFT">
         <template #label> .env file </template>
         <template #help> Content of .env file </template>
         <template #default>
