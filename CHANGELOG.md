@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/lenneTech/deploy.party/compare/v1.10.0...v1.10.1) (2025-03-10)
+
+
+### Bug Fixes
+
+* update condition for displaying .env file content in ServiceForm ([727f935](https://github.com/lenneTech/deploy.party/commit/727f9352b147a6780d2584d1f84fb77776f716dd))
+
 # [1.10.0](https://github.com/lenneTech/deploy.party/compare/v1.9.0...v1.10.0) (2025-03-10)
 
 
