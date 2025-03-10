@@ -1,3 +1,10 @@
+## [1.10.4](https://github.com/lenneTech/deploy.party/compare/v1.10.3...v1.10.4) (2025-03-10)
+
+
+### Bug Fixes
+
+* update condition for displaying .env file content based on container status ([d8aa5a5](https://github.com/lenneTech/deploy.party/commit/d8aa5a57a6cfbf017bceab9dacea08a707dcf1f8))
+
 ## [1.10.3](https://github.com/lenneTech/deploy.party/compare/v1.10.2...v1.10.3) (2025-03-10)
 
 
