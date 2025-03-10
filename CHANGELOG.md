@@ -1,3 +1,10 @@
+## [1.10.5](https://github.com/lenneTech/deploy.party/compare/v1.10.4...v1.10.5) (2025-03-10)
+
+
+### Bug Fixes
+
+* format environment variable assignment in docker service for better readability ([a113834](https://github.com/lenneTech/deploy.party/commit/a113834eca9169a3bf42f3c473850072509381b8))
+
 ## [1.10.4](https://github.com/lenneTech/deploy.party/compare/v1.10.3...v1.10.4) (2025-03-10)
 
 
