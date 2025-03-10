@@ -87,6 +87,35 @@ export class DockerService {
         compose = await getMariaDBCompose(container);
         break;
       case ServiceType.DIRECTUS:
+        // generate key and secret
+        if (!container.env) {
+          const key = Array.from({length: 36}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          const secret = Array.from({length: 36}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          container.env = `
+                KEY: "${key}"
+                SECRET: "${secret}"
+
+                DB_CLIENT: "pg"
+                DB_HOST: "database"
+                DB_PORT: "5432"
+                DB_DATABASE: "directus"
+                DB_USER: "directus"
+                DB_PASSWORD: "directus"
+
+                CACHE_ENABLED: "true"
+                CACHE_STORE: "redis"
+                REDIS: "redis://cache:6379"
+
+                ADMIN_EMAIL: "admin@directus.com"
+                ADMIN_PASSWORD: "d1r3ctu5"
+
+                # Make sure to set this in production
+                # (see https://docs.directus.io/self-hosted/config-options#general)
+                PUBLIC_URL: "https://${container.url}"
+          `;
+          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.createEnvFile(container);
+        }
         compose = getDirectus(container);
         break;
       case ServiceType.ADMINER:
@@ -352,9 +381,9 @@ export class DockerService {
     }, (err, stream) => {
       if (err) throw err;
       stream.on('data', (data) => {
-        console.log(data.toString());
+        console.debug(data.toString());
         if (data.toString().includes('ERROR')) {
-          console.log('Fehler erkannt!');
+          console.debug('Fehler erkannt!');
           // Trigger Aktion
         }
       });
