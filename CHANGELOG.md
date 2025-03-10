@@ -1,3 +1,10 @@
+## [1.10.3](https://github.com/lenneTech/deploy.party/compare/v1.10.2...v1.10.3) (2025-03-10)
+
+
+### Bug Fixes
+
+* allow nullable environment variable in ServiceForm ([df906b5](https://github.com/lenneTech/deploy.party/commit/df906b59a1782e9edbd77e132b716ebb67203d2a))
+
 ## [1.10.2](https://github.com/lenneTech/deploy.party/compare/v1.10.1...v1.10.2) (2025-03-10)
 
 
