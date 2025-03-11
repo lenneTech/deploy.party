@@ -1,3 +1,10 @@
+## [1.10.6](https://github.com/lenneTech/deploy.party/compare/v1.10.5...v1.10.6) (2025-03-11)
+
+
+### Bug Fixes
+
+* add labels for container deployment and write environment variables to .env file ([e184ea1](https://github.com/lenneTech/deploy.party/commit/e184ea15c3813cc8caeea520b015a4574d184e6f))
+
 ## [1.10.5](https://github.com/lenneTech/deploy.party/compare/v1.10.4...v1.10.5) (2025-03-10)
 
 
