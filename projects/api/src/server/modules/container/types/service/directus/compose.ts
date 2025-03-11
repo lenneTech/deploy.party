@@ -46,6 +46,8 @@ export function getDirectus(container: Container): string {
           - traefik-public
           - directus-internal
           - deploy-party
+        labels:
+          - deploy.party.id=${container.id}
         deploy:
           placement:
             constraints:

@@ -147,6 +147,15 @@ export class DockerService {
       console.error(e);
     }
 
+    try {
+      await fs.writeFile(
+        `${this.getPath(container)}/code/.env`,
+        container.env
+      );
+    } catch (e) {
+      console.error(e);
+    }
+
     if (container.baseDir) {
       try {
         await fs.writeFile(
@@ -341,24 +350,6 @@ export class DockerService {
       return stdout.replace(/"/g, '').toUpperCase() as ContainerHealthStatus;
     } catch (e) {
       return ContainerHealthStatus.UNHEALTHY;
-    }
-  }
-
-  async getTerminalSession(source: Container): Promise<string> {
-    try {
-      const dockerId = await this.getId(source.id);
-
-      if (!dockerId) {
-        throw new Error('Docker container not found');
-      }
-
-      const {stdout} = await execa(`docker exec -it ${dockerId} sh`, {
-        shell: true,
-      });
-      return stdout.replace(/"/g, '');
-    } catch (e) {
-      console.error('getDockerHealthStatus', e);
-      return 'unhealthy';
     }
   }
 
