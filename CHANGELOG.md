@@ -1,3 +1,10 @@
+## [1.10.7](https://github.com/lenneTech/deploy.party/compare/v1.10.6...v1.10.7) (2025-03-28)
+
+
+### Bug Fixes
+
+* rename SMTP_AUTH_PASSWORD to SMTP_AUTH_PASS for consistency ([7b0573c](https://github.com/lenneTech/deploy.party/commit/7b0573cc62b30f98b69304d32c36887d5e97374e))
+
 ## [1.10.6](https://github.com/lenneTech/deploy.party/compare/v1.10.5...v1.10.6) (2025-03-11)
 
 
