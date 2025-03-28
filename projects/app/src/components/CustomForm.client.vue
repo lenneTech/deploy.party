@@ -160,9 +160,11 @@ async function loadProjects(sourceId: string) {
 
 async function submit() {
   await validate();
-  if (!values.value || isSubmitting.value || !meta.value.touched || !meta.value.valid) {
+
+  if (!values.value || isSubmitting.value || !meta.value.touched || !meta.value.dirty) {
     return;
   }
+
   isSubmitting.value = true;
 
   const data: any = { ...values.value };
