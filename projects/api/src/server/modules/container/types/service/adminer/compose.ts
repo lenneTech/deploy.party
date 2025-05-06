@@ -63,6 +63,6 @@ export async function getAdminer(container: Container): Promise<string> {
     ${additionalLabels.join('\n')}
             - traefik.http.routers.${container.id}-app-https.middlewares=${middlewares.join(',')}
             - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
-            - traefik.http.services.${container.id}-app.loadbalancer.server.port=8080
+            - traefik.http.services.${container.id}-app.loadbalancer.server.port=80
       `
 }

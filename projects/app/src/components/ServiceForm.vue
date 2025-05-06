@@ -63,6 +63,12 @@ watchDebounced(
   { debounce: 800 },
 );
 
+onMounted(() => {
+  if (props.container?.basicAuth?.username || props.container?.basicAuth?.pw) {
+    basicAuth.value = true;
+  }
+});
+
 async function submit() {
   await validate();
 
