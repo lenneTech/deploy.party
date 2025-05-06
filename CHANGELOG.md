@@ -1,3 +1,10 @@
+## [1.10.10](https://github.com/lenneTech/deploy.party/compare/v1.10.9...v1.10.10) (2025-05-06)
+
+
+### Bug Fixes
+
+* update Traefik service port to 80 and enable basic auth on container mount ([83cd644](https://github.com/lenneTech/deploy.party/commit/83cd644e9a6e7ace6c4a72468f48156713b6f8e3))
+
 ## [1.10.9](https://github.com/lenneTech/deploy.party/compare/v1.10.8...v1.10.9) (2025-05-06)
 
 
