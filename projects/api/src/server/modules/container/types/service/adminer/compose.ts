@@ -4,7 +4,7 @@ import {execa} from "execa";
 export async function getAdminer(container: Container): Promise<string> {
   const basicAuth = !!(container?.basicAuth?.username && container?.basicAuth?.pw);
   const additionalLabels = [];
-  const middlewares = [`${container.id}-redirect`, 'secure-headers'];
+  const middlewares = ['secure-headers'];
 
   if (basicAuth) {
     // Hash password
@@ -60,8 +60,6 @@ export async function getAdminer(container: Container): Promise<string> {
             - traefik.http.routers.${container.id}-app-https.entrypoints=https
             - traefik.http.routers.${container.id}-app-https.tls=true
             - traefik.http.routers.${container.id}-app-https.tls.certresolver=le
-            - traefik.http.middlewares.${container.id}-redirect.redirectregex.regex=^https?://www.${container.url}/(.*)
-            - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$${1}
     ${additionalLabels.join('\n')}
             - traefik.http.routers.${container.id}-app-https.middlewares=${middlewares.join(',')}
             - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
