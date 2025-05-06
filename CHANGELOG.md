@@ -1,3 +1,10 @@
+## [1.10.9](https://github.com/lenneTech/deploy.party/compare/v1.10.8...v1.10.9) (2025-05-06)
+
+
+### Bug Fixes
+
+* remove unnecessary redirect middleware from Adminer configuration ([dfa3a35](https://github.com/lenneTech/deploy.party/commit/dfa3a35166792705bf55885f023e983a366a76ac))
+
 ## [1.10.8](https://github.com/lenneTech/deploy.party/compare/v1.10.7...v1.10.8) (2025-05-06)
 
 
