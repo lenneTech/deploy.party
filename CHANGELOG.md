@@ -1,3 +1,10 @@
+## [1.10.8](https://github.com/lenneTech/deploy.party/compare/v1.10.7...v1.10.8) (2025-05-06)
+
+
+### Bug Fixes
+
+* implement basic auth support in Adminer configuration and update form schema ([9bfb1c4](https://github.com/lenneTech/deploy.party/commit/9bfb1c4a4e2ee3fe28a11c5aa887171ab0b59e47))
+
 ## [1.10.7](https://github.com/lenneTech/deploy.party/compare/v1.10.6...v1.10.7) (2025-03-28)
 
 
