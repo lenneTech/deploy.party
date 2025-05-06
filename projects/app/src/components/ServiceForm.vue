@@ -18,21 +18,31 @@ const typeOptions = [
   { label: 'Custom', value: 'CUSTOM' },
 ];
 
-const formSchema = toTypedSchema(
-  object({
-    customDockerCompose: string()
-      .nullable()
-      .optional()
-      .when('type', {
-        is: 'CUSTOM',
-        then: (schema) => schema.required(),
-      }),
-    env: string().nullable(),
-    name: string().required().max(14),
-    type: string().required(),
-    url: string().required(),
-  }),
-);
+const basicAuth = ref(false);
+const basicAuthSchema = object({
+  basicAuth: object({
+    pw: string().required(),
+    username: string().required(),
+  }).nullable(),
+});
+
+const baseFormSchema = object({
+  customDockerCompose: string()
+    .nullable()
+    .optional()
+    .when('type', {
+      is: 'CUSTOM',
+      then: (schema) => schema.required(),
+    }),
+  env: string().nullable(),
+  name: string().required().max(14),
+  type: string().required(),
+  url: string().required(),
+});
+
+const formSchema = computed(() => {
+  return toTypedSchema(basicAuth.value ? baseFormSchema.concat(basicAuthSchema) : baseFormSchema);
+});
 
 const {
   controlledValues: values,
@@ -129,6 +139,31 @@ async function submit() {
           <FormCode name="env" class="w-full mx-auto max-w-3xl" :disabled="disabled" />
         </template>
       </FormRow>
+
+      <FormRow>
+        <template #label> Basic Auth </template>
+        <template #help> Enable basic auth for your container </template>
+        <template #default>
+          <BaseToggle v-model:active="basicAuth" class="mx-auto" :disabled="disabled" />
+        </template>
+      </FormRow>
+
+      <template v-if="basicAuth">
+        <FormRow>
+          <template #label> Username </template>
+          <template #help> Enter a username for your container </template>
+          <template #default>
+            <FormInput name="basicAuth.username" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+          </template>
+        </FormRow>
+        <FormRow>
+          <template #label> Password </template>
+          <template #help> Enter a password for your container </template>
+          <template #default>
+            <FormInput name="basicAuth.pw" class="w-full mx-auto max-w-2xl" type="text" :disabled="disabled" />
+          </template>
+        </FormRow>
+      </template>
     </div>
   </form>
 </template>

@@ -119,7 +119,7 @@ export class DockerService {
         compose = getDirectus(container);
         break;
       case ServiceType.ADMINER:
-        compose = getAdminer(container);
+        compose = await getAdminer(container);
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;

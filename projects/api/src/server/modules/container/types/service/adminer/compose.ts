@@ -1,6 +1,22 @@
 import {Container} from "../../../container.model";
+import {execa} from "execa";
 
-export function getAdminer(container: Container): string {
+export async function getAdminer(container: Container): Promise<string> {
+  const basicAuth = !!(container?.basicAuth?.username && container?.basicAuth?.pw);
+  const additionalLabels = [];
+  const middlewares = [`${container.id}-redirect`, 'secure-headers'];
+
+  if (basicAuth) {
+    // Hash password
+    const {stdout: creds} = await execa(
+      `echo $(htpasswd -nb ${container.basicAuth.username} ${container.basicAuth.pw})`,
+      {shell: true}
+    );
+    // Set password and replace all $ in hash with $$ for escaping
+    additionalLabels.push(`        - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds.replace(/\$/ig, '$$$')}`);
+    middlewares.unshift(`${container.id}-auth`);
+  }
+
   return `
     version: "3.8"
 
@@ -13,6 +29,8 @@ export function getAdminer(container: Container): string {
     services:
       adminer:
         image: dockette/adminer:full
+        labels:
+          - deploy.party.id=${container.id}
         environment:
           ADMINER_DESIGN: dracula
         networks:
@@ -31,21 +49,22 @@ export function getAdminer(container: Container): string {
             delay: 5s
             max_attempts: 3
             window: 120s
-        labels:
-          - traefik.enable=true
-          - traefik.docker.network=traefik-public
-          - traefik.constraint-label=traefik-public
-          - traefik.http.routers.${container.id}-app-http.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
-          - traefik.http.routers.${container.id}-app-http.entrypoints=http
-          - traefik.http.routers.${container.id}-app-http.middlewares=https-redirect
-          - traefik.http.routers.${container.id}-app-https.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
-          - traefik.http.routers.${container.id}-app-https.entrypoints=https
-          - traefik.http.routers.${container.id}-app-https.tls=true
-          - traefik.http.routers.${container.id}-app-https.tls.certresolver=le
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.regex=^https?://www.${container.url}/(.*)
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$${1}
-          - traefik.http.routers.${container.id}-app-https.middlewares=${container.id}-redirect,secure-headers
-          - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
-          - traefik.http.services.${container.id}-app.loadbalancer.server.port=8080
+          labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+            - traefik.constraint-label=traefik-public
+            - traefik.http.routers.${container.id}-app-http.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
+            - traefik.http.routers.${container.id}-app-http.entrypoints=http
+            - traefik.http.routers.${container.id}-app-http.middlewares=https-redirect
+            - traefik.http.routers.${container.id}-app-https.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
+            - traefik.http.routers.${container.id}-app-https.entrypoints=https
+            - traefik.http.routers.${container.id}-app-https.tls=true
+            - traefik.http.routers.${container.id}-app-https.tls.certresolver=le
+            - traefik.http.middlewares.${container.id}-redirect.redirectregex.regex=^https?://www.${container.url}/(.*)
+            - traefik.http.middlewares.${container.id}-redirect.redirectregex.replacement=https://${container.url}/$${1}
+    ${additionalLabels.join('\n')}
+            - traefik.http.routers.${container.id}-app-https.middlewares=${middlewares.join(',')}
+            - traefik.http.middlewares.${container.id}-redirect.redirectregex.permanent=true
+            - traefik.http.services.${container.id}-app.loadbalancer.server.port=8080
       `
 }
