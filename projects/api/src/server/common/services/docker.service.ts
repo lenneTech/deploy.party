@@ -132,14 +132,14 @@ export class DockerService {
           const postgresPassword = randomBytes(16).toString('hex');
 
           container.env = `
-          JWT_SECRET=${jwtKey}
-          PRIVATE_KEY=${privateKey}
-          TEMPORARY_JWT_SECRET=${temporaryKey}
-          DATABASE_URL=postgres://rocket:${postgresPassword}@${container.id}_postgres:5432/rocketadmin
+JWT_SECRET=${jwtKey}
+PRIVATE_KEY=${privateKey}
+TEMPORARY_JWT_SECRET=${temporaryKey}
+DATABASE_URL=postgres://rocket:${postgresPassword}@${container.id}_postgres:5432/rocketadmin
 
-          POSTGRES_USER=rocket
-          POSTGRES_DB=rocketadmin
-          POSTGRES_PASSWORD=${postgresPassword}
+POSTGRES_USER=rocket
+POSTGRES_DB=rocketadmin
+POSTGRES_PASSWORD=${postgresPassword}
           `;
 
           await this.containerService.updateForce(container.id, {env: container.env});
@@ -150,10 +150,13 @@ export class DockerService {
       case ServiceType.MONGO_EXPRESS:
         if (!container.env) {
           container.env = `
-          ME_CONFIG_MONGODB_URL="mongodb://mongo:27017"
-          ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-          ME_CONFIG_MONGODB_AUTH_USERNAME=
-          ME_CONFIG_MONGODB_AUTH_PASSWORD=example
+ME_CONFIG_MONGODB_URL=mongodb://[CONTAINER_ID]_[CONTAINER_NAME]:27017/[DB_NAME]?ssl=false
+ME_CONFIG_BASICAUTH_ENABLED=true
+ME_CONFIG_BASICAUTH_USERNAME=USERNAME
+ME_CONFIG_BASICAUTH_PASSWORD=PASSWORD
+ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+ME_CONFIG_MONGODB_AUTH_USERNAME=
+ME_CONFIG_MONGODB_AUTH_PASSWORD=
           `;
 
           await this.containerService.updateForce(container.id, {env: container.env});
