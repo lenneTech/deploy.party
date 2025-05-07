@@ -2,6 +2,7 @@ import {forwardRef, Inject, Injectable} from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
+import crypto from 'crypto';
 import {execa} from 'execa';
 import {promises as fs} from 'fs';
 import envConfig from "../../../config.env";
@@ -24,7 +25,6 @@ import {getStaticImage} from "../../modules/container/types/container/images/sta
 import {getMariaDBCompose} from "../../modules/container/types/database/compose/mariadb";
 import {ContainerService} from "../../modules/container/container.service";
 import {getRocketAdmin} from "../../modules/container/types/service/rocketadmin/compose";
-import crypto from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Docker = require('dockerode');
