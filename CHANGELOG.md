@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/lenneTech/deploy.party/compare/v1.14.1...v1.14.2) (2025-05-07)
+
+
+### Bug Fixes
+
+* enable MongoDB admin access in docker.service.ts ([efd2729](https://github.com/lenneTech/deploy.party/commit/efd272906358bf47877f8cf1a51b23730b198f8c))
+
 ## [1.14.1](https://github.com/lenneTech/deploy.party/compare/v1.14.0...v1.14.1) (2025-05-07)
 
 
