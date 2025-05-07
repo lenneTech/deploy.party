@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/lenneTech/deploy.party/compare/v1.12.1...v1.12.2) (2025-05-07)
+
+
+### Bug Fixes
+
+* replace crypto import with randomBytes for key generation in docker.service.ts ([c1d659e](https://github.com/lenneTech/deploy.party/commit/c1d659ef00159bdc97e3a9a8875f7e2b6ff9e1c6))
+
 ## [1.12.1](https://github.com/lenneTech/deploy.party/compare/v1.12.0...v1.12.1) (2025-05-07)
 
 
