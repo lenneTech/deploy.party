@@ -23,6 +23,8 @@ import {getStaticCompose} from "../../modules/container/types/container/compose/
 import {getStaticImage} from "../../modules/container/types/container/images/static";
 import {getMariaDBCompose} from "../../modules/container/types/database/compose/mariadb";
 import {ContainerService} from "../../modules/container/container.service";
+import {getRocketAdmin} from "../../modules/container/types/service/rocketadmin/compose";
+import crypto from "crypto";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Docker = require('dockerode');
@@ -120,6 +122,22 @@ export class DockerService {
         break;
       case ServiceType.ADMINER:
         compose = await getAdminer(container);
+        break;
+      case ServiceType.ROCKET_ADMIN:
+        if (!container.env) {
+          const jwtKey = crypto.randomBytes(32).toString('hex');
+          const privateKey = crypto.randomBytes(32).toString('hex');
+          const temporaryKey = crypto.randomBytes(32).toString('hex');
+          container.env = `
+          JWT_SECRET=${jwtKey}
+          PRIVATE_KEY=${privateKey}
+          TEMPORARY_JWT_SECRET=${temporaryKey}
+          `;
+
+          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.createEnvFile(container);
+        }
+        compose = await getRocketAdmin(container);
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;
