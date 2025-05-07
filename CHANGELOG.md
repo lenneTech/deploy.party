@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/lenneTech/deploy.party/compare/v1.11.0...v1.12.0) (2025-05-07)
+
+
+### Features
+
+* add ROCKET_ADMIN to container types enumeration ([7767b31](https://github.com/lenneTech/deploy.party/commit/7767b31ec50b0ff691c9b56a18b1606bbc86a9c1))
+
 # [1.11.0](https://github.com/lenneTech/deploy.party/compare/v1.10.10...v1.11.0) (2025-05-07)
 
 
