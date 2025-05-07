@@ -7,6 +7,7 @@ export enum AllContainerTypes {
   MARIA_DB = 'MARIA_DB',
   DIRECTUS = 'DIRECTUS',
   ADMINER = 'ADMINER',
+  ROCKET_ADMIN = 'ROCKET_ADMIN',
   CUSTOM = 'CUSTOM',
 }
 
