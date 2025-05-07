@@ -2,7 +2,7 @@ import {forwardRef, Inject, Injectable} from '@nestjs/common';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import crypto from 'crypto';
+import {randomBytes} from 'crypto';
 import {execa} from 'execa';
 import {promises as fs} from 'fs';
 import envConfig from "../../../config.env";
@@ -125,9 +125,9 @@ export class DockerService {
         break;
       case ServiceType.ROCKET_ADMIN:
         if (!container.env) {
-          const jwtKey = crypto.randomBytes(32).toString('hex');
-          const privateKey = crypto.randomBytes(32).toString('hex');
-          const temporaryKey = crypto.randomBytes(32).toString('hex');
+          const jwtKey = randomBytes(32).toString('hex');
+          const privateKey = randomBytes(32).toString('hex');
+          const temporaryKey = randomBytes(32).toString('hex');
           container.env = `
           JWT_SECRET=${jwtKey}
           PRIVATE_KEY=${privateKey}
