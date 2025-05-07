@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/lenneTech/deploy.party/compare/v1.12.0...v1.12.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* remove duplicate crypto import in docker.service.ts ([8877bdf](https://github.com/lenneTech/deploy.party/commit/8877bdfb8607ac2c595e67987ed42bff29f15e1e))
+
 # [1.12.0](https://github.com/lenneTech/deploy.party/compare/v1.11.0...v1.12.0) (2025-05-07)
 
 
