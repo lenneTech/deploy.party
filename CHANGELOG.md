@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/lenneTech/deploy.party/compare/v1.14.0...v1.14.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* update environment variable formatting in docker.service.ts ([603b8e9](https://github.com/lenneTech/deploy.party/commit/603b8e9ffcf4d89e236bff8b7be9760d83cc1259))
+
 # [1.14.0](https://github.com/lenneTech/deploy.party/compare/v1.13.0...v1.14.0) (2025-05-07)
 
 
