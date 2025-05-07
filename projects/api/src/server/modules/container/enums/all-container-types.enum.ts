@@ -8,6 +8,7 @@ export enum AllContainerTypes {
   DIRECTUS = 'DIRECTUS',
   ADMINER = 'ADMINER',
   ROCKET_ADMIN = 'ROCKET_ADMIN',
+  MONGO_EXPRESS = 'MONGO_EXPRESS',
   CUSTOM = 'CUSTOM',
 }
 

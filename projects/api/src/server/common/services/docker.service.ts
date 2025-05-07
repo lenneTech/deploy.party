@@ -25,6 +25,7 @@ import {getStaticImage} from "../../modules/container/types/container/images/sta
 import {getMariaDBCompose} from "../../modules/container/types/database/compose/mariadb";
 import {ContainerService} from "../../modules/container/container.service";
 import {getRocketAdmin} from "../../modules/container/types/service/rocketadmin/compose";
+import {getMongoExpress} from "../../modules/container/types/service/mongo-express/compose";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Docker = require('dockerode');
@@ -134,7 +135,7 @@ export class DockerService {
           JWT_SECRET=${jwtKey}
           PRIVATE_KEY=${privateKey}
           TEMPORARY_JWT_SECRET=${temporaryKey}
-          DATABASE_URL=postgres://postgres:${postgresPassword}@${container.id}_rocketadmin:5432/rocketadmin
+          DATABASE_URL=postgres://rocket:${postgresPassword}@${container.id}_postgres:5432/rocketadmin
 
           POSTGRES_USER=rocket
           POSTGRES_DB=rocketadmin
@@ -145,6 +146,20 @@ export class DockerService {
           await this.createEnvFile(container);
         }
         compose = await getRocketAdmin(container);
+        break;
+      case ServiceType.MONGO_EXPRESS:
+        if (!container.env) {
+          container.env = `
+          ME_CONFIG_MONGODB_URL="mongodb://mongo:27017"
+          ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+          ME_CONFIG_MONGODB_AUTH_USERNAME=
+          ME_CONFIG_MONGODB_AUTH_PASSWORD=example
+          `;
+
+          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.createEnvFile(container);
+        }
+        compose = await getMongoExpress(container);
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;

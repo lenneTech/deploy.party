@@ -15,6 +15,7 @@ const props = defineProps<{
 const typeOptions = [
   { label: 'Directus', value: 'DIRECTUS' },
   { label: 'RocketAdmin', value: 'ROCKET_ADMIN' },
+  { label: 'MongoExpress', value: 'MONGO_EXPRESS' },
   { label: 'Adminer', value: 'ADMINER' },
   { label: 'Custom', value: 'CUSTOM' },
 ];

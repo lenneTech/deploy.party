@@ -29,6 +29,7 @@ export enum AllContainerTypes {
   DIRECTUS = 'DIRECTUS',
   MARIA_DB = 'MARIA_DB',
   MONGO = 'MONGO',
+  MONGO_EXPRESS = 'MONGO_EXPRESS',
   NODE = 'NODE',
   ROCKET_ADMIN = 'ROCKET_ADMIN',
   STATIC = 'STATIC'
