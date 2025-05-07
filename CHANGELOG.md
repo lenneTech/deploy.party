@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/lenneTech/deploy.party/compare/v1.12.2...v1.13.0) (2025-05-07)
+
+
+### Features
+
+* add PostgreSQL service and configure environment variables for RocketAdmin ([5acab3b](https://github.com/lenneTech/deploy.party/commit/5acab3b8cc63564a483319ac807af2cde9b80784))
+
 ## [1.12.2](https://github.com/lenneTech/deploy.party/compare/v1.12.1...v1.12.2) (2025-05-07)
 
 
