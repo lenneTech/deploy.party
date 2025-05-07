@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/lenneTech/deploy.party/compare/v1.10.10...v1.11.0) (2025-05-07)
+
+
+### Features
+
+* add support for RocketAdmin service and configure environment variables ([b37d21e](https://github.com/lenneTech/deploy.party/commit/b37d21ed24035956dce928f58d9ea5ee165b5f7f))
+
 ## [1.10.10](https://github.com/lenneTech/deploy.party/compare/v1.10.9...v1.10.10) (2025-05-06)
 
 
