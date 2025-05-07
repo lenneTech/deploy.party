@@ -128,10 +128,17 @@ export class DockerService {
           const jwtKey = randomBytes(32).toString('hex');
           const privateKey = randomBytes(32).toString('hex');
           const temporaryKey = randomBytes(32).toString('hex');
+          const postgresPassword = randomBytes(16).toString('hex');
+
           container.env = `
           JWT_SECRET=${jwtKey}
           PRIVATE_KEY=${privateKey}
           TEMPORARY_JWT_SECRET=${temporaryKey}
+          DATABASE_URL=postgres://postgres:${postgresPassword}@${container.id}_rocketadmin:5432/rocketadmin
+
+          POSTGRES_USER=rocket
+          POSTGRES_DB=rocketadmin
+          POSTGRES_PASSWORD=${postgresPassword}
           `;
 
           await this.containerService.updateForce(container.id, {env: container.env});

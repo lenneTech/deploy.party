@@ -25,9 +25,23 @@ export async function getRocketAdmin(container: Container): Promise<string> {
         external: true
       deploy-party:
         external: true
+      rocket-internal:
+        driver: overlay
+
+    volumes:
+      rocketDb:
 
     services:
-      adminer:
+      postgres:
+        image: postgis/postgis:13-master
+        volumes:
+          - rocketDb:/var/lib/postgresql/data
+        networks:
+          - rocket-internal
+        env_file:
+          - .env
+
+      rocketadmin:
         image: rocketadmin/rocketadmin
         labels:
           - deploy.party.id=${container.id}
@@ -36,6 +50,7 @@ export async function getRocketAdmin(container: Container): Promise<string> {
         networks:
           - traefik-public
           - deploy-party
+          - rocket-internal
         deploy:
           update_config:
             order: start-first
