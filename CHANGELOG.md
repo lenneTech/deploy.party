@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/lenneTech/deploy.party/compare/v1.13.0...v1.14.0) (2025-05-07)
+
+
+### Features
+
+* add MongoExpress service support and update related configurations ([48f26e1](https://github.com/lenneTech/deploy.party/commit/48f26e1b5d9cb0f2fe45bd693c7153f6b95cedbe))
+
 # [1.13.0](https://github.com/lenneTech/deploy.party/compare/v1.12.2...v1.13.0) (2025-05-07)
 
 
