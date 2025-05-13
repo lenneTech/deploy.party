@@ -23,6 +23,7 @@ export async function getMongoCompose(container: Container): Promise<string> {
 
   if (container?.basicAuth?.username && container?.basicAuth?.pw) {
     dockerCompose.push(`    environment:`);
+      dockerCompose.push(`      TZ: "Europe/Berlin"`);
     if (container?.basicAuth?.username) {
       dockerCompose.push(`      MONGO_INITDB_ROOT_USERNAME: ${container.basicAuth.username}`);
     }
