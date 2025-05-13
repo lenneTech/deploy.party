@@ -1,3 +1,10 @@
+## [1.14.3](https://github.com/lenneTech/deploy.party/compare/v1.14.2...v1.14.3) (2025-05-13)
+
+
+### Bug Fixes
+
+* add timezone configuration for MongoDB service ([c086eef](https://github.com/lenneTech/deploy.party/commit/c086eef6137614bfd443de98e59089f40ad9ceea))
+
 ## [1.14.2](https://github.com/lenneTech/deploy.party/compare/v1.14.1...v1.14.2) (2025-05-07)
 
 
