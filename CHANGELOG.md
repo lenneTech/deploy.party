@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/lenneTech/deploy.party/compare/v1.14.3...v1.15.0) (2025-05-15)
+
+
+### Features
+
+* add Redis UI service support and update related configurations ([6eb49c0](https://github.com/lenneTech/deploy.party/commit/6eb49c01c08a3de5f17a2e8d0acea0db357e0482))
+
 ## [1.14.3](https://github.com/lenneTech/deploy.party/compare/v1.14.2...v1.14.3) (2025-05-13)
 
 
