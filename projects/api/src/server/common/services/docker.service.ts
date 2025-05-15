@@ -166,6 +166,14 @@ ME_CONFIG_MONGODB_AUTH_PASSWORD=
         compose = await getMongoExpress(container);
         break;
       case ServiceType.REDIS_UI:
+        if (!container.env) {
+          container.env = `
+REDIS_URL=redis://[CONTAINER_ID]_[CONTAINER_NAME]:6379
+REDIS_PASSWORD=
+`;
+          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.createEnvFile(container);
+        }
         compose = await getRedisUi(container);
         break;
       case ContainerType.CUSTOM:
