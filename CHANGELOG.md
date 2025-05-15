@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/lenneTech/deploy.party/compare/v1.15.0...v1.15.1) (2025-05-15)
+
+
+### Bug Fixes
+
+* set default environment variables for Redis UI service ([9364154](https://github.com/lenneTech/deploy.party/commit/936415493720e8589e7423d006d14c87d14eb194))
+
 # [1.15.0](https://github.com/lenneTech/deploy.party/compare/v1.14.3...v1.15.0) (2025-05-15)
 
 
