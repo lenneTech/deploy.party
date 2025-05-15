@@ -26,6 +26,7 @@ import {getMariaDBCompose} from "../../modules/container/types/database/compose/
 import {ContainerService} from "../../modules/container/container.service";
 import {getRocketAdmin} from "../../modules/container/types/service/rocketadmin/compose";
 import {getMongoExpress} from "../../modules/container/types/service/mongo-express/compose";
+import {getRedisUi} from "../../modules/container/types/service/redis-ui/compose";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const Docker = require('dockerode');
@@ -163,6 +164,9 @@ ME_CONFIG_MONGODB_AUTH_PASSWORD=
           await this.createEnvFile(container);
         }
         compose = await getMongoExpress(container);
+        break;
+      case ServiceType.REDIS_UI:
+        compose = await getRedisUi(container);
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;

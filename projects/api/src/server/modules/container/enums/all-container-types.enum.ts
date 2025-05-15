@@ -9,6 +9,7 @@ export enum AllContainerTypes {
   ADMINER = 'ADMINER',
   ROCKET_ADMIN = 'ROCKET_ADMIN',
   MONGO_EXPRESS = 'MONGO_EXPRESS',
+  REDIS_UI = 'REDIS_UI',
   CUSTOM = 'CUSTOM',
 }
 
