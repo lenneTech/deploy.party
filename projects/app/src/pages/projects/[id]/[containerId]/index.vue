@@ -68,6 +68,12 @@ function copyUrl() {
         >
           <span class="ps-2 pe-3">Env</span>
         </MenuItem>
+        <MenuItem
+          v-if="container?.kind === ContainerKind.APPLICATION"
+          :to="{ path: $route.fullPath, query: { tab: 'storages' } }"
+        >
+          <span class="ps-2 pe-3">Storages</span>
+        </MenuItem>
       </ul>
     </div>
 

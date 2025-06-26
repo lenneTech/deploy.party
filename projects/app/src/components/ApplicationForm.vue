@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/yup';
-import { useForm } from 'vee-validate';
-import { boolean, object, string } from 'yup';
+import { FieldArray, useForm } from 'vee-validate';
+import { array, boolean, object, string } from 'yup';
 
 import type { Container, ContainerInput } from '~/base/default';
 
@@ -85,6 +85,16 @@ const baseFormSchema = object({
   tag: string().nullable(),
   type: string().default('NODE'),
   url: string().nullable(),
+  volumes: array()
+    .of(
+      object({
+        destination: string().nullable(),
+        source: string().nullable(),
+        type: string(),
+      }),
+    )
+    .default([])
+    .nullable(),
   www: boolean().nullable().default(true),
 });
 
@@ -614,6 +624,68 @@ async function submit() {
             </template>
           </FormRow>
         </div>
+      </template>
+
+      <template v-else-if="tab === 'storages'">
+        <FieldArray v-slot="{ fields, push, remove }" name="volumes">
+          <div v-for="(field, idx) in fields" :key="field.key" class="w-full mt-1">
+            <div class="flex items-center justify-between my-2">
+              <label class="font-medium leading-6 text-foreground">Volume #{{ idx + 1 }}</label>
+              <BaseButton
+                variant="danger"
+                class="flex items-center justify-center"
+                :disabled="disabled"
+                @click.prevent="remove(idx)"
+              >
+                <span class="i-bi-trash text-base"></span>
+              </BaseButton>
+            </div>
+            <FormRow>
+              <template #label> Source Directory </template>
+              <template #help> Directory on the host system. </template>
+              <template #default>
+                <FormInput
+                  :name="`volumes[${idx}].source`"
+                  class="w-full mx-auto max-w-2xl"
+                  type="text"
+                  :disabled="disabled"
+                />
+              </template>
+            </FormRow>
+            <FormRow>
+              <template #label> Destination Directory </template>
+              <template #help> Directory inside the container. </template>
+              <template #default>
+                <FormInput
+                  :name="`volumes[${idx}].destination`"
+                  class="w-full mx-auto max-w-2xl"
+                  type="text"
+                  :disabled="disabled"
+              /></template>
+            </FormRow>
+
+            <FormRow>
+              <template #label> Type </template>
+              <template #help> Type of volume. </template>
+              <template #default>
+                <FormSelect
+                  :name="`volumes[${idx}].type`"
+                  class="w-full mx-auto max-w-2xl"
+                  :disabled="disabled"
+                  :options="[{ label: 'Directory Mount', value: 'DIRECTORY_MOUNT' }]"
+              /></template>
+            </FormRow>
+          </div>
+          <div class="flex justify-end py-3">
+            <BaseButton
+              class="!mt-2"
+              :disabled="disabled"
+              @click.prevent="push({ source: '', destination: '', type: 'DIRECTORY_MOUNT' })"
+            >
+              Add Volume
+            </BaseButton>
+          </div>
+        </FieldArray>
       </template>
     </div>
   </form>

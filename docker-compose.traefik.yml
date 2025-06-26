@@ -58,6 +58,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount the volume to store the certificates
       - traefik-public-certificates:/certificates
+      # Mount the dynamic configuration directory, read-only
+      - ./dynamic:/etc/traefik/dynamic:ro
     command:
       # Enable Docker in Traefik, so that it reads labels from Docker services
       - --providers.docker
@@ -67,6 +69,10 @@ services:
       - --providers.docker.exposedbydefault=false
       # Enable Docker Swarm mode
       - --providers.docker.swarmmode
+      # Enable file provider
+      - --providers.file
+      # Set file dir
+      - --providers.file.directory=/etc/traefik/dynamic
       # Create an entrypoint "http" listening on port 80
       - --entrypoints.http.address=:80
       # Create an entrypoint "https" listening on port 443

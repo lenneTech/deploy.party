@@ -373,6 +373,8 @@ export interface Container {
   updatedBy?: Maybe<User>;
   /** url of Container */
   url?: Maybe<Scalars['String']['output']>;
+  /** Volumes of container */
+  volumes?: Maybe<Array<ContainerVolume>>;
   /** webhookId of Container */
   webhookId?: Maybe<Scalars['String']['output']>;
   /** www of Container */
@@ -443,6 +445,8 @@ export interface ContainerCreateInput {
   type?: InputMaybe<AllContainerTypes>;
   /** Url of Container */
   url?: InputMaybe<Scalars['String']['input']>;
+  /** volumes of Container */
+  volumes?: InputMaybe<Array<ContainerVolumeInput>>;
   /** webhookId of Container */
   webhookId?: InputMaybe<Scalars['String']['input']>;
   /** Www of Container */
@@ -519,6 +523,8 @@ export interface ContainerInput {
   type?: InputMaybe<AllContainerTypes>;
   /** Url of Container */
   url?: InputMaybe<Scalars['String']['input']>;
+  /** volumes of Container */
+  volumes?: InputMaybe<Array<ContainerVolumeInput>>;
   /** webhookId of Container */
   webhookId?: InputMaybe<Scalars['String']['input']>;
   /** Www of Container */
@@ -552,6 +558,31 @@ export enum ContainerStatus {
   RESTORING = 'RESTORING',
   STOPPED = 'STOPPED',
   STOPPED_BY_SYSTEM = 'STOPPED_BY_SYSTEM',
+}
+
+/** Defines a volume for a container */
+export interface ContainerVolume {
+  /** destination of ContainerVolume */
+  destination?: Maybe<Scalars['String']['output']>;
+  /** source of ContainerVolume */
+  source?: Maybe<Scalars['String']['output']>;
+  /** destination of ContainerVolume */
+  type: ContainerVolumeType;
+}
+
+/** Input data for container volume */
+export interface ContainerVolumeInput {
+  /** destination of ContainerVolume */
+  destination?: InputMaybe<Scalars['String']['input']>;
+  /** source of ContainerVolume */
+  source?: InputMaybe<Scalars['String']['input']>;
+  /** destination of ContainerVolume */
+  type: ContainerVolumeType;
+}
+
+/** Volume types of Container */
+export enum ContainerVolumeType {
+  DIRECTORY_MOUNT = 'DIRECTORY_MOUNT',
 }
 
 /** CoreAuth */

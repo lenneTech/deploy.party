@@ -3,6 +3,7 @@ import {Container} from "../../../container.model";
 import {Build} from "../../../../build/build.model";
 import {Registry} from "../../../../registry/registry.model";
 import {DeploymentType} from "../../../enums/deployment-type.enum";
+import {ContainerVolumeType} from "../../../enums/container-volume-types.enum";
 
 export async function getStaticCompose(container: Container, build?: Build): Promise<string> {
   const hostOnly = container.url.replace('https://', '').replace('http://', '');
@@ -58,6 +59,14 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
   dockerCompose.push(`    networks:`);
   dockerCompose.push(`      - traefik-public`);
   dockerCompose.push(`      - deploy-party`);
+  if (container.volumes?.length) {
+    dockerCompose.push(`    volumes:`);
+    for (const volume of container.volumes) {
+      if (volume.type === ContainerVolumeType.DIRECTORY_MOUNT) {
+        dockerCompose.push(`      - ${volume.source}:${volume.destination}`);
+      }
+    }
+  }
   dockerCompose.push(`    deploy:`);
   dockerCompose.push(`      placement:`);
   dockerCompose.push(`          constraints:`);

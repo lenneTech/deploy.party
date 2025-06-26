@@ -8,6 +8,7 @@ import {DatabaseType} from "../enums/database-type.enum";
 import {ServiceType} from "../enums/service-type.enum";
 import {AllContainerTypes} from "../enums/all-container-types.enum";
 import {DeploymentType} from "../enums/deployment-type.enum";
+import {ContainerVolumeInput} from './container-volume.input';
 
 /**
  * Container input
@@ -276,4 +277,12 @@ export class ContainerInput extends CoreInput {
 
   lastDeployedAt?: Date = undefined;
   lastEditedAt?: Date = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [ContainerVolumeInput], {
+    description: 'volumes of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  volumes?: ContainerVolumeInput[] = undefined;
 }

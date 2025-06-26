@@ -54,8 +54,8 @@ services:
         - traefik.http.routers.deploy-party-app-https.tls.certresolver=le
         - traefik.http.middlewares.deploy-party-redirect.redirectregex.regex=^https?://www.${APP_URL}/(.*)
         - traefik.http.middlewares.deploy-party-redirect.redirectregex.replacement=https://${APP_URL}/$${1}
-        - traefik.http.routers.deploy-party-app-https.middlewares=deploy-party-redirect
         - traefik.http.middlewares.deploy-party-redirect.redirectregex.permanent=true
+        - traefik.http.routers.deploy-party-app-https.middlewares=deploy-party-redirect
         - traefik.http.services.deploy-party-app.loadbalancer.server.port=3000
     command:
       - |

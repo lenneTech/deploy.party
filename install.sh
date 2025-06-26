@@ -71,6 +71,7 @@ echo "Check Docker Configuration..."
 mkdir -p /etc/docker
 mkdir -p $INSTALL_PATH
 mkdir -p $PROJECTS_PATH/projects
+mkdir -p $INSTALL_PATH/dynamic
 
 chown -R 9999:root $PROJECTS_PATH
 chown -R 9999:root $INSTALL_PATH

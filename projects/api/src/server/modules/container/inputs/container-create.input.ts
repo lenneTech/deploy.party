@@ -8,6 +8,7 @@ import {DatabaseType} from "../enums/database-type.enum";
 import {ServiceType} from "../enums/service-type.enum";
 import {AllContainerTypes} from "../enums/all-container-types.enum";
 import {DeploymentType} from "../enums/deployment-type.enum";
+import {ContainerVolumeInput} from "./container-volume.input";
 
 /**
  * Container create input
@@ -237,4 +238,12 @@ export class ContainerCreateInput extends ContainerInput {
   })
   @IsOptional()
   override baseDir?: string = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [ContainerVolumeInput], {
+    description: 'volumes of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  override volumes?: ContainerVolumeInput[] = undefined;
 }

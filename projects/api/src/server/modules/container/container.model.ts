@@ -15,6 +15,7 @@ import {ContainerHealthStatus} from "./enums/container-health-status.enum";
 import {Build} from "../build/build.model";
 import {Source} from "../source/source.model";
 import {DeploymentType} from "./enums/deployment-type.enum";
+import {ContainerVolume} from "./container-volume.model";
 
 export type ContainerDocument = Container & Document;
 
@@ -318,6 +319,11 @@ export class Container extends PersistenceModel {
   @Field({ description: 'lastEditedAt date', nullable: true })
   @Prop()
   lastEditedAt: Date = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [ContainerVolume], { description: 'Volumes of container', nullable: true })
+  @Prop()
+  volumes?: ContainerVolume[] = undefined;
   // ===================================================================================================================
   // Methods
   // ===================================================================================================================
