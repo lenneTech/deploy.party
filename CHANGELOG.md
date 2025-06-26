@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/lenneTech/deploy.party/compare/v1.15.1...v1.16.0) (2025-06-26)
+
+
+### Features
+
+* add support for container volumes in application form and related models ([01aeb77](https://github.com/lenneTech/deploy.party/commit/01aeb77bb4a7e124f3b0f9517361b0342543e346))
+
 ## [1.15.1](https://github.com/lenneTech/deploy.party/compare/v1.15.0...v1.15.1) (2025-05-15)
 
 
