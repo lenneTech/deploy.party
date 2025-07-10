@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/lenneTech/deploy.party/compare/v1.16.1...v1.17.0) (2025-07-10)
+
+
+### Features
+
+* add deployment type selection and auto deploy option in CustomForm component ([ae402cd](https://github.com/lenneTech/deploy.party/commit/ae402cd648c98516ac847836026aac1ebdcc02c2))
+
 ## [1.16.1](https://github.com/lenneTech/deploy.party/compare/v1.16.0...v1.16.1) (2025-07-10)
 
 
