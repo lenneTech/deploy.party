@@ -161,11 +161,9 @@ async function loadProjects(sourceId: string) {
 async function submit() {
   await validate();
 
-  if (!values.value || isSubmitting.value || !meta.value.touched || !meta.value.dirty) {
+  if (!values.value || !meta.value.touched || !meta.value.dirty) {
     return;
   }
-
-  isSubmitting.value = true;
 
   const data: any = { ...values.value };
 
@@ -211,8 +209,6 @@ async function submit() {
   if (result) {
     useNotification().notify({ text: 'Successfully updated the container.', title: 'Well done', type: 'success' });
   }
-
-  isSubmitting.value = false;
 }
 </script>
 
