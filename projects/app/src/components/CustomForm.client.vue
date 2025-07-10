@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/yup';
 import { useForm } from 'vee-validate';
-import { object, string } from 'yup';
+import { boolean, object, string } from 'yup';
 
 import type { Container, ContainerInput } from '~/base/default';
 
@@ -21,6 +21,7 @@ const projectsOptions = ref([]);
 const loadingGitlab = ref(false);
 const gitProjects = ref<{ id: number }[]>([]);
 const branchOptions = ref<{ label: string; value: string }[]>([]);
+const tagOptions = ref<{ label: string; value: string }[]>([]);
 const { data: sources } = await useFindSourcesQuery({}, ['id', 'name', 'token', 'url', 'type']);
 const sourceOptions = sources?.map((e) => {
   return { label: e.name, value: e.id };
@@ -33,11 +34,18 @@ const registryOptions = registries?.map((e) => {
 let selectedSourceId: string | undefined = '';
 let selectedRepositoryId: string | undefined = '';
 
+const deploymentTypeOptions = [
+  { label: 'Branch', value: 'BRANCH' },
+  { label: 'Tag', value: 'TAG' },
+];
+
 const formSchema = toTypedSchema(
   object({
+    autoDeploy: boolean().nullable().default(true),
     branch: string().required(),
     customDockerCompose: string(),
     customDockerfile: string(),
+    deploymentType: string().nullable(),
     name: string().required().max(14),
     registry: object({
       id: string().required(),
@@ -46,6 +54,7 @@ const formSchema = toTypedSchema(
     source: object({
       id: string().required(),
     }).required(),
+    tag: string().nullable(),
   }),
 );
 
@@ -92,6 +101,7 @@ async function onSourceChanged(sourceId: string, repositoryId?: string) {
   await loadProjects(sourceId);
   if (repositoryId) {
     await loadBranches(sourceId, repositoryId);
+    await loadTags(sourceId, repositoryId);
   }
 }
 
@@ -114,6 +124,32 @@ async function loadBranches(sourceId: string, repositoryId: string) {
 
   branchOptions.value = (branches as any)?.map((e: any) => {
     return { label: e.name, value: e.name };
+  });
+
+  if (loadingGitlab.value) {
+    loadingGitlab.value = false;
+  }
+}
+
+async function loadTags(sourceId: string, repositoryId: string) {
+  const source = sources?.find((e) => e.id === sourceId);
+  if (!source) {
+    return;
+  }
+
+  let releases: any[] = [];
+  if (source?.type === SourceType.GITLAB) {
+    const gitlab = useGitlab(source!, false);
+    const { data } = await gitlab.getReleases(repositoryId);
+    releases = (data.value as any[]) || [];
+  } else {
+    const github = useGithub(source!, false);
+    const { data } = await github.getBranches(repositoryId);
+    releases = (data.value as any[]) || [];
+  }
+
+  tagOptions.value = (releases as any)?.map((e: any) => {
+    return { label: e.tag_name, value: e.tag_name };
   });
 
   if (loadingGitlab.value) {
@@ -296,6 +332,21 @@ async function submit() {
         </FormRow>
 
         <FormRow>
+          <template #label> Deployment type </template>
+          <template #help> Select the repository from your container </template>
+          <template #default>
+            <FormSelect
+              name="deploymentType"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a deployment type"
+              :options="deploymentTypeOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow v-if="values.deploymentType === 'BRANCH'">
           <template #label> Branch </template>
           <template #help> Select the branch to be deployed </template>
           <template #default>
@@ -307,6 +358,28 @@ async function submit() {
               :loading="loadingGitlab"
               :disabled="disabled || loadingGitlab"
             />
+          </template>
+        </FormRow>
+
+        <FormRow v-if="values.deploymentType === 'TAG'">
+          <template #label> Tag </template>
+          <template #help> Select the released tag to be deployed </template>
+          <template #default>
+            <FormSelect
+              name="tag"
+              class="w-full mx-auto max-w-2xl"
+              placeholder="Select a tag"
+              :options="tagOptions"
+              :loading="loadingGitlab"
+              :disabled="disabled || loadingGitlab"
+            />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Enable auto deploy </template>
+          <template #default>
+            <FormToggle name="autoDeploy" class="mx-auto" :disabled="disabled" />
           </template>
         </FormRow>
       </template>
