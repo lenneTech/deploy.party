@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/lenneTech/deploy.party/compare/v1.16.0...v1.16.1) (2025-07-10)
+
+
+### Bug Fixes
+
+* simplify submission validation logic in CustomForm component ([6019d6e](https://github.com/lenneTech/deploy.party/commit/6019d6e485ec6e9ee5a12ab226ea099c4e0240a9))
+
 # [1.16.0](https://github.com/lenneTech/deploy.party/compare/v1.15.1...v1.16.0) (2025-06-26)
 
 
