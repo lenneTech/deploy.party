@@ -3,6 +3,7 @@
 # Exit in case of error
 set -e
 
+# Default values
 OS_TYPE=$(cat /etc/os-release | grep -w "ID" | cut -d "=" -f 2 | tr -d '"')
 OS_VERSION=$(cat /etc/os-release | grep -w "VERSION_ID" | cut -d "=" -f 2 | tr -d '"')
 DATE=$(date +"%Y%m%d-%H%M%S")
@@ -11,25 +12,106 @@ PROJECTS_PATH="/data"
 LOCAL_SETUP=0
 HOST_IP=$(hostname -I | cut -d ' ' -f 1)
 
+# Parse command line arguments
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -l|--local)
+      LOCAL_SETUP=1
+      LOCAL="Y"
+      URL="localhost"
+      shift
+      ;;
+    -n|--name)
+      NAME="$2"
+      shift
+      shift
+      ;;
+    -u|--url)
+      URL="$2"
+      shift
+      shift
+      ;;
+    -e|--email)
+      EMAIL="$2"
+      shift
+      shift
+      ;;
+    --username)
+      USERNAME="$2"
+      shift
+      shift
+      ;;
+    --password)
+      PASSWORD="$2"
+      shift
+      shift
+      ;;
+    -h|--help)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  -l, --local             Run deploy.party locally"
+      echo "  -n, --name NAME         Instance name"
+      echo "  -u, --url URL           Base URL (required for non-local setup)"
+      echo "  -e, --email EMAIL       Email for SSL certificates (required for non-local setup)"
+      echo "      --username USER     Username for Traefik"
+      echo "      --password PASS     Password for Traefik"
+      echo "  -h, --help              Show this help message"
+      echo ""
+      echo "Example:"
+      echo "  $0 --local --name my-instance --username admin --password secret"
+      echo "  $0 --name my-instance --url example.com --email admin@example.com --username admin --password secret"
+      exit 0
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}"
+
 if [ $OS_TYPE != "ubuntu" ] && [ $OS_TYPE != "debian" ]; then
     echo "This script only supports Ubuntu and Debian for now."
     exit
 fi
 
-read -p "Run deploy.party local? (Y/N) " LOCAL
-read -p "Please enter the instance name: " NAME
+# Interactive prompts for missing parameters
+if [ -z "$LOCAL" ]; then
+    read -p "Run deploy.party local? (Y/N) " LOCAL
+fi
 
-if [ $LOCAL != "N" ] && [ $LOCAL != "n" ]; then
+if [ -z "$NAME" ]; then
+    read -p "Please enter the instance name: " NAME
+fi
+
+if [ "$LOCAL" != "N" ] && [ "$LOCAL" != "n" ]; then
     LOCAL_SETUP=1
     URL="localhost"
 else
     LOCAL_SETUP=0
-    read -p "Please enter the base url: " URL
-    read -p "Please enter the email for ssl certs: " EMAIL
+    if [ -z "$URL" ]; then
+        read -p "Please enter the base url: " URL
+    fi
+    if [ -z "$EMAIL" ]; then
+        read -p "Please enter the email for ssl certs: " EMAIL
+    fi
 fi
 
-read -p "Please enter the username for traefik: " USERNAME
-read -p "Please enter the password for traefik: " PASSWORD
+if [ -z "$USERNAME" ]; then
+    read -p "Please enter the username for traefik: " USERNAME
+fi
+
+if [ -z "$PASSWORD" ]; then
+    read -p "Please enter the password for traefik: " PASSWORD
+fi
 
 echo "--------------------------------------------------------------------------------"
 echo "Welcome to deploy.party installer!"

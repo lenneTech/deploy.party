@@ -26,9 +26,52 @@ Replace follow placeholders with your values:
 ssh root@SERVER_IP
 ```
 
+### Interactive Installation
 ```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
 ```
+
+### Automated Installation
+For automated deployments, you can pass parameters directly to the install script:
+
+```bash
+# Download install script
+curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh -o install.sh
+chmod +x install.sh
+
+# Local installation
+./install.sh --local --name my-instance --username admin --password secret123
+
+# Production installation  
+./install.sh --name my-instance --url example.com --email admin@example.com --username admin --password secret123
+```
+
+#### Available Parameters
+- `-l, --local` - Run deploy.party locally (skips URL and email prompts)
+- `-n, --name NAME` - Instance name
+- `-u, --url URL` - Base URL (required for production setup)
+- `-e, --email EMAIL` - Email for SSL certificates (required for production setup)
+- `--username USER` - Username for Traefik dashboard
+- `--password PASS` - Password for Traefik dashboard
+- `-h, --help` - Show help message
+
+#### Examples
+```bash
+# Minimal local setup
+./install.sh -l -n dev-server --username admin --password mypassword
+
+# Full production setup
+./install.sh -n production \
+             -u mydomain.com \
+             -e admin@mydomain.com \
+             --username traefik-admin \
+             --password secure-password-123
+
+# Get help
+./install.sh --help
+```
+
+**Note:** Any missing parameters will be prompted interactively during installation.
 
 #### Install fail2ban (optional)
 https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-fail2ban-on-ubuntu-22-04
