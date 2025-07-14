@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/lenneTech/deploy.party/compare/v1.17.0...v1.18.0) (2025-07-14)
+
+
+### Features
+
+* enhance install script with command line arguments and interactive prompts ([f211a0c](https://github.com/lenneTech/deploy.party/commit/f211a0c171efebdb0f33164c82c8a42380c7efa4))
+
 # [1.17.0](https://github.com/lenneTech/deploy.party/compare/v1.16.1...v1.17.0) (2025-07-10)
 
 
