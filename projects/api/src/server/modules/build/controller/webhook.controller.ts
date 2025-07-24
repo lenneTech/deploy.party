@@ -4,6 +4,8 @@ import {BuildService} from '../build.service';
 import {ContainerStatus} from "../../container/enums/container-status.enum";
 import {ProjectService} from "../../project/project.service";
 import {WebPushService} from "../../web-push/web-push.service";
+import {DeploymentType} from "../../container/enums/deployment-type.enum";
+import {TagMatchType} from "../../container/enums/tag-match-type.enum";
 
 @Controller('webhook')
 export class WebhookController {
@@ -46,6 +48,14 @@ export class WebhookController {
       // check if container is auto deploy
       if (!container.autoDeploy) {
         continue;
+      }
+
+      // Refresh container tag if deployment type is TAG and tag match type is PATTERN
+      if (container.deploymentType === DeploymentType.TAG && container.tagMatchType === TagMatchType.PATTERN) {
+        await this.containerService.update(container.id, {
+          tag: input.tag,
+        }, {force: true});
+        container.tag = input.tag;
       }
 
       // check if container is draft, stopped or stopped by system and skip
