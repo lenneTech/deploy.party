@@ -332,7 +332,7 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     }, null, {populate: 'source'}).exec();
 
     // Filter pattern containers by matching pattern
-    const matchingPatternContainers = patternTagContainers.filter(container => 
+    const matchingPatternContainers = patternTagContainers.filter(container =>
       this.matchesTagPattern(source, container.tagPattern)
     );
 
@@ -352,23 +352,23 @@ export class ContainerService extends CrudService<Container> implements OnApplic
 
     // Handle special patterns with character classes and regex anchors
     let regexPattern = pattern;
-    
+
     // Check if pattern already ends with $ (regex anchor)
     const hasEndAnchor = regexPattern.endsWith('$');
     if (hasEndAnchor) {
       regexPattern = regexPattern.slice(0, -1); // Remove $ temporarily
     }
-    
+
     // Convert character classes like [0-9] and + quantifiers to proper regex
     // Don't escape [], +, or $ when they're part of regex syntax
     regexPattern = regexPattern
-      .replace(/[.^{}()|\\]/g, '\\$&')       // Escape special chars but keep [], +, $ 
+      .replace(/[.^{}()|\\]/g, '\\$&')       // Escape special chars but keep [], +, $
       .replace(/\*/g, '.*')                   // Replace * with .*
       .replace(/\?/g, '.');                   // Replace ? with .
 
     // Add anchors - ^ at start is always added, $ only if pattern had it or if no .* at end
-    const finalPattern = hasEndAnchor || !regexPattern.endsWith('.*') 
-      ? `^${regexPattern}$` 
+    const finalPattern = hasEndAnchor || !regexPattern.endsWith('.*')
+      ? `^${regexPattern}$`
       : `^${regexPattern}`;
 
     try {
@@ -441,14 +441,20 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     return await this.dockerService.deleteVolume(container);
   }
 
-  getContainerSource(container: Container) {
-    switch (container.deploymentType) {
-      case DeploymentType.BRANCH:
-        return container.branch;
-      case DeploymentType.TAG:
-        return container.tag;
-      default:
-        return '';
+  getContainerSource(container: Container, path = false) {
+    if (container.deploymentType === DeploymentType.BRANCH) {
+      return container.branch;
     }
+
+    if (container.deploymentType === DeploymentType.TAG && container.tagMatchType === TagMatchType.PATTERN) {
+      return path ? container.tag : container.tagPattern;
+    }
+
+    if (container.deploymentType === DeploymentType.TAG) {
+      return container.tag;
+    }
+
+    // Default case if no deployment type matches
+    return 'unknown';
   }
 }

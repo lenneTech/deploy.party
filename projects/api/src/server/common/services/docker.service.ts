@@ -409,7 +409,7 @@ REDIS_PASSWORD=
   }
 
   getPath(container: Container) {
-    const source = this.containerService.getContainerSource(container);
+    const source = this.containerService.getContainerSource(container, true);
     return `${envConfig.projectsDir}/${container.id}${source ? `/${source}` : ''}`;
   }
 
