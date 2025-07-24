@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/lenneTech/deploy.party/compare/v1.18.0...v1.19.0) (2025-07-24)
+
+
+### Features
+
+* add tag pattern support and skip CI patterns for container deployments ([2824317](https://github.com/lenneTech/deploy.party/commit/28243175d24826dbffcc4e140907fffb25e46205))
+
 # [1.18.0](https://github.com/lenneTech/deploy.party/compare/v1.17.0...v1.18.0) (2025-07-14)
 
 
