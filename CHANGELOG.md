@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/lenneTech/deploy.party/compare/v1.21.0...v1.22.0) (2025-07-24)
+
+
+### Features
+
+* enhance container source retrieval to support tag pattern matching ([7f20385](https://github.com/lenneTech/deploy.party/commit/7f20385b8775f1cd2b6bef6af2686c11cac3c6e2))
+
 # [1.21.0](https://github.com/lenneTech/deploy.party/compare/v1.20.0...v1.21.0) (2025-07-24)
 
 
