@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/lenneTech/deploy.party/compare/v1.22.0...v1.23.0) (2025-07-24)
+
+
+### Features
+
+* fix tag retrieval logic to correctly handle path condition for PATTERN match type ([26cc4dd](https://github.com/lenneTech/deploy.party/commit/26cc4ddbab4dfa356216bf610dcd8d50f4af91a1))
+
 # [1.22.0](https://github.com/lenneTech/deploy.party/compare/v1.21.0...v1.22.0) (2025-07-24)
 
 
