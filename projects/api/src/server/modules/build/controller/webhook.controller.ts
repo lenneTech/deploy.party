@@ -26,7 +26,7 @@ export class WebhookController {
     }
 
     // check if release is not create action
-    if (release && input?.object_attributes.action !== 'create') {
+    if (release && input?.action !== 'create') {
       return true;
     }
 

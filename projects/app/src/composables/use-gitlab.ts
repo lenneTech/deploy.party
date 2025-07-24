@@ -153,6 +153,7 @@ export function useGitlab(source: Source, loading = true) {
     const body: any = {
       merge_requests_events: true,
       push_events: true,
+      releases_events: true,
       url: config.public.apiUrl + '/webhook',
     };
 
