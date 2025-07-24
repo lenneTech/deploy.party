@@ -22,6 +22,7 @@ import {ContainerHealthStatus} from "./enums/container-health-status.enum";
 import {ContainerKind} from "./enums/container-kind.enum";
 import {ContainerType} from "./enums/container-type.enum";
 import {DeploymentType} from "./enums/deployment-type.enum";
+import {TagMatchType} from "./enums/tag-match-type.enum";
 
 /**
  * Container service
@@ -303,13 +304,80 @@ export class ContainerService extends CrudService<Container> implements OnApplic
   }
 
   async getContainerForWebhook(id: string, source: string): Promise<Container[]> {
-    const containers = await this.containerModel.find({$and: [{repositoryId: id}, {$or: [{branch: source}, {tag: source}]}]}, null, {populate: 'source'}).exec();
+    // Find containers for branch deployments (existing behavior)
+    const branchContainers = await this.containerModel.find({
+      repositoryId: id,
+      deploymentType: DeploymentType.BRANCH,
+      branch: source
+    }, null, {populate: 'source'}).exec();
 
-    if (!containers.length) {
+    // Find containers for exact tag matching (existing behavior)
+    const exactTagContainers = await this.containerModel.find({
+      repositoryId: id,
+      deploymentType: DeploymentType.TAG,
+      $or: [
+        { tagMatchType: TagMatchType.EXACT },
+        { tagMatchType: { $exists: false } }, // null for backward compatibility
+        { tagMatchType: null }
+      ],
+      tag: source
+    }, null, {populate: 'source'}).exec();
+
+    // Find containers for tag pattern matching (new functionality)
+    const patternTagContainers = await this.containerModel.find({
+      repositoryId: id,
+      deploymentType: DeploymentType.TAG,
+      tagMatchType: TagMatchType.PATTERN,
+      tagPattern: { $exists: true, $ne: null }
+    }, null, {populate: 'source'}).exec();
+
+    // Filter pattern containers by matching pattern
+    const matchingPatternContainers = patternTagContainers.filter(container => 
+      this.matchesTagPattern(source, container.tagPattern)
+    );
+
+    const allContainers = [...branchContainers, ...exactTagContainers, ...matchingPatternContainers];
+
+    if (!allContainers.length) {
       throw new NotFoundException();
     }
 
-    return containers;
+    return allContainers;
+  }
+
+  private matchesTagPattern(tag: string, pattern: string): boolean {
+    if (!pattern || !tag) {
+      return false;
+    }
+
+    // Handle special patterns with character classes and regex anchors
+    let regexPattern = pattern;
+    
+    // Check if pattern already ends with $ (regex anchor)
+    const hasEndAnchor = regexPattern.endsWith('$');
+    if (hasEndAnchor) {
+      regexPattern = regexPattern.slice(0, -1); // Remove $ temporarily
+    }
+    
+    // Convert character classes like [0-9] and + quantifiers to proper regex
+    // Don't escape [], +, or $ when they're part of regex syntax
+    regexPattern = regexPattern
+      .replace(/[.^{}()|\\]/g, '\\$&')       // Escape special chars but keep [], +, $ 
+      .replace(/\*/g, '.*')                   // Replace * with .*
+      .replace(/\?/g, '.');                   // Replace ? with .
+
+    // Add anchors - ^ at start is always added, $ only if pattern had it or if no .* at end
+    const finalPattern = hasEndAnchor || !regexPattern.endsWith('.*') 
+      ? `^${regexPattern}$` 
+      : `^${regexPattern}`;
+
+    try {
+      const regex = new RegExp(finalPattern);
+      return regex.test(tag);
+    } catch (error) {
+      console.error(`Invalid tag pattern: ${pattern}`, error);
+      return false;
+    }
   }
 
   async findContainersForProject(projectId: string, serviceOptions?: ServiceOptions): Promise<Container[]> {

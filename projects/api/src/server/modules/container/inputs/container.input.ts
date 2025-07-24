@@ -8,6 +8,7 @@ import {DatabaseType} from "../enums/database-type.enum";
 import {ServiceType} from "../enums/service-type.enum";
 import {AllContainerTypes} from "../enums/all-container-types.enum";
 import {DeploymentType} from "../enums/deployment-type.enum";
+import {TagMatchType} from "../enums/tag-match-type.enum";
 import {ContainerVolumeInput} from './container-volume.input';
 
 /**
@@ -188,6 +189,22 @@ export class ContainerInput extends CoreInput {
   deploymentType?: DeploymentType = undefined;
 
   @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => TagMatchType, {
+    description: 'tagMatchType of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  tagMatchType?: TagMatchType = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => String, {
+    description: 'tagPattern of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  tagPattern?: string = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => AllContainerTypes, {
     description: 'Type of Container',
     nullable: true,
@@ -285,4 +302,12 @@ export class ContainerInput extends CoreInput {
   })
   @IsOptional()
   volumes?: ContainerVolumeInput[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Skip CI patterns for this container',
+    nullable: true,
+  })
+  @IsOptional()
+  skipCiPatterns?: string[] = undefined;
 }

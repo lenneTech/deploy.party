@@ -15,6 +15,7 @@ import {ContainerHealthStatus} from "./enums/container-health-status.enum";
 import {Build} from "../build/build.model";
 import {Source} from "../source/source.model";
 import {DeploymentType} from "./enums/deployment-type.enum";
+import {TagMatchType} from "./enums/tag-match-type.enum";
 import {ContainerVolume} from "./container-volume.model";
 
 export type ContainerDocument = Container & Document;
@@ -97,6 +98,22 @@ export class Container extends PersistenceModel {
   })
   @Prop({default: DeploymentType.BRANCH})
   deploymentType: DeploymentType = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => TagMatchType, {
+    description: 'tagMatchType of Container',
+    nullable: true,
+  })
+  @Prop({default: TagMatchType.EXACT})
+  tagMatchType?: TagMatchType = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => String, {
+    description: 'tagPattern of Container',
+    nullable: true,
+  })
+  @Prop()
+  tagPattern?: string = undefined;
 
   @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => ContainerHealthStatus, {
@@ -324,6 +341,15 @@ export class Container extends PersistenceModel {
   @Field(() => [ContainerVolume], { description: 'Volumes of container', nullable: true })
   @Prop()
   volumes?: ContainerVolume[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Skip CI patterns for this container',
+    nullable: true,
+  })
+  @Prop({ default: ['[skip ci]', '[ci skip]', '[no ci]', '[skip build]'] })
+  skipCiPatterns?: string[] = undefined;
+
   // ===================================================================================================================
   // Methods
   // ===================================================================================================================

@@ -8,6 +8,7 @@ import {DatabaseType} from "../enums/database-type.enum";
 import {ServiceType} from "../enums/service-type.enum";
 import {AllContainerTypes} from "../enums/all-container-types.enum";
 import {DeploymentType} from "../enums/deployment-type.enum";
+import {TagMatchType} from "../enums/tag-match-type.enum";
 import {ContainerVolumeInput} from "./container-volume.input";
 
 /**
@@ -55,6 +56,22 @@ export class ContainerCreateInput extends ContainerInput {
   })
   @IsOptional()
   override deploymentType?: DeploymentType = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => TagMatchType, {
+    description: 'tagMatchType of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  override tagMatchType?: TagMatchType = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => String, {
+    description: 'tagPattern of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  override tagPattern?: string = undefined;
 
   @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => String, {
@@ -246,4 +263,12 @@ export class ContainerCreateInput extends ContainerInput {
   })
   @IsOptional()
   override volumes?: ContainerVolumeInput[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Skip CI patterns for this container',
+    nullable: true,
+  })
+  @IsOptional()
+  override skipCiPatterns?: string[] = undefined;
 }

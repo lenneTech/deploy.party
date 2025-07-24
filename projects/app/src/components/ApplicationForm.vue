@@ -46,6 +46,50 @@ const deploymentTypeOptions = [
   { label: 'Branch', value: 'BRANCH' },
   { label: 'Tag', value: 'TAG' },
 ];
+
+const tagMatchTypeOptions = [
+  { label: 'Specific Tag', value: 'EXACT' },
+  { label: 'Tag Pattern', value: 'PATTERN' },
+];
+
+const tagPatternTemplates = [
+  {
+    description: 'Matches tags ending with .dev (e.g., v1.0.0-dev.1, v2.1.0-dev.3)',
+    icon: '🔧',
+    label: 'Development Tags',
+    value: '*-dev*',
+  },
+  {
+    description: 'Matches tags containing -test (e.g., v1.0.0-test, v2.1.0-test.1)',
+    icon: '🧪',
+    label: 'Test/Staging Tags',
+    value: '*-test*',
+  },
+  {
+    description: 'Matches production version tags without suffixes (e.g., v1.0.0, v2.1.0, but not v1.0.0-dev)',
+    icon: '🚀',
+    label: 'Production Tags',
+    value: 'v[0-9]+.[0-9]+.[0-9]+$',
+  },
+  {
+    description: 'Matches release candidate tags (e.g., v1.0.0-rc.1, v2.0.0-rc.2)',
+    icon: '🎯',
+    label: 'Release Candidates',
+    value: '*-rc*',
+  },
+  {
+    description: 'Matches beta version tags (e.g., v1.0.0-beta.1, v2.0.0-beta)',
+    icon: '🔄',
+    label: 'Beta Releases',
+    value: '*-beta*',
+  },
+  {
+    description: 'Matches alpha version tags (e.g., v1.0.0-alpha.1, v2.0.0-alpha)',
+    icon: '⚡',
+    label: 'Alpha Releases',
+    value: '*-alpha*',
+  },
+];
 let selectedSourceId: string | undefined = '';
 let selectedRepositoryId: string | undefined = '';
 
@@ -77,12 +121,15 @@ const baseFormSchema = object({
     id: string(),
   }).nullable(),
   repositoryId: string().nullable(),
+  skipCiPatterns: array().of(string()).default(['[skip ci]', '[ci skip]', '[no ci]', '[skip build]']).nullable(),
   source: object({
     id: string(),
   }).nullable(),
   ssl: boolean().nullable(),
   startCmd: string().default('npm run start').nullable(),
   tag: string().nullable(),
+  tagMatchType: string().nullable(),
+  tagPattern: string().nullable(),
   type: string().default('NODE'),
   url: string().nullable(),
   volumes: array()
@@ -107,11 +154,16 @@ const {
   meta,
   resetForm,
   setFieldTouched,
+  setFieldValue,
   validate,
 } = useForm({
   initialValues: props.container as any,
   validationSchema: formSchema,
 });
+
+function applyTagPatternTemplate(pattern: string) {
+  setFieldValue('tagPattern', pattern);
+}
 
 watch(
   () => props.tab,
@@ -511,25 +563,129 @@ async function submit() {
           </template>
         </FormRow>
 
-        <FormRow v-if="values.deploymentType === 'TAG'">
-          <template #label> Tag </template>
-          <template #help> Select the released tag to be deployed </template>
-          <template #default>
-            <FormSelect
-              name="tag"
-              class="w-full mx-auto max-w-2xl"
-              placeholder="Select a tag"
-              :options="tagOptions"
-              :loading="loadingGitlab"
-              :disabled="disabled || loadingGitlab"
-            />
-          </template>
-        </FormRow>
+        <template v-if="values.deploymentType === 'TAG'">
+          <FormRow>
+            <template #label> Tag matching type </template>
+            <template #help> Choose how tags should be matched for deployment </template>
+            <template #default>
+              <FormSelect
+                name="tagMatchType"
+                class="w-full mx-auto max-w-2xl"
+                placeholder="Select tag matching type"
+                :options="tagMatchTypeOptions"
+                :disabled="disabled"
+              />
+            </template>
+          </FormRow>
+
+          <FormRow v-if="values.tagMatchType === 'EXACT'">
+            <template #label> Tag </template>
+            <template #help> Select the specific tag to be deployed </template>
+            <template #default>
+              <FormSelect
+                name="tag"
+                class="w-full mx-auto max-w-2xl"
+                placeholder="Select a tag"
+                :options="tagOptions"
+                :loading="loadingGitlab"
+                :disabled="disabled || loadingGitlab"
+              />
+            </template>
+          </FormRow>
+
+          <FormRow v-if="values.tagMatchType === 'PATTERN'">
+            <template #label> Tag pattern </template>
+            <template #help>
+              Enter a pattern to match tags automatically or choose from common templates below.
+            </template>
+            <template #default>
+              <div class="w-full mx-auto max-w-2xl space-y-4">
+                <FormInput name="tagPattern" type="text" placeholder="e.g., *.dev or v*-dev.*" :disabled="disabled" />
+
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-300">Quick templates:</label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <button
+                      v-for="template in tagPatternTemplates"
+                      :key="template.value"
+                      type="button"
+                      class="flex items-start p-3 text-left border border-white/10 rounded-lg hover:border-white/20 hover:bg-white/5 transition-colors group"
+                      :disabled="disabled"
+                      @click="applyTagPatternTemplate(template.value)"
+                    >
+                      <span class="text-lg mr-3 group-hover:scale-110 transition-transform">{{ template.icon }}</span>
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-white">{{ template.label }}</div>
+                        <div class="text-xs text-gray-400 mt-1">{{ template.value }}</div>
+                        <div class="text-xs text-gray-500 mt-1 leading-tight">{{ template.description }}</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </FormRow>
+        </template>
 
         <FormRow>
           <template #label> Enable auto deploy </template>
           <template #default>
             <FormToggle name="autoDeploy" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Skip CI Patterns </template>
+          <template #help>
+            Configure patterns that will skip CI/deployment when found in commits, tags, or release descriptions
+          </template>
+          <template #default>
+            <FieldArray v-slot="{ fields, push, remove }" name="skipCiPatterns">
+              <div class="w-full mx-auto max-w-2xl space-y-3">
+                <div v-for="(field, idx) in fields" :key="field.key" class="flex items-end gap-2">
+                  <FormInput
+                    :name="`skipCiPatterns[${idx}]`"
+                    type="text"
+                    placeholder="e.g., [skip ci] or [no deploy]"
+                    class="flex-1"
+                    :disabled="disabled"
+                  />
+
+                  <button type="button" :disabled="disabled" class="pb-3 px-3" @click.prevent="remove(idx)">
+                    <span class="i-bi-trash text-md self-end text-red-500"></span>
+                  </button>
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                  <BaseButton variant="outline" size="sm" :disabled="disabled" @click.prevent="push('')">
+                    Add Pattern
+                  </BaseButton>
+
+                  <BaseButton
+                    variant="outline"
+                    size="sm"
+                    :disabled="disabled"
+                    @click.prevent="
+                      () => {
+                        // Reset to defaults
+                        setFieldValue('skipCiPatterns', ['[skip ci]', '[ci skip]', '[no ci]', '[skip build]']);
+                      }
+                    "
+                  >
+                    Reset to Defaults
+                  </BaseButton>
+                </div>
+
+                <div class="text-xs text-gray-400 bg-gray-800/30 p-3 rounded border border-white/5">
+                  <div class="font-medium mb-1">Common patterns:</div>
+                  <div class="space-y-1">
+                    <div><code>[skip ci]</code> - Standard skip pattern</div>
+                    <div><code>[no deploy]</code> - Custom skip for deployments</div>
+                    <div><code>semantic-release-skip</code> - For semantic-release tools</div>
+                  </div>
+                </div>
+              </div>
+            </FieldArray>
           </template>
         </FormRow>
       </template>
