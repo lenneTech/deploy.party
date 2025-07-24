@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/lenneTech/deploy.party/compare/v1.19.0...v1.20.0) (2025-07-24)
+
+
+### Features
+
+* add support for release events in GitLab webhook configuration ([b8410c0](https://github.com/lenneTech/deploy.party/commit/b8410c05aecff17a0aef5fa9df5fa5b993ad5603))
+
 # [1.19.0](https://github.com/lenneTech/deploy.party/compare/v1.18.0...v1.19.0) (2025-07-24)
 
 
