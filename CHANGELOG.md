@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/lenneTech/deploy.party/compare/v1.20.0...v1.21.0) (2025-07-24)
+
+
+### Features
+
+* refresh container tag for TAG deployment type with PATTERN match type ([1407528](https://github.com/lenneTech/deploy.party/commit/140752845d6b9b20071e1f876d76373e4ffb6aa3))
+
 # [1.20.0](https://github.com/lenneTech/deploy.party/compare/v1.19.0...v1.20.0) (2025-07-24)
 
 
