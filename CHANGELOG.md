@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/lenneTech/deploy.party/compare/v1.24.0...v1.25.0) (2025-07-24)
+
+
+### Features
+
+* update tag pattern handling to sanitize special characters for path-like format ([d3a5cac](https://github.com/lenneTech/deploy.party/commit/d3a5cac660a675716f7e5bcd8fbb146fb943116a))
+
 # [1.24.0](https://github.com/lenneTech/deploy.party/compare/v1.23.0...v1.24.0) (2025-07-24)
 
 
