@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/lenneTech/deploy.party/compare/v1.23.0...v1.24.0) (2025-07-24)
+
+
+### Features
+
+* update tag pattern handling to normalize regex for container deployments ([ddb458d](https://github.com/lenneTech/deploy.party/commit/ddb458da4f50915fcf2eeaf01aabb30d14d87d41))
+
 # [1.23.0](https://github.com/lenneTech/deploy.party/compare/v1.22.0...v1.23.0) (2025-07-24)
 
 
