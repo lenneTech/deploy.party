@@ -447,7 +447,14 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     }
 
     if (container.deploymentType === DeploymentType.TAG && container.tagMatchType === TagMatchType.PATTERN) {
-      return !path ? container.tag : container.tagPattern.replace(/^\^|\$$/g, '').replace(/\.\*/g, '*').replace(/\./g, '/');
+      if (!path) {
+        return container.tag;
+      } else {
+        // Convert tag pattern to a path-like format
+        const pattern = container.tagPattern;
+        // remove all special characters except alphanumeric, underscore, and hyphen
+        return pattern.replace(/[^a-zA-Z0-9_-]/g, '_');
+      }
     }
 
     if (container.deploymentType === DeploymentType.TAG) {
