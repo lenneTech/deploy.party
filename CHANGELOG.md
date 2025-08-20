@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/lenneTech/deploy.party/compare/v1.26.0...v1.26.1) (2025-08-20)
+
+
+### Bug Fixes
+
+* remove unnecessary newline characters in environment variable section of install script ([9b0d0a2](https://github.com/lenneTech/deploy.party/commit/9b0d0a278cda34f04d23d36ac737ede6367e71c3))
+
 # [1.26.0](https://github.com/lenneTech/deploy.party/compare/v1.25.0...v1.26.0) (2025-08-20)
 
 
