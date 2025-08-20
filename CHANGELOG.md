@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/lenneTech/deploy.party/compare/v1.25.0...v1.26.0) (2025-08-20)
+
+
+### Features
+
+* auto-detect production mode in install script and update README for bash usage ([7cb5093](https://github.com/lenneTech/deploy.party/commit/7cb50930db956912190bbd808b5eb8b4da80d3ba))
+
 # [1.25.0](https://github.com/lenneTech/deploy.party/compare/v1.24.0...v1.25.0) (2025-07-24)
 
 
