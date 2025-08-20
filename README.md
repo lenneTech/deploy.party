@@ -28,7 +28,7 @@ ssh root@SERVER_IP
 
 ### Interactive Installation
 ```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/install.sh)"
 ```
 
 ### Automated Installation

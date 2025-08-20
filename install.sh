@@ -83,6 +83,11 @@ if [ $OS_TYPE != "ubuntu" ] && [ $OS_TYPE != "debian" ]; then
     exit
 fi
 
+# Auto-detect production mode if URL and EMAIL are provided
+if [ -n "$URL" ] && [ -n "$EMAIL" ] && [ $LOCAL_SETUP -eq 0 ]; then
+    LOCAL="N"
+fi
+
 # Interactive prompts for missing parameters
 if [ -z "$LOCAL" ]; then
     read -p "Run deploy.party local? (Y/N) " LOCAL
@@ -179,10 +184,22 @@ curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/reconfigure.
 curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/update.sh" >> $INSTALL_PATH/update.sh
 echo "--------------------------------------------------------------------------------"
 echo "Init docker swarm..."
-docker swarm init
+# Check if Docker Swarm is already initialized
+if ! docker info --format '{{.Swarm.LocalNodeState}}' | grep -q 'active'; then
+    echo "Initializing Docker Swarm..."
+    docker swarm init
+else
+    echo "Docker Swarm already initialized, skipping..."
+fi
+
 export NODE_ID=$(docker info -f '{{.Swarm.NodeID}}')
-docker node update --label-add traefik-public.traefik-public-certificates=true $NODE_ID
-echo "Congratulations! Docker is installed."
+# Check if node already has the traefik label
+if ! docker node inspect $NODE_ID --format '{{.Spec.Labels}}' | grep -q 'traefik-public.traefik-public-certificates'; then
+    docker node update --label-add traefik-public.traefik-public-certificates=true $NODE_ID
+else
+    echo "Traefik label already set on node, skipping..."
+fi
+echo "Congratulations! Docker is configured."
 
 echo "--------------------------------------------------------------------------------"
 echo "Generate keys..."
@@ -288,18 +305,45 @@ fi
 
 echo "--------------------------------------------------------------------------------"
 echo "Start registry"
-docker run -d -p 5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='true' --name registry registry:2
+# Check if registry container already exists
+if ! docker ps -a --format '{{.Names}}' | grep -q '^registry$'; then
+    echo "Starting Docker registry..."
+    docker run -d -p 5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='true' --name registry registry:2
+else
+    echo "Registry container already exists, ensuring it's running..."
+    docker start registry 2>/dev/null || true
+fi
 
 echo "--------------------------------------------------------------------------------"
 echo "Start traefik"
-docker network create --driver=overlay traefik-public
+# Check if traefik-public network already exists
+if ! docker network ls --format '{{.Name}}' | grep -q '^traefik-public$'; then
+    echo "Creating traefik-public network..."
+    docker network create --driver=overlay traefik-public
+else
+    echo "traefik-public network already exists, skipping..."
+fi
+
+# Deploy or update traefik stack
+echo "Deploying traefik stack..."
 docker stack deploy -c $INSTALL_PATH/docker-compose.traefik.yml traefik
 
 echo "--------------------------------------------------------------------------------"
 echo "Start deploy.party"
-docker network create --driver=overlay deploy-party
+# Check if deploy-party network already exists
+if ! docker network ls --format '{{.Name}}' | grep -q '^deploy-party$'; then
+    echo "Creating deploy-party network..."
+    docker network create --driver=overlay deploy-party
+else
+    echo "deploy-party network already exists, skipping..."
+fi
+
+echo "Pulling latest images..."
 docker pull ghcr.io/lennetech/deploy.party/app:latest
 docker pull ghcr.io/lennetech/deploy.party/api:latest
+
+# Deploy or update deploy-party stack
+echo "Deploying deploy-party stack..."
 docker stack deploy -c $INSTALL_PATH/docker-compose.yml deploy-party
 
 
