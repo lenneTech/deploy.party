@@ -185,7 +185,8 @@ curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/update.sh" >
 echo "--------------------------------------------------------------------------------"
 echo "Init docker swarm..."
 # Check if Docker Swarm is already initialized
-if ! docker info --format '{{.Swarm.LocalNodeState}}' | grep -q 'active'; then
+SWARM_STATE=$(sudo docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null)
+if [ "$SWARM_STATE" != "active" ]; then
     echo "Initializing Docker Swarm..."
     docker swarm init
 else
