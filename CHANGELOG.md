@@ -1,3 +1,10 @@
+## [1.26.2](https://github.com/lenneTech/deploy.party/compare/v1.26.1...v1.26.2) (2025-08-25)
+
+
+### Bug Fixes
+
+* **DEV-652:** improve Docker Swarm initialization check in install script ([af46e4b](https://github.com/lenneTech/deploy.party/commit/af46e4b7a2259e1899ff7144c9753f40cd71c19b))
+
 ## [1.26.1](https://github.com/lenneTech/deploy.party/compare/v1.26.0...v1.26.1) (2025-08-20)
 
 
