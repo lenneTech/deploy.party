@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/lenneTech/deploy.party/compare/v1.26.2...v1.27.0) (2025-09-01)
+
+
+### Features
+
+* **DEV-673:** add custom test reporter for enhanced test results overview ([afc116d](https://github.com/lenneTech/deploy.party/commit/afc116d2fceaeac42abb760fb5e2175b7f9da049))
+
 ## [1.26.2](https://github.com/lenneTech/deploy.party/compare/v1.26.1...v1.26.2) (2025-08-25)
 
 
