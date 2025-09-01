@@ -3,6 +3,7 @@ import {registerEnumType} from '@nestjs/graphql';
 export enum BackupType {
   VOLUME = 'VOLUME',
   DATABASE = 'DATABASE',
+  SERVICE = 'SERVICE',
 }
 
 registerEnumType(BackupType, {

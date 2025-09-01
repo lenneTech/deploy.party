@@ -2,6 +2,7 @@ import {Restricted, RoleEnum} from '@lenne.tech/nest-server';
 import {Field, InputType} from '@nestjs/graphql';
 import {IsOptional} from 'class-validator';
 import {BackupInput} from './backup.input';
+import {BackupType} from '../enum/backup-type.enum';
 
 
 /**
@@ -110,4 +111,12 @@ export class BackupCreateInput extends BackupInput {
   })
   @IsOptional()
   override maxBackups?: number = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => BackupType, {
+    description: 'Type of backup',
+    nullable: true,
+  })
+  @IsOptional()
+  override type?: BackupType = undefined;
 }

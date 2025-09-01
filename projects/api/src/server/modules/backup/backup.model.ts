@@ -5,6 +5,7 @@ import {Document, Schema} from 'mongoose';
 import {PersistenceModel} from '../../common/models/persistence.model';
 import {User} from '../user/user.model';
 import {Container} from "../container/container.model";
+import {BackupType} from "./enum/backup-type.enum";
 
 export type BackupDocument = Backup & Document;
 
@@ -135,6 +136,14 @@ export class Backup extends PersistenceModel {
   @Field({ description: 'Last backup date', nullable: true })
   @Prop()
   maxBackups: number = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => BackupType, {
+    description: 'Type of backup',
+    nullable: true,
+  })
+  @Prop({ default: BackupType.VOLUME })
+  type: BackupType = undefined;
   // ===================================================================================================================
   // Methods
   // ===================================================================================================================

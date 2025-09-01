@@ -3,7 +3,7 @@ import { toTypedSchema } from '@vee-validate/yup';
 import { useForm } from 'vee-validate';
 import { boolean, object, string } from 'yup';
 
-import type { Backup, BackupCreateInput, BackupInput, Container } from '~/base/default';
+import type { AllContainerTypes, Backup, BackupCreateInput, BackupInput, Container } from '~/base/default';
 
 import {
   useAsyncGetBackupByDatabaseQuery,
@@ -12,6 +12,7 @@ import {
   useRestoreBackupMutation,
   useUpdateBackupMutation,
 } from '~/base';
+import { BackupType, ContainerKind } from '~/base/default';
 import FormRow from '~/components/FormRow.vue';
 import ModalBackupLog from '~/components/Modals/ModalBackupLog.vue';
 import ModalRestoreLog from '~/components/Modals/ModalRestoreLog.vue';
@@ -45,6 +46,58 @@ const selectedBackup = ref(undefined);
 const inputFile = ref<HTMLElement>();
 const backupOptions = ref<{ label: string; value: string }[]>([]);
 const loading = ref(false);
+
+// Determine the appropriate backup type based on container type
+const defaultBackupType = computed(() => {
+  if (!container.value) {
+    return BackupType.VOLUME;
+  }
+
+  // For service containers like Directus, default to SERVICE backup
+  if (container.value.kind === ContainerKind.SERVICE) {
+    return BackupType.SERVICE;
+  }
+
+  // For database containers, default to DATABASE backup
+  if (container.value.kind === ContainerKind.DATABASE) {
+    return BackupType.DATABASE;
+  }
+
+  // For application containers, default to VOLUME backup
+  return BackupType.VOLUME;
+});
+
+// Available backup type options based on container type
+const backupTypeOptions = computed(() => {
+  if (!container.value) {
+    return [];
+  }
+
+  const options = [];
+
+  if (container.value.kind === ContainerKind.SERVICE) {
+    // Services can use SERVICE backup (multi-container) or VOLUME backup
+    options.push({ label: 'Service Backup (Multi-Container)', value: BackupType.SERVICE });
+    options.push({ label: 'Volume Backup', value: BackupType.VOLUME });
+  } else if (container.value.kind === ContainerKind.DATABASE) {
+    // Databases can use DATABASE or VOLUME backup
+    options.push({ label: 'Database Backup', value: BackupType.DATABASE });
+    options.push({ label: 'Volume Backup', value: BackupType.VOLUME });
+  } else {
+    // Applications only support VOLUME backup
+    options.push({ label: 'Volume Backup', value: BackupType.VOLUME });
+  }
+
+  return options;
+});
+
+// Show type selection based on container type
+const showTypeSelection = computed(() => {
+  return (
+    container.value &&
+    (container.value.kind === ContainerKind.SERVICE || container.value.kind === ContainerKind.DATABASE)
+  );
+});
 
 const formSchema = toTypedSchema(
   object({
@@ -86,6 +139,7 @@ const formSchema = toTypedSchema(
         is: true,
         then: (schema) => schema.required(),
       }),
+    type: string().nullable(),
   }),
 );
 
@@ -96,8 +150,17 @@ const {
   resetForm,
   validate,
 } = useForm({
-  initialValues: backup.value,
+  initialValues: {
+    ...backup.value,
+    type: backup.value?.type || defaultBackupType.value,
+  },
   validationSchema: formSchema,
+});
+
+// Show path field based on backup type (needs to be after form definition)
+const showPathField = computed(() => {
+  const currentType = values.value?.type || defaultBackupType.value;
+  return currentType === BackupType.VOLUME;
 });
 
 watchDebounced(
@@ -111,7 +174,12 @@ watchDebounced(
 watch(
   () => backup.value,
   () => {
-    resetForm({ values: backup.value });
+    resetForm({
+      values: {
+        ...backup.value,
+        type: backup.value?.type || defaultBackupType.value,
+      },
+    });
   },
 );
 
@@ -190,6 +258,16 @@ function timeAgo(date: string) {
   return useTimeAgo(new Date(date)).value;
 }
 
+function handleRestore() {
+  const currentType = backup.value?.type || defaultBackupType.value;
+
+  if (currentType === BackupType.DATABASE || currentType === BackupType.SERVICE) {
+    restore();
+  } else {
+    restoreVolume();
+  }
+}
+
 async function restore() {
   if (!selectedBackup.value || !route.params.containerId) {
     return;
@@ -264,11 +342,16 @@ async function uploadBackup(e: any) {
 
 <template>
   <div class="w-full dark:text-white">
-    <div class="w-full m-2 p-2 border border-amber-500 text-white rounded-lg flex items-center gap-3 justify-center">
-      <i class="i-bi-exclamation-triangle text-amber-500 text-xl"></i>
-      <span class="text-amber-500 text-sm"
-        >AWS Cli needs to installed inside the container. Please check your Dockerfile!</span
-      >
+    <div
+      v-if="container?.kind === ContainerKind.SERVICE"
+      class="w-full m-2 p-2 border border-blue-500 text-white rounded-lg flex items-center gap-3 justify-start"
+    >
+      <i class="i-bi-info-circle text-blue-500 text-xl"></i>
+      <div class="text-blue-500 text-sm">
+        <p class="font-semibold">Service Backup Info:</p>
+        <p>• <strong>Service Backup:</strong> Backs up all containers and data (databases, uploads, etc.)</p>
+        <p>• <strong>Volume Backup:</strong> Backs up only the specified path from the main container</p>
+      </div>
     </div>
     <div
       class="border-b border-white/10 pb-4 pt-4 text-sm text-light text-secondary-100/50 flex items-end justify-between"
@@ -287,7 +370,7 @@ async function uploadBackup(e: any) {
           class="mb-2"
           variant="outline"
           :disabled="loading"
-          @click="container?.kind === ContainerKind.DATABASE ? restore() : restoreVolume()"
+          @click="handleRestore()"
         >
           Restore
         </BaseButton>
@@ -310,10 +393,19 @@ async function uploadBackup(e: any) {
       <div class="space-y-8 border-b border-border pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:pb-0">
         <FormRow>
           <template #label> Enable </template>
-          <template #help> Activate backup for this database. </template>
+          <template #help> Activate backup for this container. </template>
           <template #default>
             <div class="flex items-center w-full">
               <FormToggle name="active" class="mx-auto" />
+            </div>
+          </template>
+        </FormRow>
+        <FormRow v-if="showTypeSelection">
+          <template #label> Backup Type </template>
+          <template #help> Choose the backup strategy for this container. </template>
+          <template #default>
+            <div class="flex items-center w-full">
+              <FormSelect name="type" class="w-full mx-auto max-w-2xl" :options="backupTypeOptions" />
             </div>
           </template>
         </FormRow>
@@ -330,9 +422,9 @@ async function uploadBackup(e: any) {
             </div>
           </template>
         </FormRow>
-        <FormRow v-if="container?.kind !== ContainerKind.DATABASE">
+        <FormRow v-if="showPathField">
           <template #label> Path </template>
-          <template #help> File path to backup </template>
+          <template #help> File path to backup (only required for volume backups) </template>
           <template #default>
             <div class="flex items-center w-full">
               <FormInput name="path" class="w-full mx-auto max-w-2xl" type="text" />

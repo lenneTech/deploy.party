@@ -20,6 +20,8 @@ import {ContainerKind} from "../container/enums/container-kind.enum";
 import {Agent} from 'https';
 import axios from "axios";
 import {BackupStatus} from "./enum/backup-status.enum";
+import {BackupType} from "./enum/backup-type.enum";
+import {SERVICE_BACKUP_CONFIGS, SupportedBackupServices} from "./types/service-backup-config.interface";
 
 /**
  * Backup service
@@ -212,7 +214,17 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       return;
     }
 
-    if (container.kind !== ContainerKind.DATABASE) {
+    // Handle SERVICE type backups
+    if (backup?.type === BackupType.SERVICE) {
+      await this.backupService(backup, additionalInfos);
+      return;
+    }
+
+    // Handle DATABASE type backups or legacy backups (no type) for database containers
+    if (backup?.type === BackupType.DATABASE || (backup?.type == null && container.kind === ContainerKind.DATABASE)) {
+      // Continue with existing database backup logic below
+    } else if (backup?.type === BackupType.VOLUME || (backup?.type == null && container.kind !== ContainerKind.DATABASE)) {
+      // Handle volume backups (including legacy backups for non-database containers)
       await this.backupVolume(backup);
       return;
     }
@@ -320,6 +332,217 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     });
 
     return;
+  }
+
+  async backupService(backup: Backup, additionalInfos?: {callbackUrl?: string}) {
+    console.debug(`Service backup for ${backup.id} started at ${new Date().toISOString()}`);
+    const startTime = new Date().getTime();
+    const container = await this.containerService.get(getStringIds(backup.container));
+
+    if (!container || container.status !== ContainerStatus.DEPLOYED) {
+      return;
+    }
+
+    const project = await this.projectService.getProjectByContainer(container);
+    const serviceName = container.type as keyof typeof SupportedBackupServices;
+    const serviceConfig = SERVICE_BACKUP_CONFIGS[serviceName];
+
+    if (!serviceConfig) {
+      console.error(`No backup configuration found for service type: ${container.type}`);
+      return;
+    }
+
+    const fileName = `${getStringIds(container.id)}-${new Date().toISOString().replace(/[:|.]/g, "-")}`;
+    const folderName = `${project.name.toLowerCase().replace(/\s/g, "_")}-${container.type}`;
+
+    // Get all Docker service containers for this deployment
+    const serviceContainers = await this.dockerService.getServiceContainers(getStringIds(container.id));
+
+    const backupPromises = [];
+
+    for (const target of serviceConfig.backupTargets) {
+      const targetContainer = serviceContainers.find(sc => sc.Names[0].includes(target.containerName));
+
+      if (!targetContainer) {
+        console.error(`Container ${target.containerName} not found for service ${serviceName}`);
+        continue;
+      }
+
+      const dockerId = targetContainer.Id;
+      const targetFileName = `${target.containerName}-${fileName}`;
+
+      if (target.type === 'DATABASE') {
+        backupPromises.push(this.backupServiceDatabase(backup, dockerId, targetFileName, target.dbType, folderName));
+      } else if (target.type === 'VOLUME' && target.path) {
+        backupPromises.push(this.backupServiceVolume(backup, dockerId, targetFileName, target.path, folderName));
+      }
+    }
+
+    try {
+      await Promise.all(backupPromises);
+
+      if (additionalInfos?.callbackUrl) {
+        const endTime = new Date().getTime();
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.SUCCEEDED,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Service backup failed: ${error}`);
+
+      if (additionalInfos?.callbackUrl) {
+        const endTime = new Date().getTime();
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
+      }
+    }
+  }
+
+  async backupServiceDatabase(backup: Backup, dockerId: string, fileName: string, dbType: string, folderName: string) {
+    let commands = [];
+
+    switch (dbType) {
+      case 'postgresql':
+        commands = [
+          'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client',
+          `aws configure set aws_access_key_id ${backup.key}`,
+          `aws configure set aws_secret_access_key ${backup.secret}`,
+          `aws configure set default.region ${backup.region}`,
+          `aws configure set verify_ssl false`,
+          `echo 'Start PostgreSQL dump'`,
+          `PGPASSWORD=directus pg_dump -h localhost -U directus -d directus > /tmp/${fileName}.sql`,
+          `echo 'Start zipping'`,
+          `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
+          `echo 'Start uploading'`,
+          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `echo 'Finished uploading'`,
+          `rm -rf /tmp/${fileName}.sql && rm -rf /tmp/${fileName}.tar.gz`,
+          `echo 'Finished'`,
+        ];
+        break;
+      case 'mongodb':
+        commands = [
+          'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
+          `aws configure set aws_access_key_id ${backup.key}`,
+          `aws configure set aws_secret_access_key ${backup.secret}`,
+          `aws configure set default.region ${backup.region}`,
+          `aws configure set verify_ssl false`,
+          `echo 'Start dumping'`,
+          `mongodump --uri="mongodb://localhost:27017" --out="/tmp/${fileName}"`,
+          `echo 'Start zipping'`,
+          `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}`,
+          `echo 'Start uploading'`,
+          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `echo 'Finished uploading'`,
+          `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
+          `echo 'Finished'`,
+        ];
+        break;
+      default:
+        console.error(`Unsupported database type: ${dbType}`);
+        return;
+    }
+
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {spawn} = require('child_process');
+      const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+
+      spawnProcess.stdout.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                log: `[${fileName}] ${line}`,
+              },
+              $set: {
+                lastBackup: new Date()
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.on('error', (code) => {
+        console.error(`Database backup failed for ${fileName} with code ${code}`);
+        reject(code);
+      });
+
+      spawnProcess.on('close', (code) => {
+        console.debug(`Database backup finished for ${fileName} with code ${code}`);
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      });
+    });
+  }
+
+  async backupServiceVolume(backup: Backup, dockerId: string, fileName: string, path: string, folderName: string) {
+    const commands = [
+      'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
+      `aws configure set aws_access_key_id ${backup.key}`,
+      `aws configure set aws_secret_access_key ${backup.secret}`,
+      `aws configure set default.region ${backup.region}`,
+      `aws configure set verify_ssl false`,
+      `echo "Creating files dump for ${path}"`,
+      `cp ${path} /tmp/${fileName} -r`,
+      `cd /tmp`,
+      `tar -czvf ${fileName}.tar.gz ${fileName} 1>/dev/null 2>&1`,
+      `echo "Completed files dump at /tmp/${fileName}.tar.gz"`,
+      `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+      `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
+      `echo 'Finished volume backup for ${path}'`,
+    ];
+
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {spawn} = require('child_process');
+      const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+
+      spawnProcess.stdout.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                log: `[${fileName}] ${line}`,
+              },
+              $set: {
+                lastBackup: new Date()
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.on('error', (code) => {
+        console.error(`Volume backup failed for ${fileName} with code ${code}`);
+        reject(code);
+      });
+
+      spawnProcess.on('close', (code) => {
+        console.debug(`Volume backup finished for ${fileName} with code ${code}`);
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      });
+    });
   }
 
   async backupVolume(backup: Backup) {

@@ -317,6 +317,22 @@ REDIS_PASSWORD=
     return idsArray.length ? idsArray[0] : null;
   }
 
+  async getServiceContainers(containerId: string): Promise<any[]> {
+    const {stdout: containerList} = await execa(
+      `docker ps --filter 'label=deploy.party.id=${containerId}' --format '{{json .}}'`,
+      {shell: true}
+    );
+    
+    if (!containerList.trim()) {
+      return [];
+    }
+    
+    return containerList
+      .split('\n')
+      .filter(line => line.trim())
+      .map(line => JSON.parse(line));
+  }
+
   async deploy(container: Container): Promise<string | null> {
     const configExist = await this.fileService.checkConfigExist(container);
 

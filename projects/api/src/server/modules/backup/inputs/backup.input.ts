@@ -127,4 +127,12 @@ export class BackupInput extends CoreInput {
   })
   @IsOptional()
   maxBackups?: number = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => BackupType, {
+    description: 'Type of backup',
+    nullable: true,
+  })
+  @IsOptional()
+  type?: BackupType = undefined;
 }
