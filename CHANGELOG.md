@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/lenneTech/deploy.party/compare/v1.27.0...v1.28.0) (2025-09-01)
+
+
+### Features
+
+* add SERVICE backup type and enhance backup handling for service containers ([24ed721](https://github.com/lenneTech/deploy.party/commit/24ed721dd201191e220dfe43e2c45d98cceae2b6))
+
 # [1.27.0](https://github.com/lenneTech/deploy.party/compare/v1.26.2...v1.27.0) (2025-09-01)
 
 
