@@ -700,6 +700,13 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     }
 
     const backup = result[0];
+    
+    // Handle SERVICE type restores
+    if (backup?.type === BackupType.SERVICE) {
+      await this.restoreService(containerId, key, backup, additionalInfos);
+      return;
+    }
+    
     const dockerId = await this.dockerService.getId(getStringIds(container.id));
     if (!dockerId) {
       await this.containerService.updateForce(containerId, {status: ContainerStatus.DEPLOYED});
@@ -1012,6 +1019,267 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     }
 
     return true;
+  }
+
+  async restoreService(containerId: string, key: string, backup: Backup, additionalInfos?: {callbackUrl?: string}) {
+    console.debug(`Service restore for ${containerId} started at ${new Date().toISOString()}`);
+    const startTime = new Date().getTime();
+    const container = await this.containerService.getForce(containerId);
+    
+    if (!container) {
+      console.error(`Container ${containerId} not found`);
+      return;
+    }
+
+    const project = await this.projectService.getProjectByContainer(container);
+    const serviceName = container.type;
+
+    // Get service configuration
+    const serviceConfig = serviceName in SERVICE_BACKUP_CONFIGS 
+      ? SERVICE_BACKUP_CONFIGS[serviceName as unknown as SupportedBackupServices]
+      : null;
+    if (!serviceConfig) {
+      console.error(`No restore configuration found for service type: ${container.type}`);
+      await this.containerService.updateForce(containerId, {status: ContainerStatus.DEPLOYED});
+      return;
+    }
+
+    // Clear restore logs
+    await this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+      $set: {
+        restoreLog: [],
+      }
+    }).exec();
+
+    const folderName = `${project.name.toLowerCase().replace(/\s/g, "_")}-${container.type}`;
+
+    // Get all Docker service containers for this deployment
+    const serviceContainers: any[] = await this.dockerService.getServiceContainers(getStringIds(container.id));
+    console.debug(`Found ${serviceContainers.length} containers for service ${serviceName}`);
+
+    const restorePromises = [];
+
+    for (const target of serviceConfig.backupTargets) {
+      // Find container by checking if the name contains the target container name
+      const targetContainer = serviceContainers.find(sc =>
+        sc.Names.includes(`_${target.containerName}`)
+      );
+
+      if (!targetContainer) {
+        console.error(`Container ${target.containerName} not found for service ${serviceName}. Available containers: ${serviceContainers.map(c => c.Names).join(', ')}`);
+        continue;
+      }
+
+      const dockerId = targetContainer.ID;
+      const targetFileName = `${target.containerName}-${getStringIds(container.id)}-${new Date().toISOString().replace(/[:|.]/g, "-")}`;
+
+      if (target.type === 'DATABASE') {
+        restorePromises.push(this.restoreServiceDatabase(backup, dockerId, targetFileName, target.dbType, folderName, key));
+      } else if (target.type === 'VOLUME' && target.path) {
+        restorePromises.push(this.restoreServiceVolume(backup, dockerId, targetFileName, target.path, folderName, key));
+      }
+    }
+
+    try {
+      await Promise.all(restorePromises);
+
+      await this.containerService.updateForce(containerId, {status: ContainerStatus.DEPLOYED});
+
+      if (additionalInfos?.callbackUrl) {
+        const endTime = new Date().getTime();
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.SUCCEEDED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Service restore failed: ${error}`);
+      await this.containerService.updateForce(containerId, {status: ContainerStatus.DEPLOYED});
+
+      if (additionalInfos?.callbackUrl) {
+        const endTime = new Date().getTime();
+        try {
+          await axios.post(additionalInfos.callbackUrl, {
+            status: BackupStatus.FAILED,
+            key,
+            duration: endTime - startTime
+          });
+        } catch (e) {
+          console.debug(`Callback for ${container.name} failed with error ${e}`);
+        }
+      }
+    }
+  }
+
+  async restoreServiceDatabase(backup: Backup, dockerId: string, fileName: string, dbType: string, folderName: string, s3Key: string) {
+    let commands = [];
+
+    switch (dbType) {
+      case 'postgresql':
+        commands = [
+          `echo "Starting PostgreSQL restore as root user"`,
+          `whoami`,
+          'if which apt-get > /dev/null; then echo "Installing via apt-get" && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client; elif which apk > /dev/null; then echo "Installing via apk" && apk add --no-cache aws-cli postgresql-client; else echo "No package manager found, checking if tools are pre-installed"; fi',
+          `aws configure set aws_access_key_id ${backup.key}`,
+          `aws configure set aws_secret_access_key ${backup.secret}`,
+          `aws configure set default.region ${backup.region}`,
+          `aws configure set verify_ssl false`,
+          `echo 'Downloading backup from S3...'`,
+          `aws s3 cp s3://${backup.bucket}/${s3Key} /tmp/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `echo 'Extracting backup...'`,
+          `cd /tmp && tar -xzf ${fileName}.tar.gz`,
+          `echo 'Stopping PostgreSQL temporarily for restore'`,
+          `pg_ctl stop -D /var/lib/postgresql/data || echo "PostgreSQL already stopped"`,
+          `echo 'Starting PostgreSQL restore...'`,
+          `pg_ctl start -D /var/lib/postgresql/data`,
+          `sleep 5`,
+          `echo 'Dropping existing database...'`,
+          `PGPASSWORD=$POSTGRES_PASSWORD dropdb -h localhost -U $POSTGRES_USER $POSTGRES_DB --if-exists`,
+          `echo 'Creating new database...'`,
+          `PGPASSWORD=$POSTGRES_PASSWORD createdb -h localhost -U $POSTGRES_USER $POSTGRES_DB`,
+          `echo 'Restoring database from backup...'`,
+          `PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -U $POSTGRES_USER -d $POSTGRES_DB < /tmp/${fileName}.sql`,
+          `rm -rf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
+          `echo 'Finished PostgreSQL restore'`,
+        ];
+        break;
+      case 'mongodb':
+        commands = [
+          'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
+          `aws configure set aws_access_key_id ${backup.key}`,
+          `aws configure set aws_secret_access_key ${backup.secret}`,
+          `aws configure set default.region ${backup.region}`,
+          `aws configure set verify_ssl false`,
+          `aws s3 cp s3://${backup.bucket}/${s3Key} /tmp/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `tar -xvf /tmp/${fileName}.tar.gz`,
+          `mongorestore --drop --uri="mongodb://localhost:27017" /tmp/${fileName}`,
+          `rm -rf /tmp/${fileName} /tmp/${fileName}.tar.gz`,
+          `echo 'Finished MongoDB restore'`,
+        ];
+        break;
+      default:
+        console.error(`Unsupported database type for restore: ${dbType}`);
+        return;
+    }
+
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {spawn} = require('child_process');
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' ; ')]);
+
+      spawnProcess.stdout.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                restoreLog: `[${fileName}] ${line}`,
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.stderr.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                restoreLog: `[${fileName}] ERROR: ${line}`,
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.on('error', (code) => {
+        console.error(`Database restore failed for ${fileName} with code ${code}`);
+        reject(code);
+      });
+
+      spawnProcess.on('close', (code) => {
+        console.debug(`Database restore finished for ${fileName} with code ${code}`);
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      });
+    });
+  }
+
+  async restoreServiceVolume(backup: Backup, dockerId: string, fileName: string, path: string, folderName: string, s3Key: string) {
+    const commands = [
+      `echo "Starting volume restore for ${path} as root user"`,
+      `whoami`,
+      'which apt-get > /dev/null && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli || (which apk > /dev/null && apk add --no-cache aws-cli) || echo "Package manager not found, assuming aws-cli is pre-installed"',
+      `aws configure set aws_access_key_id ${backup.key}`,
+      `aws configure set aws_secret_access_key ${backup.secret}`,
+      `aws configure set default.region ${backup.region}`,
+      `aws configure set verify_ssl false`,
+      `echo 'Downloading backup from S3...'`,
+      `aws s3 cp s3://${backup.bucket}/${s3Key} /tmp/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+      `echo 'Extracting backup...'`,
+      `cd /tmp && tar -xzf ${fileName}.tar.gz`,
+      `echo 'Backing up existing data...'`,
+      `mv ${path} ${path}.backup.$(date +%s) || echo "No existing data to backup"`,
+      `echo 'Restoring files to ${path}...'`,
+      `cp -r /tmp/${fileName} ${path}`,
+      `rm -rf /tmp/${fileName}.tar.gz /tmp/${fileName}`,
+      `echo 'Finished volume restore for ${path}'`,
+    ];
+
+    return new Promise((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {spawn} = require('child_process');
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' ; ')]);
+
+      spawnProcess.stdout.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                restoreLog: `[${fileName}] ${line}`,
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.stderr.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                restoreLog: `[${fileName}] ERROR: ${line}`,
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.on('error', (code) => {
+        console.error(`Volume restore failed for ${fileName} with code ${code}`);
+        reject(code);
+      });
+
+      spawnProcess.on('close', (code) => {
+        console.debug(`Volume restore finished for ${fileName} with code ${code}`);
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      });
+    });
   }
 
   async processUpload(id: string) {
