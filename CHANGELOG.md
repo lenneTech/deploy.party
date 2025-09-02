@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/lenneTech/deploy.party/compare/v1.29.0...v1.29.1) (2025-09-02)
+
+
+### Bug Fixes
+
+* use environment variables for PostgreSQL dump command in backup service ([ce58575](https://github.com/lenneTech/deploy.party/commit/ce5857567648753dd94ba490247dbd312c3b1de8))
+
 # [1.29.0](https://github.com/lenneTech/deploy.party/compare/v1.28.0...v1.29.0) (2025-09-02)
 
 
