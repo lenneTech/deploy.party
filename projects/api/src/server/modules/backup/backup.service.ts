@@ -364,8 +364,9 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     for (const target of serviceConfig.backupTargets) {
       // Find container by checking if the name contains the target container name
       // Format: 6870e11f3af612ab0693d5b8_database.1.xxxxx -> we search for "_database"
+      // Note: sc.Names is a string, not an array
       const targetContainer = serviceContainers.find(sc => 
-        sc.Names.some(name => name.includes(`_${target.containerName}`))
+        sc.Names.includes(`_${target.containerName}`)
       );
 
       if (!targetContainer) {
