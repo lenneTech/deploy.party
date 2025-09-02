@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/lenneTech/deploy.party/compare/v1.28.0...v1.29.0) (2025-09-02)
+
+
+### Features
+
+* enhance service container retrieval by combining label and name filters ([08c2177](https://github.com/lenneTech/deploy.party/commit/08c21770e223718312f714880376a2c7dd00463f))
+
 # [1.28.0](https://github.com/lenneTech/deploy.party/compare/v1.27.0...v1.28.0) (2025-09-01)
 
 
