@@ -362,10 +362,14 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     const backupPromises = [];
 
     for (const target of serviceConfig.backupTargets) {
-      const targetContainer = serviceContainers.find(sc => sc.Names.includes(target.containerName));
+      // Find container by checking if the name contains the target container name
+      // Format: 6870e11f3af612ab0693d5b8_database.1.xxxxx -> we search for "_database"
+      const targetContainer = serviceContainers.find(sc => 
+        sc.Names.some(name => name.includes(`_${target.containerName}`))
+      );
 
       if (!targetContainer) {
-        console.error(`Container ${target.containerName} not found for service ${serviceName}`);
+        console.error(`Container ${target.containerName} not found for service ${serviceName}. Available containers: ${serviceContainers.map(c => c.Names).join(', ')}`);
         continue;
       }
 
@@ -416,13 +420,13 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     switch (dbType) {
       case 'postgresql':
         commands = [
-          'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client',
+          'which apt-get > /dev/null && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client || (which apk > /dev/null && apk add --no-cache aws-cli postgresql-client) || echo "Package manager not found, assuming tools are pre-installed"',
           `aws configure set aws_access_key_id ${backup.key}`,
           `aws configure set aws_secret_access_key ${backup.secret}`,
           `aws configure set default.region ${backup.region}`,
           `aws configure set verify_ssl false`,
           `echo 'Start PostgreSQL dump'`,
-          `pg_dump -h localhost -U $POSTGRES_USER -d $POSTGRES_DB > /tmp/${fileName}.sql`,
+          `PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h localhost -U $POSTGRES_USER -d $POSTGRES_DB > /tmp/${fileName}.sql`,
           `echo 'Start zipping'`,
           `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
           `echo 'Start uploading'`,
@@ -494,7 +498,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
   async backupServiceVolume(backup: Backup, dockerId: string, fileName: string, path: string, folderName: string) {
     const commands = [
-      'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
+      'which apt-get > /dev/null && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli || (which apk > /dev/null && apk add --no-cache aws-cli) || echo "Package manager not found, assuming aws-cli is pre-installed"',
       `aws configure set aws_access_key_id ${backup.key}`,
       `aws configure set aws_secret_access_key ${backup.secret}`,
       `aws configure set default.region ${backup.region}`,
