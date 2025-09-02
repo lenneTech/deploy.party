@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/lenneTech/deploy.party/compare/v1.32.0...v1.33.0) (2025-09-02)
+
+
+### Features
+
+* implement service restore functionality with detailed logging and error handling ([b6919d2](https://github.com/lenneTech/deploy.party/commit/b6919d2aaf8c9cf5570ca2f630b6878c75be8d2a))
+
 # [1.32.0](https://github.com/lenneTech/deploy.party/compare/v1.31.0...v1.32.0) (2025-09-02)
 
 
