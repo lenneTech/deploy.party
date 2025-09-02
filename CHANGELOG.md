@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/lenneTech/deploy.party/compare/v1.30.1...v1.31.0) (2025-09-02)
+
+
+### Features
+
+* enhance PostgreSQL backup process with detailed logging and root user execution ([8a7bfb8](https://github.com/lenneTech/deploy.party/commit/8a7bfb8efdb3151318ba31336a207c7e6424c6e5))
+
 ## [1.30.1](https://github.com/lenneTech/deploy.party/compare/v1.30.0...v1.30.1) (2025-09-02)
 
 
