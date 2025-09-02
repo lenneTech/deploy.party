@@ -251,8 +251,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         `mongodump --uri="mongodb://localhost:27017" --out="/tmp/${fileName}"`,
         `echo 'Start zipping'`,
         `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}`,
-        `echo 'Start uploading'`,
-        `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+        `echo 'Start uploading to S3...'`,
+        `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+        `echo 'Verifying S3 upload...'`,
+        `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
         `echo 'Finished uploading'`,
         `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
         `echo 'Finished'`,
@@ -270,7 +272,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         `ls -al /tmp`,
         `cd /tmp && tar -zcvf ${fileName}.tar.gz ${fileName}.sql`,
         `ls -al /tmp`,
-        `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+        `echo 'Start uploading to S3...'`,
+        `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+        `echo 'Verifying S3 upload...'`,
+        `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
         `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
         `echo 'Finished'`,
       ];
@@ -448,8 +453,14 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
           `echo 'Start zipping'`,
           `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
           `ls -la /tmp/${fileName}.tar.gz && echo "Archive created successfully" || echo "ERROR: Archive creation failed"`,
-          `echo 'Start uploading'`,
-          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `echo 'Testing AWS configuration...'`,
+          `aws configure list`,
+          `echo 'Testing S3 access...'`,
+          `aws s3 ls s3://${backup.bucket}/ --region ${backup.region} --endpoint-url ${backup.host} | head -5`,
+          `echo 'Start uploading to S3...'`,
+          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+          `echo 'Verifying S3 upload...'`,
+          `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
           `echo 'Finished uploading'`,
           `rm -rf /tmp/${fileName}.sql && rm -rf /tmp/${fileName}.tar.gz`,
           `echo 'Finished PostgreSQL backup'`,
@@ -466,8 +477,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
           `mongodump --uri="mongodb://localhost:27017" --out="/tmp/${fileName}"`,
           `echo 'Start zipping'`,
           `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}`,
-          `echo 'Start uploading'`,
-          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+          `echo 'Start uploading to S3...'`,
+          `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+          `echo 'Verifying S3 upload...'`,
+          `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
           `echo 'Finished uploading'`,
           `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
           `echo 'Finished'`,
@@ -481,7 +494,8 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     return new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {spawn} = require('child_process');
-      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' && ')]);
+      // Use semicolons to continue even if individual commands fail - for debugging
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' ; ')]);
 
       spawnProcess.stdout.on('data', async (data) => {
         if (data.toString()) {
@@ -493,6 +507,19 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
               },
               $set: {
                 lastBackup: new Date()
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.stderr.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                log: `[${fileName}] ERROR: ${line}`,
               }
             }).exec();
           });
@@ -529,7 +556,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       `cd /tmp`,
       `tar -czvf ${fileName}.tar.gz ${fileName} 1>/dev/null 2>&1`,
       `echo "Completed files dump at /tmp/${fileName}.tar.gz"`,
-      `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+      `echo 'Start uploading to S3...'`,
+      `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+      `echo 'Verifying S3 upload...'`,
+      `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
       `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
       `echo 'Finished volume backup for ${path}'`,
     ];
@@ -537,7 +567,8 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     return new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {spawn} = require('child_process');
-      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' && ')]);
+      // Use semicolons to continue even if individual commands fail - for debugging
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' ; ')]);
 
       spawnProcess.stdout.on('data', async (data) => {
         if (data.toString()) {
@@ -549,6 +580,19 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
               },
               $set: {
                 lastBackup: new Date()
+              }
+            }).exec();
+          });
+        }
+      });
+
+      spawnProcess.stderr.on('data', async (data) => {
+        if (data.toString()) {
+          const lines = data.toString().split('\n');
+          lines.forEach((line) => {
+            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
+              $push: {
+                log: `[${fileName}] ERROR: ${line}`,
               }
             }).exec();
           });
@@ -600,7 +644,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       `cd /tmp`,
       `tar -czvf ${fileName}.tar.gz ${fileName} 1>/dev/null 2>&1`,
       `echo "Completed files dump at /tmp/${fileName}.tar.gz"`,
-      `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
+      `echo 'Start uploading to S3...'`,
+      `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
+      `echo 'Verifying S3 upload...'`,
+      `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
     ];
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
