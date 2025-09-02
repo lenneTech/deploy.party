@@ -318,19 +318,43 @@ REDIS_PASSWORD=
   }
 
   async getServiceContainers(containerId: string): Promise<any[]> {
-    const {stdout: containerList} = await execa(
+    // First try to find containers with the deploy.party.id label
+    const {stdout: labelContainerList} = await execa(
       `docker ps --filter 'label=deploy.party.id=${containerId}' --format '{{json .}}'`,
       {shell: true}
     );
     
-    if (!containerList.trim()) {
-      return [];
+    // If we find containers with the label, also search for related containers by name prefix
+    if (labelContainerList.trim()) {
+      // Search for all containers that start with the containerId prefix (like 6870e11f3af612ab0693d5b8_*)
+      const {stdout: nameContainerList} = await execa(
+        `docker ps --filter 'name=^${containerId}_' --format '{{json .}}'`,
+        {shell: true}
+      );
+      
+      const labelContainers = labelContainerList
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => JSON.parse(line));
+      
+      const nameContainers = nameContainerList.trim() 
+        ? nameContainerList
+            .split('\n')
+            .filter(line => line.trim())
+            .map(line => JSON.parse(line))
+        : [];
+      
+      // Combine both results and remove duplicates based on container ID
+      const allContainers = [...labelContainers, ...nameContainers];
+      const uniqueContainers = allContainers.filter((container, index, self) => 
+        index === self.findIndex(c => c.ID === container.ID)
+      );
+      
+      console.debug(`Found ${uniqueContainers.length} containers for service ${containerId}: ${uniqueContainers.map(c => c.Names).join(', ')}`);
+      return uniqueContainers;
     }
     
-    return containerList
-      .split('\n')
-      .filter(line => line.trim())
-      .map(line => JSON.parse(line));
+    return [];
   }
 
   async deploy(container: Container): Promise<string | null> {

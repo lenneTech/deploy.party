@@ -356,19 +356,20 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     const folderName = `${project.name.toLowerCase().replace(/\s/g, "_")}-${container.type}`;
 
     // Get all Docker service containers for this deployment
-    const serviceContainers = await this.dockerService.getServiceContainers(getStringIds(container.id));
+    const serviceContainers: any[] = await this.dockerService.getServiceContainers(getStringIds(container.id));
+    console.debug(`Found ${serviceContainers.length} containers for service ${serviceName}`);
 
     const backupPromises = [];
 
     for (const target of serviceConfig.backupTargets) {
-      const targetContainer = serviceContainers.find(sc => sc.Names[0].includes(target.containerName));
+      const targetContainer = serviceContainers.find(sc => sc.Names.includes(target.containerName));
 
       if (!targetContainer) {
         console.error(`Container ${target.containerName} not found for service ${serviceName}`);
         continue;
       }
 
-      const dockerId = targetContainer.Id;
+      const dockerId = targetContainer.ID;
       const targetFileName = `${target.containerName}-${fileName}`;
 
       if (target.type === 'DATABASE') {
