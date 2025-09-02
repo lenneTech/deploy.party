@@ -365,7 +365,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       // Find container by checking if the name contains the target container name
       // Format: 6870e11f3af612ab0693d5b8_database.1.xxxxx -> we search for "_database"
       // Note: sc.Names is a string, not an array
-      const targetContainer = serviceContainers.find(sc => 
+      const targetContainer = serviceContainers.find(sc =>
         sc.Names.includes(`_${target.containerName}`)
       );
 
@@ -421,20 +421,38 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     switch (dbType) {
       case 'postgresql':
         commands = [
-          'which apt-get > /dev/null && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client || (which apk > /dev/null && apk add --no-cache aws-cli postgresql-client) || echo "Package manager not found, assuming tools are pre-installed"',
+          `echo "Starting PostgreSQL backup as root user"`,
+          `whoami`,
+          `echo "Checking environment variables..."`,
+          `echo "POSTGRES_USER: $POSTGRES_USER"`,
+          `echo "POSTGRES_DB: $POSTGRES_DB"`,
+          `echo "POSTGRES_PASSWORD length: \${#POSTGRES_PASSWORD}"`,
+          `echo "Checking available package managers..."`,
+          `which apt-get && echo "apt-get available" || echo "apt-get not available"`,
+          `which apk && echo "apk available" || echo "apk not available"`,
+          `which pg_dump && echo "pg_dump already available" || echo "pg_dump not available"`,
+          `which aws && echo "aws-cli already available" || echo "aws-cli not available"`,
+          'if which apt-get > /dev/null; then echo "Installing via apt-get" && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli postgresql-client; elif which apk > /dev/null; then echo "Installing via apk" && apk add --no-cache aws-cli postgresql-client; else echo "No package manager found, checking if tools are pre-installed"; fi',
+          `which pg_dump && echo "pg_dump is now available" || (echo "ERROR: postgresql-client installation failed" && exit 1)`,
+          `which aws && echo "aws-cli is now available" || (echo "ERROR: aws-cli installation failed" && exit 1)`,
+          `echo "Configuring AWS..."`,
           `aws configure set aws_access_key_id ${backup.key}`,
           `aws configure set aws_secret_access_key ${backup.secret}`,
           `aws configure set default.region ${backup.region}`,
           `aws configure set verify_ssl false`,
-          `echo 'Start PostgreSQL dump'`,
+          `echo 'Testing PostgreSQL connection...'`,
+          `PGPASSWORD=$POSTGRES_PASSWORD pg_isready -h localhost -U $POSTGRES_USER -d $POSTGRES_DB && echo "PostgreSQL connection OK" || echo "WARNING: PostgreSQL connection test failed"`,
+          `echo 'Starting PostgreSQL dump...'`,
           `PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h localhost -U $POSTGRES_USER -d $POSTGRES_DB > /tmp/${fileName}.sql`,
+          `ls -la /tmp/${fileName}.sql && echo "PostgreSQL dump created successfully" || echo "ERROR: PostgreSQL dump failed"`,
           `echo 'Start zipping'`,
           `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
+          `ls -la /tmp/${fileName}.tar.gz && echo "Archive created successfully" || echo "ERROR: Archive creation failed"`,
           `echo 'Start uploading'`,
           `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host}`,
           `echo 'Finished uploading'`,
           `rm -rf /tmp/${fileName}.sql && rm -rf /tmp/${fileName}.tar.gz`,
-          `echo 'Finished'`,
+          `echo 'Finished PostgreSQL backup'`,
         ];
         break;
       case 'mongodb':
@@ -463,7 +481,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     return new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {spawn} = require('child_process');
-      const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' && ')]);
 
       spawnProcess.stdout.on('data', async (data) => {
         if (data.toString()) {
@@ -499,6 +517,8 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
   async backupServiceVolume(backup: Backup, dockerId: string, fileName: string, path: string, folderName: string) {
     const commands = [
+      `echo "Starting volume backup for ${path} as root user"`,
+      `whoami`,
       'which apt-get > /dev/null && apt-get update && apt-get install -y --no-install-recommends apt-utils awscli || (which apk > /dev/null && apk add --no-cache aws-cli) || echo "Package manager not found, assuming aws-cli is pre-installed"',
       `aws configure set aws_access_key_id ${backup.key}`,
       `aws configure set aws_secret_access_key ${backup.secret}`,
@@ -517,7 +537,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
     return new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {spawn} = require('child_process');
-      const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+      const spawnProcess = spawn('docker', ['exec', '-u', 'root', dockerId, 'sh', '-c', commands.join(' && ')]);
 
       spawnProcess.stdout.on('data', async (data) => {
         if (data.toString()) {
