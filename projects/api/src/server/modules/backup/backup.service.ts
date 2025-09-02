@@ -422,7 +422,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
           `aws configure set default.region ${backup.region}`,
           `aws configure set verify_ssl false`,
           `echo 'Start PostgreSQL dump'`,
-          `PGPASSWORD=directus pg_dump -h localhost -U directus -d directus > /tmp/${fileName}.sql`,
+          `pg_dump -h localhost -U $POSTGRES_USER -d $POSTGRES_DB > /tmp/${fileName}.sql`,
           `echo 'Start zipping'`,
           `tar -zcvf /tmp/${fileName}.tar.gz /tmp/${fileName}.sql`,
           `echo 'Start uploading'`,
