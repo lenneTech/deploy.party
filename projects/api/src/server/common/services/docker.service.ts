@@ -323,7 +323,7 @@ REDIS_PASSWORD=
       `docker ps --filter 'label=deploy.party.id=${containerId}' --format '{{json .}}'`,
       {shell: true}
     );
-    
+
     // If we find containers with the label, also search for related containers by name prefix
     if (labelContainerList.trim()) {
       // Search for all containers that start with the containerId prefix (like 6870e11f3af612ab0693d5b8_*)
@@ -331,29 +331,26 @@ REDIS_PASSWORD=
         `docker ps --filter 'name=^${containerId}_' --format '{{json .}}'`,
         {shell: true}
       );
-      
+
       const labelContainers = labelContainerList
         .split('\n')
         .filter(line => line.trim())
         .map(line => JSON.parse(line));
-      
-      const nameContainers = nameContainerList.trim() 
+
+      const nameContainers = nameContainerList.trim()
         ? nameContainerList
             .split('\n')
             .filter(line => line.trim())
             .map(line => JSON.parse(line))
         : [];
-      
+
       // Combine both results and remove duplicates based on container ID
       const allContainers = [...labelContainers, ...nameContainers];
-      const uniqueContainers = allContainers.filter((container, index, self) => 
+      return allContainers.filter((container, index, self) =>
         index === self.findIndex(c => c.ID === container.ID)
       );
-      
-      console.debug(`Found ${uniqueContainers.length} containers for service ${containerId}: ${uniqueContainers.map(c => c.Names).join(', ')}`);
-      return uniqueContainers;
     }
-    
+
     return [];
   }
 

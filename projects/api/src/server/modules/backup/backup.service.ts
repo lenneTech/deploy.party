@@ -362,14 +362,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     // Get all Docker service containers for this deployment
     const serviceContainers: any[] = await this.dockerService.getServiceContainers(getStringIds(container.id));
-    console.debug(`Found ${serviceContainers.length} containers for service ${serviceName}`);
-
     const backupPromises = [];
 
     for (const target of serviceConfig.backupTargets) {
       // Find container by checking if the name contains the target container name
-      // Format: 6870e11f3af612ab0693d5b8_database.1.xxxxx -> we search for "_database"
-      // Note: sc.Names is a string, not an array
       const targetContainer = serviceContainers.find(sc =>
         sc.Names.includes(`_${target.containerName}`)
       );
