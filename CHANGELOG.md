@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/lenneTech/deploy.party/compare/v1.31.0...v1.32.0) (2025-09-02)
+
+
+### Features
+
+* enhance S3 upload process with success and verification messages ([601f7b6](https://github.com/lenneTech/deploy.party/commit/601f7b6221d82c8a3f55cccd7c8dfe94aae1af05))
+
 # [1.31.0](https://github.com/lenneTech/deploy.party/compare/v1.30.1...v1.31.0) (2025-09-02)
 
 
