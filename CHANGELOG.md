@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/lenneTech/deploy.party/compare/v1.29.1...v1.30.0) (2025-09-02)
+
+
+### Features
+
+* improve container lookup and enhance PostgreSQL dump command with package manager detection ([1fcbe95](https://github.com/lenneTech/deploy.party/commit/1fcbe9508b27b64415ec02a412c3789c372ea5bc))
+
 ## [1.29.1](https://github.com/lenneTech/deploy.party/compare/v1.29.0...v1.29.1) (2025-09-02)
 
 
