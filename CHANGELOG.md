@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/lenneTech/deploy.party/compare/v1.30.0...v1.30.1) (2025-09-02)
+
+
+### Bug Fixes
+
+* update container name lookup to use string includes instead of array some method ([bf67ff3](https://github.com/lenneTech/deploy.party/commit/bf67ff3b1f853d8472dc673c9bb38f3a73c9e5fa))
+
 # [1.30.0](https://github.com/lenneTech/deploy.party/compare/v1.29.1...v1.30.0) (2025-09-02)
 
 
