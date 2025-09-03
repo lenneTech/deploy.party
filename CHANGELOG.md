@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/lenneTech/deploy.party/compare/v1.33.0...v1.34.0) (2025-09-03)
+
+
+### Features
+
+* update Docker images to use latest tags and add new MongoDB and MariaDB versions ([fad51c6](https://github.com/lenneTech/deploy.party/commit/fad51c6373ab33b1dbdd57688f013eccbf22cd2b))
+
 # [1.33.0](https://github.com/lenneTech/deploy.party/compare/v1.32.0...v1.33.0) (2025-09-02)
 
 
