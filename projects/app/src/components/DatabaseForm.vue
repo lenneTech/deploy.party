@@ -22,9 +22,10 @@ const typeOptions = [
 ];
 const mongoOptions = [
   { label: 'mongo:4.4', value: 'mongo:4.4' },
-  { label: 'mongo:5.0', value: 'mongo:5.0' },
-  { label: 'mongo:6.0', value: 'mongo:6.0' },
-  { label: 'mongo:7.0-rc', value: 'mongo:7.0-rc' },
+  { label: 'mongo:5', value: 'mongo:5' },
+  { label: 'mongo:6', value: 'mongo:6' },
+  { label: 'mongo:7', value: 'mongo:7' },
+  { label: 'mongo:8', value: 'mongo:8' },
   { label: 'mongo:latest', value: 'mongo:latest' },
 ];
 const mariaOptions = [
@@ -32,7 +33,10 @@ const mariaOptions = [
   { label: 'mariadb:11.1', value: 'mariadb:11.1' },
   { label: 'mariadb:11.2', value: 'mariadb:11.2' },
   { label: 'mariadb:11.3', value: 'mariadb:11.3' },
-  { label: 'mariadb:11.4-rc', value: 'mariadb:11.4-rc' },
+  { label: 'mariadb:11.8', value: 'mariadb:11.8' },
+  { label: 'mariadb:11.8.3', value: 'mariadb:11.8.3' },
+  { label: 'mariadb:12.0', value: 'mariadb:12.0' },
+  { label: 'mariadb:lts', value: 'mariadb:lts' },
   { label: 'mariadb:latest', value: 'mariadb:latest' },
 ];
 
