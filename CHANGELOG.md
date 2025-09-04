@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/lenneTech/deploy.party/compare/v1.34.0...v1.35.0) (2025-09-04)
+
+
+### Features
+
+* update Traefik configuration to support v3 and adjust Docker network settings ([766799c](https://github.com/lenneTech/deploy.party/commit/766799c18183664e0595628b1cb1944078d8f003))
+
 # [1.34.0](https://github.com/lenneTech/deploy.party/compare/v1.33.0...v1.34.0) (2025-09-03)
 
 
