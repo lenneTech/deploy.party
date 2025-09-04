@@ -10,6 +10,7 @@ DATE=$(date +"%Y%m%d-%H%M%S")
 INSTALL_PATH="/var/opt/deploy-party"
 PROJECTS_PATH="/data"
 LOCAL_SETUP=0
+TRAEFIK_VERSION="v2"
 HOST_IP=$(hostname -I | cut -d ' ' -f 1)
 
 # Parse command line arguments
@@ -48,6 +49,10 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --traefik-v3)
+      TRAEFIK_VERSION="v3"
+      shift
+      ;;
     -h|--help)
       echo "Usage: $0 [OPTIONS]"
       echo ""
@@ -58,11 +63,13 @@ while [[ $# -gt 0 ]]; do
       echo "  -e, --email EMAIL       Email for SSL certificates (required for non-local setup)"
       echo "      --username USER     Username for Traefik"
       echo "      --password PASS     Password for Traefik"
+      echo "      --traefik-v3        Use Traefik v3 (experimental)"
       echo "  -h, --help              Show this help message"
       echo ""
       echo "Example:"
       echo "  $0 --local --name my-instance --username admin --password secret"
       echo "  $0 --name my-instance --url example.com --email admin@example.com --username admin --password secret"
+      echo "  $0 --name my-instance --url example.com --email admin@example.com --username admin --password secret --traefik-v3"
       exit 0
       ;;
     -*|--*)
@@ -172,12 +179,23 @@ systemctl restart docker
 echo "--------------------------------------------------------------------------------"
 echo "Download config files for deploy-party..."
 
-if [ $LOCAL_SETUP != 0 ]; then
-  curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik-local.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
-  curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.prod-local.yml" >> $INSTALL_PATH/docker-compose.yml
-else
-  curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
+if [ "$TRAEFIK_VERSION" = "v3" ]; then
+  echo "Using experimental Traefik v3 configuration..."
+  if [ $LOCAL_SETUP != 0 ]; then
+    echo "Warning: Traefik v3 local configuration not yet available, falling back to v2"
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik-local.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
+  else
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefikv3.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
+  fi
   curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.prod.yml" >> $INSTALL_PATH/docker-compose.yml
+else
+  if [ $LOCAL_SETUP != 0 ]; then
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik-local.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.prod-local.yml" >> $INSTALL_PATH/docker-compose.yml
+  else
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.traefik.yml" >> $INSTALL_PATH/docker-compose.traefik.yml
+    curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/docker-compose.prod.yml" >> $INSTALL_PATH/docker-compose.yml
+  fi
 fi
 
 curl "https://raw.githubusercontent.com/lenneTech/deploy.party/main/reconfigure.sh" >> $INSTALL_PATH/reconfigure.sh

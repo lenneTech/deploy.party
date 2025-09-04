@@ -12,7 +12,7 @@ services:
           - node.labels.traefik-public.traefik-public-certificates == true
       labels:
         - traefik.enable=true
-        - traefik.swarm.network=traefik-public
+        - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
         - traefik.http.middlewares.secure-headers.headers.framedeny=true
         - traefik.http.middlewares.traefik-compress.compress=true
@@ -32,10 +32,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-public-certificates:/certificates
+      - ./dynamic:/etc/traefik/dynamic:ro
     command:
       - --providers.swarm.endpoint=unix:///var/run/docker.sock
       - --providers.swarm.constraints=Label(`traefik.constraint-label`, `traefik-public`)
       - --providers.swarm.exposedbydefault=false
+      - --providers.file
+      - --providers.file.directory=/etc/traefik/dynamic
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
       - --certificatesresolvers.le.acme.email=${EMAIL?Variable not set}
