@@ -42,7 +42,7 @@ export async function getRocketAdmin(container: Container): Promise<string> {
           - .env
 
       rocketadmin:
-        image: rocketadmin/rocketadmin
+        image: rocketadmin/rocketadmin:${container.buildImage || 'latest'}
         labels:
           - deploy.party.id=${container.id}
         env_file:

@@ -30,6 +30,11 @@ const basicAuthSchema = object({
 });
 
 const baseFormSchema = object({
+  buildImage: string()
+    .nullable()
+    .optional()
+    .matches(/^[a-zA-Z0-9._-]+$/, 'Only alphanumeric characters, dots, hyphens, and underscores are allowed')
+    .max(50, 'Version must be at most 50 characters'),
   customDockerCompose: string()
     .nullable()
     .optional()
@@ -122,6 +127,14 @@ async function submit() {
             :options="typeOptions"
             :disabled="disabled"
           />
+        </template>
+      </FormRow>
+
+      <FormRow v-if="values.type !== 'CUSTOM'">
+        <template #label> Docker Image Version </template>
+        <template #help> Enter the Docker image version tag (e.g., latest, 1.0.0, 10.8.3) </template>
+        <template #default>
+          <FormInput name="buildImage" class="w-full mx-auto max-w-2xl" type="text" placeholder="latest" :disabled="disabled" />
         </template>
       </FormRow>
 

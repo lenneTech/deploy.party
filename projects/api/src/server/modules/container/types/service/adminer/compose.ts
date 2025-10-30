@@ -28,7 +28,7 @@ export async function getAdminer(container: Container): Promise<string> {
 
     services:
       adminer:
-        image: dockette/adminer:full
+        image: dockette/adminer:${container.buildImage || 'full'}
         labels:
           - deploy.party.id=${container.id}
         environment:

@@ -28,7 +28,7 @@ export async function getMongoExpress(container: Container): Promise<string> {
 
     services:
       mongo-express:
-        image: mongo-express:latest
+        image: mongo-express:${container.buildImage || 'latest'}
         labels:
           - deploy.party.id=${container.id}
         env_file:

@@ -32,7 +32,7 @@ export function getDirectus(container: Container): string {
           - directus-internal
 
       directus:
-        image: directus/directus:latest
+        image: directus/directus:${container.buildImage || 'latest'}
         volumes:
           - uploads:/directus/uploads
           # If you want to load extensions from the host

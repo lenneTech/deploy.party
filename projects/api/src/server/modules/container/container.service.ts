@@ -195,6 +195,33 @@ export class ContainerService extends CrudService<Container> implements OnApplic
       throw new InternalServerErrorException('Container is missing required fields');
     }
 
+    // Validation for SERVICE containers
+    if (container.kind === ContainerKind.SERVICE) {
+      if (!container.name || !container.type || !container.url) {
+        throw new InternalServerErrorException('Service container is missing required fields (name, type, url)');
+      }
+
+      // Set default buildImage to 'latest' if not provided (except for CUSTOM type)
+      if (!container.buildImage && container.type !== 'CUSTOM') {
+        await this.update(containerId, { buildImage: 'latest' });
+        container.buildImage = 'latest';
+      }
+
+      // Validate buildImage format (allow alphanumeric, dots, hyphens, underscores)
+      if (container.buildImage && container.type !== 'CUSTOM') {
+        const validImageTagPattern = /^[a-zA-Z0-9._-]+$/;
+        if (!validImageTagPattern.test(container.buildImage)) {
+          throw new InternalServerErrorException('Invalid buildImage format. Only alphanumeric characters, dots, hyphens, and underscores are allowed.');
+        }
+      }
+    }
+
+    // Validation for DATABASE containers - set default buildImage if not provided
+    if (container.kind === ContainerKind.DATABASE && !container.buildImage) {
+      await this.update(containerId, { buildImage: 'latest' });
+      container.buildImage = 'latest';
+    }
+
     if (!(await this.fileService.checkProjectExist(container))) {
       await this.fileService.createProjectFolder(container);
     }

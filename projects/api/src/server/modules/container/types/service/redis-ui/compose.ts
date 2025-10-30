@@ -31,7 +31,7 @@ export async function getRedisUi(container: Container): Promise<string> {
 
     services:
       redis-ui:
-        image: patrikx3/p3x-redis-ui:latest
+        image: patrikx3/p3x-redis-ui:${container.buildImage || 'latest'}
         labels:
           - deploy.party.id=${container.id}
         volumes:
