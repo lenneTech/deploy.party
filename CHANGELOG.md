@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/lenneTech/deploy.party/compare/v1.35.0...v1.36.0) (2025-10-30)
+
+
+### Features
+
+* Add build image for service container ([7f19137](https://github.com/lenneTech/deploy.party/commit/7f1913792dc25da789bc45b6686e07f2fb2671b8))
+
 # [1.35.0](https://github.com/lenneTech/deploy.party/compare/v1.34.0...v1.35.0) (2025-09-04)
 
 
