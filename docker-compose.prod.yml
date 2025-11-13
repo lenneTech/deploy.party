@@ -45,10 +45,10 @@ services:
         - traefik.enable=true
         - traefik.docker.network=traefik-public
         - traefik.constraint-label=traefik-public
-        - traefik.http.routers.deploy-party-app-http.rule=Host(`${APP_URL?Variable not set}`, `www.${APP_URL?Variable not set}`)
+        - traefik.http.routers.deploy-party-app-http.rule=Host(`${APP_URL?Variable not set}`) || Host(`www.${APP_URL?Variable not set}`)
         - traefik.http.routers.deploy-party-app-http.entrypoints=http
-        - traefik.http.routers.deploy-party-app-http.middlewares=https-redirect
-        - traefik.http.routers.deploy-party-app-https.rule=Host(`${APP_URL?Variable not set}`, `www.${APP_URL?Variable not set}`)
+        - traefik.http.routers.deploy-party-app-http.middlewares=https-redirect@swarm
+        - traefik.http.routers.deploy-party-app-https.rule=Host(`${APP_URL?Variable not set}`) || Host(`www.${APP_URL?Variable not set}`)
         - traefik.http.routers.deploy-party-app-https.entrypoints=https
         - traefik.http.routers.deploy-party-app-https.tls=true
         - traefik.http.routers.deploy-party-app-https.tls.certresolver=le
@@ -102,7 +102,7 @@ services:
         # API Router
         - traefik.http.routers.deploy-party-api-http.rule=Host(`api.${APP_URL}`)
         - traefik.http.routers.deploy-party-api-http.entrypoints=http
-        - traefik.http.routers.deploy-party-api-http.middlewares=https-redirect
+        - traefik.http.routers.deploy-party-api-http.middlewares=https-redirect@swarm
         - traefik.http.routers.deploy-party-api-https.rule=Host(`api.${APP_URL}`)
         - traefik.http.routers.deploy-party-api-https.entrypoints=https
         - traefik.http.routers.deploy-party-api-https.tls=true
@@ -113,7 +113,7 @@ services:
         # Terminal Router
         - traefik.http.routers.deploy-party-terminal-http.rule=Host(`api.terminal.${APP_URL}`)
         - traefik.http.routers.deploy-party-terminal-http.entrypoints=http
-        - traefik.http.routers.deploy-party-terminal-http.middlewares=https-redirect
+        - traefik.http.routers.deploy-party-terminal-http.middlewares=https-redirect@swarm
         - traefik.http.routers.deploy-party-terminal-https.rule=Host(`api.terminal.${APP_URL}`)
         - traefik.http.routers.deploy-party-terminal-https.entrypoints=https
         - traefik.http.routers.deploy-party-terminal-https.tls=true
@@ -178,7 +178,7 @@ services:
         # API Router
         - traefik.http.routers.minio-3-api-http.rule=Host(`s3.${APP_URL}`)
         - traefik.http.routers.minio-3-api-http.entrypoints=http
-        - traefik.http.routers.minio-3-api-http.middlewares=https-redirect
+        - traefik.http.routers.minio-3-api-http.middlewares=https-redirect@swarm
         - traefik.http.routers.minio-3-api-https.rule=Host(`s3.${APP_URL}`)
         - traefik.http.routers.minio-3-api-https.entrypoints=https
         - traefik.http.routers.minio-3-api-https.tls=true
@@ -189,7 +189,7 @@ services:
         # Console Router
         - traefik.http.routers.minio-3-ui-http.rule=Host(`console.s3.${APP_URL}`)
         - traefik.http.routers.minio-3-ui-http.entrypoints=http
-        - traefik.http.routers.minio-3-ui-http.middlewares=https-redirect
+        - traefik.http.routers.minio-3-ui-http.middlewares=https-redirect@swarm
         - traefik.http.routers.minio-3-ui-https.rule=Host(`console.s3.${APP_URL}`)
         - traefik.http.routers.minio-3-ui-https.entrypoints=https
         - traefik.http.routers.minio-3-ui-https.tls=true

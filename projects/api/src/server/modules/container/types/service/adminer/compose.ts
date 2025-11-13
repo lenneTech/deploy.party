@@ -53,10 +53,10 @@ export async function getAdminer(container: Container): Promise<string> {
             - traefik.enable=true
             - traefik.docker.network=traefik-public
             - traefik.constraint-label=traefik-public
-            - traefik.http.routers.${container.id}-app-http.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
+            - traefik.http.routers.${container.id}-app-http.rule=Host(\`${container.url}\`) || Host(\`www.${container.url}\`)
             - traefik.http.routers.${container.id}-app-http.entrypoints=http
-            - traefik.http.routers.${container.id}-app-http.middlewares=https-redirect
-            - traefik.http.routers.${container.id}-app-https.rule=Host(\`${container.url}\`, \`www.${container.url}\`)
+            - traefik.http.routers.${container.id}-app-http.middlewares=https-redirect@swarm
+            - traefik.http.routers.${container.id}-app-https.rule=Host(\`${container.url}\`) || Host(\`www.${container.url}\`)
             - traefik.http.routers.${container.id}-app-https.entrypoints=https
             - traefik.http.routers.${container.id}-app-https.tls=true
             - traefik.http.routers.${container.id}-app-https.tls.certresolver=le

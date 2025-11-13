@@ -70,7 +70,7 @@ export function getDirectus(container: Container): string {
             - traefik.constraint-label=traefik-public
             - traefik.http.routers.${container.id}-http.rule=Host(\`${container.url}\`)
             - traefik.http.routers.${container.id}-http.entrypoints=http
-            - traefik.http.routers.${container.id}-http.middlewares=https-redirect
+            - traefik.http.routers.${container.id}-http.middlewares=https-redirect@swarm
             - traefik.http.routers.${container.id}-https.rule=Host(\`${container.url}\`)
             - traefik.http.routers.${container.id}-https.entrypoints=https
             - traefik.http.routers.${container.id}-https.tls=true

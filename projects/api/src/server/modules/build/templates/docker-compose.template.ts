@@ -52,14 +52,14 @@ export function dockerCompose(container: Container) {
             - traefik.enable=true
             - traefik.docker.network=traefik-public
             - traefik.constraint-label=traefik-public
-            - traefik.http.routers.${container.id}-http.rule=Host(\`${hostOnly}\`${
-    container.www ? `\`,www.${hostOnly}\`` : ''
-  })
+            - traefik.http.routers.${container.id}-http.rule=Host(\`${hostOnly}\`)${
+    container.www ? ` || Host(\`www.${hostOnly}\`)` : ''
+  }
             - traefik.http.routers.${container.id}-http.entrypoints=http
-            - traefik.http.routers.${container.id}-http.middlewares=https-redirect
-            - traefik.http.routers.${container.id}-https.rule=Host(\`${hostOnly}\`${
-    container.www ? `\`,www.${hostOnly}\`` : ''
-  })
+            - traefik.http.routers.${container.id}-http.middlewares=https-redirect@swarm
+            - traefik.http.routers.${container.id}-https.rule=Host(\`${hostOnly}\`)${
+    container.www ? ` || Host(\`www.${hostOnly}\`)` : ''
+  }
             - traefik.http.routers.${container.id}-https.entrypoints=https
             - traefik.http.routers.${container.id}-https.tls=true
             - traefik.http.routers.${container.id}-https.tls.certresolver=le

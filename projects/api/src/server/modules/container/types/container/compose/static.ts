@@ -91,23 +91,23 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
     dockerCompose.push(`          - traefik.http.routers.${container.id}-http.rule=${container.url}`);
   } else {
     dockerCompose.push(
-      `          - traefik.http.routers.${container.id}-http.rule=Host(\`${hostOnly}\`${
-        container.www ? `,\`www.${hostOnly}\`` : ''
-      })`
+      `          - traefik.http.routers.${container.id}-http.rule=Host(\`${hostOnly}\`)${
+        container.www ? ` || Host(\`www.${hostOnly}\`)` : ''
+      }`
     );
   }
   dockerCompose.push(`          - traefik.http.routers.${container.id}-http.entrypoints=http`);
 
   if (container.ssl) {
-    dockerCompose.push(`          - traefik.http.routers.${container.id}-http.middlewares=https-redirect`);
+    dockerCompose.push(`          - traefik.http.routers.${container.id}-http.middlewares=https-redirect@swarm`);
 
     if (container.isCustomRule) {
       dockerCompose.push(`          - traefik.http.routers.${container.id}-https.rule=${container.url}`);
     } else {
       dockerCompose.push(
-        `          - traefik.http.routers.${container.id}-https.rule=Host(\`${hostOnly}\`${
-          container.www ? `,\`www.${hostOnly}\`` : ''
-        })`
+        `          - traefik.http.routers.${container.id}-https.rule=Host(\`${hostOnly}\`)${
+          container.www ? ` || Host(\`www.${hostOnly}\`)` : ''
+        }`
       );
     }
 
