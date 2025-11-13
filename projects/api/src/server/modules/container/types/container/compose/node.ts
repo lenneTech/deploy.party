@@ -24,7 +24,6 @@ export async function getNodeCompose(container: Container, build?: Build): Promi
     return container.deploymentType === DeploymentType.TAG ? container.tag : container.branch;
   }
 
-  dockerCompose.push('version: "3.8"');
   dockerCompose.push('networks:');
   dockerCompose.push('    traefik-public:');
   dockerCompose.push('        external: true');

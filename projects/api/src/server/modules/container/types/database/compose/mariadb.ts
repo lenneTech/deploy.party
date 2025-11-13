@@ -3,7 +3,6 @@ import {Container} from "../../../container.model";
 export async function getMariaDBCompose(container: Container): Promise<string> {
   const dockerCompose: Array<string> = [];
 
-  dockerCompose.push('version: "3.8"');
   dockerCompose.push('networks:');
   dockerCompose.push('    deploy-party:');
   dockerCompose.push('        external: true');

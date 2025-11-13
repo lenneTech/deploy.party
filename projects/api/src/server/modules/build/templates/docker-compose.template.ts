@@ -16,7 +16,6 @@ export function dockerCompose(container: Container) {
   }
 
   return `
-    version: "3.8"
     networks:
         traefik-public:
             external: true

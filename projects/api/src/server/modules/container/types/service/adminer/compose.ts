@@ -18,8 +18,6 @@ export async function getAdminer(container: Container): Promise<string> {
   }
 
   return `
-    version: "3.8"
-
     networks:
       traefik-public:
         external: true

@@ -18,8 +18,6 @@ export async function getMongoExpress(container: Container): Promise<string> {
   }
 
   return `
-    version: "3.8"
-
     networks:
       traefik-public:
         external: true

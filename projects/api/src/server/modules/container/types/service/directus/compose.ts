@@ -2,8 +2,6 @@ import {Container} from "../../../container.model";
 
 export function getDirectus(container: Container): string {
   return `
-    version: "3.8"
-
     networks:
       traefik-public:
         external: true
