@@ -1,24 +1,26 @@
-FROM node:21-alpine3.19
+FROM node:21-alpine3.20
 
 RUN mkdir -p /var/www/api
 
-RUN echo "#/media/cdrom/apks" >> /etc/apk/repositories
-RUN echo "http://ftp.halifax.rwth-aachen.de/alpine/v3.16/main" >> /etc/apk/repositories
-RUN echo "http://ftp.halifax.rwth-aachen.de/alpine/v3.16/community" >> /etc/apk/repositories
-
-RUN apk update
-
-RUN apk add --no-cache tzdata docker docker-cli-compose git apache2-utils sed curl
+RUN apk update && apk add --no-cache \
+    tzdata \
+    docker-cli \
+    docker-cli-compose \
+    git \
+    apache2-utils \
+    sed \
+    curl
 
 ENV TZ=Europe/Berlin
 
-COPY ./projects/api ./var/www/api
-
-ADD ./projects/api/package.json /var/www/api/dist/package.json
-ADD ./projects/api/package-lock.json /var/www/api/dist/package-lock.json
-
 WORKDIR /var/www/api
 
-RUN npm install && npm cache clean --force && npm run build
+COPY ./projects/api/package*.json ./
+
+RUN npm install && npm cache clean --force
+
+COPY ./projects/api ./
+
+RUN npm run build
 
 EXPOSE 3000 4800
