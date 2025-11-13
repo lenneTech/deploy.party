@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/lenneTech/deploy.party/compare/v1.36.0...v1.36.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* fix linting ([b2eb97c](https://github.com/lenneTech/deploy.party/commit/b2eb97c4982234e086f686ea0faa7e910b921eb6))
+
 # [1.36.0](https://github.com/lenneTech/deploy.party/compare/v1.35.0...v1.36.0) (2025-10-30)
 
 
