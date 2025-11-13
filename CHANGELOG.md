@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/lenneTech/deploy.party/compare/v1.37.0...v2.0.0) (2025-11-13)
+
+
+### Features
+
+* adjust changes for traefik v3 ([d469ec8](https://github.com/lenneTech/deploy.party/commit/d469ec8cffc6c12e82350d744017e7e7423b5a05))
+
+
+### BREAKING CHANGES
+
+* Label syntax changed, container needs restart
+
 # [1.37.0](https://github.com/lenneTech/deploy.party/compare/v1.36.1...v1.37.0) (2025-11-13)
 
 
