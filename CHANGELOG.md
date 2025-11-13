@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/lenneTech/deploy.party/compare/v1.36.1...v1.37.0) (2025-11-13)
+
+
+### Features
+
+* update traefik version ([3923e3b](https://github.com/lenneTech/deploy.party/commit/3923e3b3c51cbd9e71e00fc15ee677a3264dc9e9))
+
 ## [1.36.1](https://github.com/lenneTech/deploy.party/compare/v1.36.0...v1.36.1) (2025-11-13)
 
 
