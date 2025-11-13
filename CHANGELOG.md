@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/lenneTech/deploy.party/compare/v2.1.0...v2.1.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* fix versions in docker file ([d143b01](https://github.com/lenneTech/deploy.party/commit/d143b011b7b1e9b3b8f5bc1ba83735eed6a9e56c))
+
 # [2.1.0](https://github.com/lenneTech/deploy.party/compare/v2.0.0...v2.1.0) (2025-11-13)
 
 
