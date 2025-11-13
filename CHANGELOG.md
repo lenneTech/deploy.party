@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/lenneTech/deploy.party/compare/v2.1.1...v2.2.0) (2025-11-13)
+
+
+### Features
+
+* remove verison in docker files because of obsolete ([b764be8](https://github.com/lenneTech/deploy.party/commit/b764be83ed165430df545cd6182838a5dc77784d))
+
 ## [2.1.1](https://github.com/lenneTech/deploy.party/compare/v2.1.0...v2.1.1) (2025-11-13)
 
 
