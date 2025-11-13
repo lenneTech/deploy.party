@@ -1,35 +1,32 @@
-import {forwardRef, Inject, Injectable} from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import * as dayjs from 'dayjs';
 import * as timezone from 'dayjs/plugin/timezone';
 import * as utc from 'dayjs/plugin/utc';
-import {randomBytes} from 'crypto';
-import {execa} from 'execa';
-import {promises as fs} from 'fs';
+import { execa } from 'execa';
+import { promises as fs } from 'fs';
 import envConfig from "../../../config.env";
-import {BuildService} from "../../modules/build/build.service";
-import {Container} from "../../modules/container/container.model";
-import {getNodeImage} from "../../modules/container/types/container/images/node";
-import {Registry} from "../../modules/registry/registry.model";
-import {getNodeCompose} from "../../modules/container/types/container/compose/node";
-import {getMongoCompose} from "../../modules/container/types/database/compose/mongo";
-import {ServiceType} from "../../modules/container/enums/service-type.enum";
-import {getDirectus} from "../../modules/container/types/service/directus/compose";
-import {ContainerStats} from "../../modules/container/outputs/container-stats.output";
-import {ContainerType} from '../../modules/container/enums/container-type.enum';
-import {DatabaseType} from '../../modules/container/enums/database-type.enum';
-import {FileService} from "./file.service";
-import {ContainerHealthStatus} from "../../modules/container/enums/container-health-status.enum";
-import {getAdminer} from "../../modules/container/types/service/adminer/compose";
-import {getStaticCompose} from "../../modules/container/types/container/compose/static";
-import {getStaticImage} from "../../modules/container/types/container/images/static";
-import {getMariaDBCompose} from "../../modules/container/types/database/compose/mariadb";
-import {ContainerService} from "../../modules/container/container.service";
-import {getRocketAdmin} from "../../modules/container/types/service/rocketadmin/compose";
-import {getMongoExpress} from "../../modules/container/types/service/mongo-express/compose";
-import {getRedisUi} from "../../modules/container/types/service/redis-ui/compose";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Docker = require('dockerode');
+import { BuildService } from "../../modules/build/build.service";
+import { Container } from "../../modules/container/container.model";
+import { ContainerService } from "../../modules/container/container.service";
+import { ContainerHealthStatus } from "../../modules/container/enums/container-health-status.enum";
+import { ContainerType } from '../../modules/container/enums/container-type.enum';
+import { DatabaseType } from '../../modules/container/enums/database-type.enum';
+import { ServiceType } from "../../modules/container/enums/service-type.enum";
+import { ContainerStats } from "../../modules/container/outputs/container-stats.output";
+import { getNodeCompose } from "../../modules/container/types/container/compose/node";
+import { getStaticCompose } from "../../modules/container/types/container/compose/static";
+import { getNodeImage } from "../../modules/container/types/container/images/node";
+import { getStaticImage } from "../../modules/container/types/container/images/static";
+import { getMariaDBCompose } from "../../modules/container/types/database/compose/mariadb";
+import { getMongoCompose } from "../../modules/container/types/database/compose/mongo";
+import { getAdminer } from "../../modules/container/types/service/adminer/compose";
+import { getDirectus } from "../../modules/container/types/service/directus/compose";
+import { getMongoExpress } from "../../modules/container/types/service/mongo-express/compose";
+import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
+import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
+import { Registry } from "../../modules/registry/registry.model";
+import { FileService } from "./file.service";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -37,8 +34,6 @@ dayjs.tz.setDefault('Europe/Berlin');
 
 @Injectable()
 export class DockerService {
-  private docker = new Docker();
-
   constructor(
     @Inject(forwardRef(() => BuildService)) private buildService: BuildService,
     @Inject(forwardRef(() => ContainerService)) private containerService: ContainerService,
@@ -93,8 +88,8 @@ export class DockerService {
       case ServiceType.DIRECTUS:
         // generate key and secret
         if (!container.env) {
-          const key = Array.from({length: 36}, () => Math.floor(Math.random() * 16).toString(16)).join('');
-          const secret = Array.from({length: 36}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          const key = Array.from({ length: 36 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          const secret = Array.from({ length: 36 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           container.env = `
           KEY=${key}
           SECRET=${secret}
@@ -117,7 +112,7 @@ export class DockerService {
           # (see https://docs.directus.io/self-hosted/config-options#general)
           PUBLIC_URL=https://${container.url}
           `;
-          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
         compose = getDirectus(container);
@@ -143,7 +138,7 @@ POSTGRES_DB=rocketadmin
 POSTGRES_PASSWORD=${postgresPassword}
           `;
 
-          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
         compose = await getRocketAdmin(container);
@@ -160,7 +155,7 @@ ME_CONFIG_MONGODB_AUTH_USERNAME=
 ME_CONFIG_MONGODB_AUTH_PASSWORD=
           `;
 
-          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
         compose = await getMongoExpress(container);
@@ -171,7 +166,7 @@ ME_CONFIG_MONGODB_AUTH_PASSWORD=
 REDIS_URL=redis://[CONTAINER_ID]_[CONTAINER_NAME]:6379
 REDIS_PASSWORD=
 `;
-          await this.containerService.updateForce(container.id, {env: container.env});
+          await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
         compose = await getRedisUi(container);
@@ -247,7 +242,7 @@ REDIS_PASSWORD=
   async deleteVolume(container: Container) {
     const process = execa(
       `docker volume rm ${container.id}_${container.id}`,
-      {shell: true}
+      { shell: true }
     );
 
     return true;
@@ -256,7 +251,7 @@ REDIS_PASSWORD=
   async buildImage(container: Container, buildId: string) {
     const process = execa(
       `docker compose --project-directory ${this.getPath(container)} build`,
-      {shell: true}
+      { shell: true }
     );
 
     return this.prepareProcess(process, buildId);
@@ -266,7 +261,7 @@ REDIS_PASSWORD=
     const configExist = await this.fileService.checkConfigExist(container);
     const process = execa(
       `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} compose --project-directory ${this.getPath(container)} push`,
-      {shell: true}
+      { shell: true }
     );
 
     return this.prepareProcess(process, buildId);
@@ -308,9 +303,9 @@ REDIS_PASSWORD=
   }
 
   async getId(containerId: string): Promise<string | null> {
-    const {stdout: ids} = await execa(
+    const { stdout: ids } = await execa(
       `docker ps -a --filter 'label=deploy.party.id=${containerId}' --format {{.ID}}`,
-      {shell: true}
+      { shell: true }
     );
 
     const idsArray = ids.split('\n');
@@ -319,17 +314,17 @@ REDIS_PASSWORD=
 
   async getServiceContainers(containerId: string): Promise<any[]> {
     // First try to find containers with the deploy.party.id label
-    const {stdout: labelContainerList} = await execa(
+    const { stdout: labelContainerList } = await execa(
       `docker ps --filter 'label=deploy.party.id=${containerId}' --format '{{json .}}'`,
-      {shell: true}
+      { shell: true }
     );
 
     // If we find containers with the label, also search for related containers by name prefix
     if (labelContainerList.trim()) {
       // Search for all containers that start with the containerId prefix (like 6870e11f3af612ab0693d5b8_*)
-      const {stdout: nameContainerList} = await execa(
+      const { stdout: nameContainerList } = await execa(
         `docker ps --filter 'name=^${containerId}_' --format '{{json .}}'`,
-        {shell: true}
+        { shell: true }
       );
 
       const labelContainers = labelContainerList
@@ -339,9 +334,9 @@ REDIS_PASSWORD=
 
       const nameContainers = nameContainerList.trim()
         ? nameContainerList
-            .split('\n')
-            .filter(line => line.trim())
-            .map(line => JSON.parse(line))
+          .split('\n')
+          .filter(line => line.trim())
+          .map(line => JSON.parse(line))
         : [];
 
       // Combine both results and remove duplicates based on container ID
@@ -357,22 +352,22 @@ REDIS_PASSWORD=
   async deploy(container: Container): Promise<string | null> {
     const configExist = await this.fileService.checkConfigExist(container);
 
-    const {stdout: containers} = await execa(
+    const { stdout: containers } = await execa(
       envConfig.dockerSwarm
         ? `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} stack deploy -c ${this.getPath(container)}/docker-compose.yml ${container.id}`
         : `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} compose --project-directory ${this.getPath(container)} up -d`,
-      {shell: true}
+      { shell: true }
     );
 
     return containers.length ? containers[0] : null;
   }
 
   async stop(container: Container): Promise<string | null> {
-    const {stdout: containers} = await execa(
+    const { stdout: containers } = await execa(
       envConfig.dockerSwarm
         ? `docker stack rm ${container.id}`
         : `docker compose --project-directory ${this.getPath(container)} down`,
-      {shell: true}
+      { shell: true }
     );
 
     return containers.length ? containers[0] : null;
@@ -385,7 +380,7 @@ REDIS_PASSWORD=
       return [];
     }
 
-    const {stdout, stderr} = await execa(
+    const { stdout, stderr } = await execa(
       `docker logs ${since ? `--since ${since}` : ''} --tail 2000 --timestamps ${dockerId}`,
       {
         shell: true,
@@ -413,9 +408,9 @@ REDIS_PASSWORD=
         throw new Error('Docker container not found');
       }
 
-      const {stdout} = await execa(
+      const { stdout } = await execa(
         `docker container stats ${dockerId} --no-stream --no-trunc --format "{{json .}}"`,
-        {shell: true}
+        { shell: true }
       );
       return JSON.parse(stdout);
     } catch (e) {
@@ -436,7 +431,7 @@ REDIS_PASSWORD=
         throw new Error('Docker container not found');
       }
 
-      const {stdout} = await execa(`docker inspect --format='{{json .State.Health.Status}}' ${dockerId}`, {
+      const { stdout } = await execa(`docker inspect --format='{{json .State.Health.Status}}' ${dockerId}`, {
         shell: true,
       });
       return stdout.replace(/"/g, '').toUpperCase() as ContainerHealthStatus;
@@ -448,28 +443,5 @@ REDIS_PASSWORD=
   getPath(container: Container) {
     const source = this.containerService.getContainerSource(container, true);
     return `${envConfig.projectsDir}/${container.id}${source ? `/${source}` : ''}`;
-  }
-
-  /**
-   * Experimental function to listen to container logs
-   * @param containerId
-   */
-  async listenToContainerLogs(containerId: string) {
-    const dockerId = await this.getId(containerId);
-    const container = this.docker.getContainer(dockerId);
-    await container.logs({
-      follow: true,
-      stdout: true,
-      stderr: true,
-    }, (err, stream) => {
-      if (err) throw err;
-      stream.on('data', (data) => {
-        console.debug(data.toString());
-        if (data.toString().includes('ERROR')) {
-          console.debug('Fehler erkannt!');
-          // Trigger Aktion
-        }
-      });
-    });
   }
 }
