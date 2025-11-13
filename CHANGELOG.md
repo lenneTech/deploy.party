@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/lenneTech/deploy.party/compare/v2.0.0...v2.1.0) (2025-11-13)
+
+
+### Features
+
+* update dockerode ([7ec6023](https://github.com/lenneTech/deploy.party/commit/7ec602326e45321f939e3c431040b87ad0ef9623))
+
 # [2.0.0](https://github.com/lenneTech/deploy.party/compare/v1.37.0...v2.0.0) (2025-11-13)
 
 
