@@ -134,7 +134,13 @@ async function submit() {
         <template #label> Docker Image Version </template>
         <template #help> Enter the Docker image version tag (e.g., latest, 1.0.0, 10.8.3) </template>
         <template #default>
-          <FormInput name="buildImage" class="w-full mx-auto max-w-2xl" type="text" placeholder="latest" :disabled="disabled" />
+          <FormInput
+            name="buildImage"
+            class="w-full mx-auto max-w-2xl"
+            type="text"
+            placeholder="latest"
+            :disabled="disabled"
+          />
         </template>
       </FormRow>
 
