@@ -169,3 +169,29 @@ cd /var/opt/deploy-party
 ```bash
 sh reconfigure.sh
 ```
+
+## Migration to Traefik v3
+
+As of the latest version, deploy.party uses **Traefik v3** by default. If you have an existing installation running Traefik v2, please see the comprehensive migration guide:
+
+📖 **[Complete Migration Guide (MIGRATION.md)](MIGRATION.md)**
+
+The guide includes:
+- ✅ Automated migration script (recommended)
+- ✅ Manual migration steps
+- ✅ Rollback instructions
+- ✅ Troubleshooting guide
+- ✅ Post-migration checklist
+
+### Quick Start
+
+For a quick automated migration:
+
+```bash
+cd /var/opt/deploy-party
+curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/upgrade-traefik-v3.sh -o upgrade-traefik-v3.sh
+chmod +x upgrade-traefik-v3.sh
+./upgrade-traefik-v3.sh
+```
+
+**Important:** All your existing containers remain 100% compatible - no changes needed to your applications!

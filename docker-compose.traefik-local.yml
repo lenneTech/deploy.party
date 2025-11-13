@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.5
     ports:
       - 80:80
       - 8080:8080
@@ -23,10 +23,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-public-certificates:/certificates
     command:
-      - --providers.docker
-      - --providers.docker.constraints=Label(`traefik.constraint-label`, `traefik-public`)
-      - --providers.docker.exposedbydefault=false
-      - --providers.docker.swarmmode
+      - --providers.swarm.endpoint=unix:///var/run/docker.sock
+      - --providers.swarm.constraints=Label(`traefik.constraint-label`, `traefik-public`)
+      - --providers.swarm.exposedbydefault=false
       - --entrypoints.http.address=:80
       - --entrypoints.3000.address=:3000
       - --entrypoints.3001.address=:3001
