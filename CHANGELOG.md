@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/lenneTech/deploy.party/compare/v2.2.0...v2.3.0) (2025-11-14)
+
+
+### Features
+
+* update to traefik:v3.6.1 ([0e3d294](https://github.com/lenneTech/deploy.party/commit/0e3d2943b73a21e94526c9331eb5fa5cd038f10c))
+
 # [2.2.0](https://github.com/lenneTech/deploy.party/compare/v2.1.1...v2.2.0) (2025-11-13)
 
 
