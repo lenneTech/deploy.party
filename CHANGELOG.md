@@ -1,3 +1,10 @@
+## [2.6.1](https://github.com/lenneTech/deploy.party/compare/v2.6.0...v2.6.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* improve container migration error handling and API key validation ([849dcc6](https://github.com/lenneTech/deploy.party/commit/849dcc6ca939eb9a363c93c66a716bbc33bcc9ce))
+
 # [2.6.0](https://github.com/lenneTech/deploy.party/compare/v2.5.0...v2.6.0) (2025-11-19)
 
 
