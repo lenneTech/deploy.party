@@ -324,13 +324,23 @@ export class ExternController {
       let container: Container;
 
       try {
-        // Load container with all relations (registry, source, etc.)
+        // Load container with all relations (registry, source)
         console.debug(`${progress} Loading container ${containerId}...`);
         container = await this.containerService.get(containerId, {
-          populate: [{ path: 'registry' }, { path: 'source' }, { path: 'project' }]
+          populate: [{ path: 'registry' }, { path: 'source' }]
         });
 
+        // Check if container exists (could have been deleted during migration)
+        if (!container) {
+          throw new Error('Container not found or was deleted');
+        }
+
         console.debug(`${progress} Migrating container: ${container.name} (${container.id})`);
+
+        // Check if registry is set (required for APPLICATION containers)
+        if (container.kind === ContainerKind.APPLICATION && !container.registry) {
+          throw new Error(`Container ${container.name} is missing required registry configuration`);
+        }
 
         // Stop container
         console.debug(`${progress} - Stopping container...`);

@@ -58,6 +58,7 @@ export class ApiKeyService extends CrudService<ApiKey, ApiKeyCreateInput> {
   }
 
   async checkTokenIsValid(apiToken: string) {
-    return !!(await this.find({ filterQuery: {key: apiToken }}));
+    const result = await this.find({ filterQuery: {key: apiToken }});
+    return result.length > 0;
   }
 }
