@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/lenneTech/deploy.party/compare/v2.5.0...v2.6.0) (2025-11-19)
+
+
+### Features
+
+* refactor update script for traefik ([44920f9](https://github.com/lenneTech/deploy.party/commit/44920f9dacf62f2aa3d1fc1f3ba1fec593d2949d))
+
 # [2.5.0](https://github.com/lenneTech/deploy.party/compare/v2.4.0...v2.5.0) (2025-11-19)
 
 
