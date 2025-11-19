@@ -28,6 +28,7 @@ BACKUP_TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 API_URL=""
 API_TOKEN=""
 SKIP_MIGRATION=false
+SKIP_DEPLOY_PARTY_UPDATE=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -44,16 +45,21 @@ while [[ $# -gt 0 ]]; do
             SKIP_MIGRATION=true
             shift
             ;;
+        --skip-deploy-party-update)
+            SKIP_DEPLOY_PARTY_UPDATE=true
+            shift
+            ;;
         -h|--help)
             echo "Traefik v2 to v3 Upgrade Script"
             echo ""
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --api-url URL          API URL for container migration (e.g., https://api.deploy.party)"
-            echo "  --api-token TOKEN      API token for authentication (starts with dp-)"
-            echo "  --skip-migration       Skip automatic container migration"
-            echo "  -h, --help            Show this help message"
+            echo "  --api-url URL                API URL for container migration (e.g., https://api.deploy.party)"
+            echo "  --api-token TOKEN            API token for authentication (starts with dp-)"
+            echo "  --skip-migration             Skip automatic container migration"
+            echo "  --skip-deploy-party-update   Skip deploy.party update after Traefik upgrade"
+            echo "  -h, --help                   Show this help message"
             echo ""
             echo "Examples:"
             echo "  $0 --api-url https://api.deploy.party --api-token dp-xxx..."
@@ -67,6 +73,82 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Function to update deploy.party
+update_deploy_party() {
+    if [ "$SKIP_DEPLOY_PARTY_UPDATE" = true ]; then
+        echo -e "${YELLOW}Skipping deploy.party update (--skip-deploy-party-update flag).${NC}"
+        return
+    fi
+
+    echo ""
+    echo "================================================================================"
+    echo "Updating deploy.party to latest version..."
+    echo "================================================================================"
+    echo ""
+
+    # Stop deploy.party
+    echo "Stopping deploy.party..."
+    docker stack rm deploy-party
+    sleep 10
+
+    # Pull latest images
+    echo "Pulling latest images..."
+    docker pull ghcr.io/lennetech/deploy.party/app:latest
+    docker pull ghcr.io/lennetech/deploy.party/api:latest
+
+    # Redeploy
+    echo "Redeploying deploy.party..."
+    docker stack deploy -c docker-compose.yml deploy-party
+
+    # Wait for health check
+    echo "--------------------------------------------------------------------------------"
+    echo "Waiting for deploy.party to start..."
+    sleep 10
+
+    local UPDATE_TIMEOUT=180
+    local UPDATE_START_TIME=$(date +%s)
+    local UPDATE_BAR_LENGTH=50
+
+    while true; do
+        local DEPLOY_PARTY_CONTAINER_ID=$(docker ps --filter "ancestor=ghcr.io/lennetech/deploy.party/app:latest" --format "{{.ID}}" 2>/dev/null | head -n 1)
+
+        if [ -n "$DEPLOY_PARTY_CONTAINER_ID" ]; then
+            local DEPLOY_PARTY_STATUS=$(docker inspect --format='{{.State.Health.Status}}' "$DEPLOY_PARTY_CONTAINER_ID" 2>/dev/null)
+
+            if [ "$DEPLOY_PARTY_STATUS" = "healthy" ]; then
+                local UPDATE_PROGRESS=100
+                local UPDATE_FILLED=$((UPDATE_PROGRESS * UPDATE_BAR_LENGTH / 100))
+                local UPDATE_EMPTY=$((UPDATE_BAR_LENGTH - UPDATE_FILLED))
+                local UPDATE_BAR=$(printf "%0.s#" $(seq 1 $UPDATE_FILLED))
+                local UPDATE_SPACES=$(printf "%0.s " $(seq 1 $UPDATE_EMPTY))
+                printf "\r[%s%s] %d%%" "$UPDATE_BAR" "$UPDATE_SPACES" "$UPDATE_PROGRESS"
+                sleep 2
+                echo ""
+                echo -e "${GREEN}Successfully updated deploy.party!${NC}"
+                break
+            fi
+        fi
+
+        local UPDATE_CURRENT_TIME=$(date +%s)
+        local UPDATE_ELAPSED_TIME=$((UPDATE_CURRENT_TIME - UPDATE_START_TIME))
+        if [ $UPDATE_ELAPSED_TIME -ge $UPDATE_TIMEOUT ]; then
+            echo ""
+            echo -e "${YELLOW}Warning: deploy.party did not reach healthy status within timeout${NC}"
+            echo "You may need to check the logs: docker service logs deploy-party_app"
+            break
+        fi
+
+        local UPDATE_PROGRESS=$((UPDATE_ELAPSED_TIME * 100 / UPDATE_TIMEOUT))
+        local UPDATE_FILLED=$((UPDATE_PROGRESS * UPDATE_BAR_LENGTH / 100))
+        local UPDATE_EMPTY=$((UPDATE_BAR_LENGTH - UPDATE_FILLED))
+        local UPDATE_BAR=$(printf "%0.s#" $(seq 1 $UPDATE_FILLED))
+        local UPDATE_SPACES=$(printf "%0.s " $(seq 1 $UPDATE_EMPTY))
+        printf "\r[%s%s] %d%%" "$UPDATE_BAR" "$UPDATE_SPACES" "$UPDATE_PROGRESS"
+
+        sleep 2
+    done
+}
 
 echo "================================================================================"
 echo "Traefik v2 → v3 Upgrade Script"
@@ -243,6 +325,11 @@ while true; do
                 echo "To migrate containers later, run:"
                 echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
                 echo ""
+
+                # Update deploy.party before exit
+                update_deploy_party
+
+                echo ""
                 echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                 exit 0
             fi
@@ -264,6 +351,11 @@ while true; do
                         echo "To migrate containers later, run:"
                         echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
                         echo ""
+
+                        # Update deploy.party before exit
+                        update_deploy_party
+
+                        echo ""
                         echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                         exit 0
                     fi
@@ -284,6 +376,11 @@ while true; do
                     echo ""
                     echo "To migrate containers later, run:"
                     echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
+                    echo ""
+
+                    # Update deploy.party before exit
+                    update_deploy_party
+
                     echo ""
                     echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                     exit 0
@@ -321,9 +418,27 @@ while true; do
             fi
 
             echo ""
+
+            # deploy.party Update Section
+            update_deploy_party
+
+            echo ""
             echo "================================================================================"
-            echo -e "${GREEN}Traefik v3 upgrade completed!${NC}"
+            echo -e "${GREEN}Upgrade completed successfully!${NC}"
             echo "================================================================================"
+            echo ""
+            echo "✅ Traefik upgraded from v2 to v3"
+            if [ "$SKIP_MIGRATION" != true ]; then
+                MIGRATED_COUNT=$(echo "$MIGRATION_RESULT" | grep -o '"migrated":[0-9]*' | grep -o '[0-9]*')
+                echo "✅ Container middleware migrated ($MIGRATED_COUNT containers)"
+            fi
+            if [ "$SKIP_DEPLOY_PARTY_UPDATE" != true ]; then
+                echo "✅ deploy.party updated to latest version"
+            fi
+            echo ""
+            echo "Dashboard: lb.$APP_URL"
+            echo "deploy.party: $APP_URL"
+            echo ""
             exit 0
         fi
     fi

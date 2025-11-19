@@ -127,10 +127,16 @@ chmod +x upgrade-traefik-v3.sh
 ./upgrade-traefik-v3.sh --skip-migration
 ```
 
+**Skip deploy.party update**:
+```bash
+./upgrade-traefik-v3.sh --skip-deploy-party-update
+```
+
 **Script options:**
 - `--api-url URL` - API URL for container migration (e.g., https://api.deploy.party)
 - `--api-token TOKEN` - API token for authentication (starts with dp-)
 - `--skip-migration` - Skip automatic container migration
+- `--skip-deploy-party-update` - Skip deploy.party update after Traefik upgrade
 - `-h, --help` - Show help message
 
 The script will:
@@ -142,6 +148,7 @@ The script will:
 - ✅ Auto-detect API URL from APP_URL environment variable
 - ✅ Prompt for API token or accept via parameter
 - ✅ Migrate all containers with rolling update
+- ✅ Update deploy.party to latest version
 - ✅ Verify the upgrade was successful
 - ✅ Provide rollback instructions if anything goes wrong
 

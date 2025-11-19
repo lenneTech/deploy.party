@@ -200,6 +200,9 @@ chmod +x upgrade-traefik-v3.sh
 
 # Skip container migration
 ./upgrade-traefik-v3.sh --skip-migration
+
+# Skip deploy.party update
+./upgrade-traefik-v3.sh --skip-deploy-party-update
 ```
 
 **What you'll need:**
@@ -216,3 +219,4 @@ chmod +x upgrade-traefik-v3.sh
 - 🔄 All deployed containers will be restarted with updated configuration (rolling update)
 - ⏱️ Each container has ~5-10 seconds downtime during restart
 - ✅ Docker Compose files are automatically regenerated
+- 🚀 deploy.party is updated to the latest version
