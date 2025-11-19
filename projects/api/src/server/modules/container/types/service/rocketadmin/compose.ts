@@ -4,7 +4,7 @@ import {execa} from "execa";
 export async function getRocketAdmin(container: Container): Promise<string> {
   const basicAuth = !!(container?.basicAuth?.username && container?.basicAuth?.pw);
   const additionalLabels = [];
-  const middlewares = ['secure-headers'];
+  const middlewares = ['secure-headers@swarm'];
 
   if (basicAuth) {
     // Hash password

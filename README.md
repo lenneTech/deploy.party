@@ -191,7 +191,28 @@ For a quick automated migration:
 cd /var/opt/deploy-party
 curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/upgrade-traefik-v3.sh -o upgrade-traefik-v3.sh
 chmod +x upgrade-traefik-v3.sh
+
+# Interactive mode (prompts for API URL and token)
 ./upgrade-traefik-v3.sh
+
+# Or with parameters for automation
+./upgrade-traefik-v3.sh --api-url https://api.deploy.party --api-token dp-xxx...
+
+# Skip container migration
+./upgrade-traefik-v3.sh --skip-migration
 ```
 
-**Important:** All your existing containers remain 100% compatible - no changes needed to your applications!
+**What you'll need:**
+- 🌐 **API URL** (optional - auto-detected from APP_URL if available)
+  - Format: `https://api.YOUR_DOMAIN` or `https://YOUR_DOMAIN:3000`
+  - The script will try to auto-detect or prompt you
+- 🔑 **API Token** (optional but recommended for automatic container migration)
+  - Get it from: Settings → API Keys in your deploy.party UI
+  - Starts with `dp-`
+  - Can be passed via `--api-token` flag or entered interactively
+
+**What happens:**
+- ⚠️ Traefik v3 requires middleware syntax changes (`@swarm` suffix)
+- 🔄 All deployed containers will be restarted with updated configuration (rolling update)
+- ⏱️ Each container has ~5-10 seconds downtime during restart
+- ✅ Docker Compose files are automatically regenerated

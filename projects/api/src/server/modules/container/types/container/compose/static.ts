@@ -141,7 +141,7 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
   }
 
   if (container.ssl) {
-    middlewares.push('secure-headers');
+    middlewares.push('secure-headers@swarm');
     dockerCompose.push(`          - traefik.http.routers.${container.id}-https.middlewares=${middlewares.join(',')}`);
   } else {
     if (middlewares.length) {

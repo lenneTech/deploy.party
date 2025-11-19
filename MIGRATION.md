@@ -15,11 +15,78 @@ This guide helps you migrate your existing deploy.party installation from Traefi
 - **Provider syntax**: `--providers.docker.swarmmode` → `--providers.swarm.endpoint=unix:///var/run/docker.sock`
 
 ### What Stays the Same?
-- **All your containers** - No changes needed! 100% compatible
-- **Docker labels** - All dynamic configuration remains identical
 - **SSL certificates** - Will be preserved
 - **Network configuration** - traefik-public network stays the same
-- **Middleware** - All middleware configurations work without changes
+
+### What Requires Container Updates?
+⚠️ **Important**: Due to middleware syntax changes in Traefik v3, all deployed containers need to be restarted with updated configuration.
+
+**Why?** Traefik v3 requires middleware provider suffixes (e.g., `@swarm`, `@docker`). The upgrade script automatically updates all container configurations with the correct syntax.
+
+**What happens?**
+- Containers are restarted one by one (rolling update)
+- Each container has ~5-10 seconds downtime during restart
+- Docker Compose files are regenerated with v3-compatible syntax
+
+## Container Migration
+
+After upgrading Traefik to v3, all deployed containers must be migrated to use the new middleware syntax. The upgrade script handles this automatically.
+
+### Automatic Migration (Recommended)
+
+The `upgrade-traefik-v3.sh` script will prompt you for a deploy.party API token and automatically:
+1. Find all deployed containers
+2. Stop each container
+3. Regenerate docker-compose.yml with updated middleware syntax
+4. Redeploy the container
+5. Continue with the next container (rolling update)
+
+### Manual Migration via REST API
+
+If you skip the automatic migration or need to re-run it later:
+
+```bash
+curl -X POST \
+  -H "dp-api-token: YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  https://YOUR_API_URL/extern/migrate/traefik-middleware
+```
+
+**Replace `YOUR_API_URL` with:**
+- `https://api.YOUR_DOMAIN` (production)
+- `https://YOUR_DOMAIN:3000` (if API runs on port 3000)
+- `http://localhost:3000` (local development only)
+
+**How to get an API token:**
+1. Log into your deploy.party instance
+2. Go to Settings → API Keys
+3. Create a new API key
+4. Copy the token (starts with `dp-`)
+
+### Manual Container Migration
+
+If the automated migration fails, you can manually restart containers via the deploy.party UI:
+1. Log into deploy.party
+2. Go to each project
+3. Click "Redeploy" on each container
+
+The new docker-compose files will automatically use the correct v3 syntax.
+
+### What Changed in Middleware Syntax?
+
+**Before (Traefik v2):**
+```yaml
+- traefik.http.routers.myapp-http.middlewares=https-redirect
+- traefik.http.routers.myapp-https.middlewares=secure-headers
+```
+
+**After (Traefik v3):**
+```yaml
+- traefik.http.routers.myapp-http.middlewares=https-redirect@swarm
+- traefik.http.routers.myapp-https.middlewares=secure-headers@swarm
+```
+
+The `@swarm` suffix tells Traefik where the middleware is defined (in Docker Swarm labels).
 
 ## Migration Options
 
@@ -44,9 +111,27 @@ chmod +x upgrade-traefik-v3.sh
 ```
 
 ### Step 3: Run the upgrade script
+
+**Interactive mode** (recommended):
 ```bash
 ./upgrade-traefik-v3.sh
 ```
+
+**With parameters** (for automation):
+```bash
+./upgrade-traefik-v3.sh --api-url https://api.deploy.party --api-token dp-xxx...
+```
+
+**Skip container migration**:
+```bash
+./upgrade-traefik-v3.sh --skip-migration
+```
+
+**Script options:**
+- `--api-url URL` - API URL for container migration (e.g., https://api.deploy.party)
+- `--api-token TOKEN` - API token for authentication (starts with dp-)
+- `--skip-migration` - Skip automatic container migration
+- `-h, --help` - Show help message
 
 The script will:
 - ✅ Automatically detect your setup type (local/production)
@@ -54,8 +139,10 @@ The script will:
 - ✅ Stop Traefik v2 safely
 - ✅ Download the correct v3 configuration
 - ✅ Start Traefik v3
+- ✅ Auto-detect API URL from APP_URL environment variable
+- ✅ Prompt for API token or accept via parameter
+- ✅ Migrate all containers with rolling update
 - ✅ Verify the upgrade was successful
-- ✅ Show you verification commands
 - ✅ Provide rollback instructions if anything goes wrong
 
 ### Step 4: Verify the migration
@@ -220,6 +307,41 @@ echo $USERNAME
 # Check basic auth middleware
 docker exec $(docker ps -q -f name=traefik) cat /etc/traefik/traefik.yml
 ```
+
+### Containers showing 404 or 503 errors after upgrade
+This happens when containers were not migrated to the new middleware syntax.
+
+**Solution 1: Run the migration API endpoint**
+```bash
+curl -X POST \
+  -H "dp-api-token: YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  https://YOUR_API_URL/extern/migrate/traefik-middleware
+```
+Replace `YOUR_API_URL` with your actual API URL (e.g., `https://api.deploy.party`)
+
+**Solution 2: Manually redeploy affected containers**
+```bash
+# Find the container
+docker ps | grep YOUR_CONTAINER_NAME
+
+# Get the project path
+# Usually: /data/projects/PROJECT_ID
+
+# Redeploy using the existing compose file
+cd /data/projects/PROJECT_ID
+docker stack rm CONTAINER_ID
+sleep 10
+
+# Trigger a rebuild through the API which will regenerate the compose file
+# Or manually edit docker-compose.yml to add @swarm suffix to middleware
+```
+
+**Solution 3: Redeploy via UI**
+1. Log into deploy.party
+2. Find the affected container
+3. Click "Redeploy" or "Update"
+4. The new deployment will use the correct v3 syntax
 
 ---
 

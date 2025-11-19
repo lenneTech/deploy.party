@@ -2,6 +2,15 @@
 
 # Traefik v2 to v3 Upgrade Script
 # This script upgrades an existing Traefik v2 installation to v3
+#
+# Usage:
+#   ./upgrade-traefik-v3.sh [OPTIONS]
+#
+# Options:
+#   --api-url URL          API URL for container migration (e.g., https://api.deploy.party)
+#   --api-token TOKEN      API token for authentication (starts with dp-)
+#   --skip-migration       Skip automatic container migration
+#   -h, --help            Show this help message
 
 # Exit in case of error
 set -e
@@ -14,6 +23,50 @@ NC='\033[0m' # No Color
 
 INSTALL_PATH="/var/opt/deploy-party"
 BACKUP_TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+
+# Default values
+API_URL=""
+API_TOKEN=""
+SKIP_MIGRATION=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --api-url)
+            API_URL="$2"
+            shift 2
+            ;;
+        --api-token)
+            API_TOKEN="$2"
+            shift 2
+            ;;
+        --skip-migration)
+            SKIP_MIGRATION=true
+            shift
+            ;;
+        -h|--help)
+            echo "Traefik v2 to v3 Upgrade Script"
+            echo ""
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --api-url URL          API URL for container migration (e.g., https://api.deploy.party)"
+            echo "  --api-token TOKEN      API token for authentication (starts with dp-)"
+            echo "  --skip-migration       Skip automatic container migration"
+            echo "  -h, --help            Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0 --api-url https://api.deploy.party --api-token dp-xxx..."
+            echo "  $0 --skip-migration"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use -h or --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 echo "================================================================================"
 echo "Traefik v2 → v3 Upgrade Script"
@@ -173,7 +226,104 @@ while true; do
             echo "  docker ps | grep traefik"
             echo "  docker logs \$(docker ps -q -f name=traefik)"
             echo ""
-            echo -e "${GREEN}All your containers should continue to work without any changes.${NC}"
+
+            # Container Migration for Traefik v3 Middleware Syntax
+            echo "--------------------------------------------------------------------------------"
+            echo "Container Migration for Traefik v3"
+            echo "--------------------------------------------------------------------------------"
+            echo ""
+            echo -e "${YELLOW}IMPORTANT: All deployed containers need updated middleware configuration.${NC}"
+            echo "Traefik v3 requires middleware provider suffixes (@swarm)."
+            echo ""
+
+            # Skip if requested
+            if [ "$SKIP_MIGRATION" = true ]; then
+                echo -e "${YELLOW}Skipping automatic container migration (--skip-migration flag).${NC}"
+                echo ""
+                echo "To migrate containers later, run:"
+                echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
+                echo ""
+                echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
+                exit 0
+            fi
+
+            # Determine API URL
+            if [ -z "$API_URL" ]; then
+                # Try to auto-detect from environment
+                if [ -n "$APP_URL" ]; then
+                    API_URL="https://api.$APP_URL"
+                    echo "Auto-detected API URL: $API_URL"
+                else
+                    echo "No API URL provided and could not auto-detect."
+                    echo ""
+                    read -p "Enter your API URL (e.g., https://api.deploy.party): " API_URL
+
+                    if [ -z "$API_URL" ]; then
+                        echo -e "${YELLOW}No API URL provided. Skipping automatic migration.${NC}"
+                        echo ""
+                        echo "To migrate containers later, run:"
+                        echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
+                        echo ""
+                        echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
+                        exit 0
+                    fi
+                fi
+            fi
+
+            # Get API token if not provided
+            if [ -z "$API_TOKEN" ]; then
+                echo ""
+                echo "API token required for automatic container migration."
+                echo "Get your token from: Settings → API Keys (starts with dp-)"
+                echo ""
+                read -sp "Enter your API token (or press Enter to skip): " API_TOKEN
+                echo ""
+
+                if [ -z "$API_TOKEN" ]; then
+                    echo -e "${YELLOW}No API token provided. Skipping automatic migration.${NC}"
+                    echo ""
+                    echo "To migrate containers later, run:"
+                    echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
+                    echo ""
+                    echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
+                    exit 0
+                fi
+            fi
+
+            # Trigger migration via REST API
+            echo ""
+            echo "Triggering container migration..."
+            echo "API URL: $API_URL"
+            echo ""
+
+            MIGRATION_RESULT=$(curl -s -X POST \
+                -H "dp-api-token: $API_TOKEN" \
+                -H "Content-Type: application/json" \
+                "$API_URL/extern/migrate/traefik-middleware")
+
+            if echo "$MIGRATION_RESULT" | grep -q '"success":true'; then
+                echo -e "${GREEN}Container migration completed successfully!${NC}"
+                echo ""
+                echo "Migration details:"
+                echo "$MIGRATION_RESULT" | grep -o '"migrated":[0-9]*' | sed 's/"migrated":/  Migrated: /'
+                echo "$MIGRATION_RESULT" | grep -o '"failed":[0-9]*' | sed 's/"failed":/  Failed:   /'
+            elif echo "$MIGRATION_RESULT" | grep -q "Invalid API Token"; then
+                echo -e "${RED}Error: Invalid API token provided.${NC}"
+                echo ""
+                echo "To migrate containers manually with correct token, run:"
+                echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
+            else
+                echo -e "${YELLOW}Warning: Container migration encountered issues.${NC}"
+                echo "Response: $MIGRATION_RESULT"
+                echo ""
+                echo "To retry migration manually, run:"
+                echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
+            fi
+
+            echo ""
+            echo "================================================================================"
+            echo -e "${GREEN}Traefik v3 upgrade completed!${NC}"
+            echo "================================================================================"
             exit 0
         fi
     fi

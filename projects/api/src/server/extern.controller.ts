@@ -1,18 +1,20 @@
-import {Body, Controller, Delete, Get, Headers, Param, Post} from "@nestjs/common";
-import {BuildService} from "./modules/build/build.service";
-import {ContainerService} from "./modules/container/container.service";
-import {ManuallyDeployDto} from "./common/dto/manually-deploy.dto";
-import {ContainerStatus} from "./modules/container/enums/container-status.enum";
-import {ApiKeyService} from "./modules/api-key/api-key.service";
-import {DeploymentType} from "./modules/container/enums/deployment-type.enum";
-import {CallbackInput} from "./common/dto/callback.input";
-import {BackupService} from "./modules/backup/backup.service";
-import {AutoBackupDto} from "./common/dto/auto-backup.dto";
-import {ContainerKind} from "./modules/container/enums/container-kind.enum";
-import {ApiBody, ApiOperation, ApiParam, ApiResponse} from "@nestjs/swagger";
-import {BackupInput} from "./modules/backup/inputs/backup.input";
-import {BackupStatus} from "./modules/backup/enum/backup-status.enum";
-import {BackupExternResult} from "./modules/build/outputs/backup-extern.result";
+import { Body, Controller, Delete, Get, Headers, Param, Post } from "@nestjs/common";
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from "@nestjs/swagger";
+import { AutoBackupDto } from "./common/dto/auto-backup.dto";
+import { CallbackInput } from "./common/dto/callback.input";
+import { ManuallyDeployDto } from "./common/dto/manually-deploy.dto";
+import { DockerService } from "./common/services/docker.service";
+import { ApiKeyService } from "./modules/api-key/api-key.service";
+import { BackupService } from "./modules/backup/backup.service";
+import { BackupStatus } from "./modules/backup/enum/backup-status.enum";
+import { BackupInput } from "./modules/backup/inputs/backup.input";
+import { BuildService } from "./modules/build/build.service";
+import { BackupExternResult } from "./modules/build/outputs/backup-extern.result";
+import { Container } from "./modules/container/container.model";
+import { ContainerService } from "./modules/container/container.service";
+import { ContainerKind } from "./modules/container/enums/container-kind.enum";
+import { ContainerStatus } from "./modules/container/enums/container-status.enum";
+import { DeploymentType } from "./modules/container/enums/deployment-type.enum";
 
 @Controller('extern')
 export class ExternController {
@@ -21,7 +23,8 @@ export class ExternController {
     private containerService: ContainerService,
     private apiKeyService: ApiKeyService,
     private backupService: BackupService,
-  ) {}
+    private dockerService: DockerService,
+  ) { }
 
   @Post(':projectId/deploy')
   @ApiOperation({
@@ -259,6 +262,77 @@ export class ExternController {
       throw new Error('No database container found');
     }
 
-    return await this.backupService.listBackups(dbContainer.id, {force: true});
+    return await this.backupService.listBackups(dbContainer.id, { force: true });
+  }
+
+  @Post('migrate/traefik-middleware')
+  @ApiOperation({
+    summary: 'Migrate Traefik middleware configuration',
+    description: 'Updates all deployed containers to use Traefik v3/v4 middleware syntax with @swarm provider suffix. Performs rolling update to minimize downtime.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Migration completed with details about success and failures',
+  })
+  async migrateTraefikMiddleware(@Headers('dp-api-token') apiToken: string) {
+    if (!apiToken) {
+      return 'No API Token provided';
+    }
+
+    const valid = await this.apiKeyService.checkTokenIsValid(apiToken);
+    if (!valid) {
+      return 'Invalid API Token';
+    }
+
+    const allDeployed = await this.containerService.findForce({ filterQuery: { status: ContainerStatus.DEPLOYED } });
+
+    // Filter out database containers (they don't use Traefik)
+    const deployedContainers = allDeployed.filter(
+      (c: Container) => c.kind !== ContainerKind.DATABASE
+    );
+
+    const result = {
+      success: true,
+      total: deployedContainers.length,
+      migrated: 0,
+      failed: 0,
+      details: [],
+    };
+
+    console.debug(`Starting Traefik middleware migration for ${deployedContainers.length} containers...`);
+
+    for (const container of deployedContainers) {
+      try {
+        console.debug(`Migrating container ${container.id} (${container.name})...`);
+
+        await this.dockerService.stop(container);
+        await this.dockerService.createDockerComposeFile(container);
+        await this.dockerService.deploy(container);
+
+        result.migrated++;
+        result.details.push({
+          containerId: container.id,
+          name: container.name,
+          status: 'success',
+        });
+
+        console.debug(`✓ Successfully migrated container ${container.id}`);
+      } catch (error) {
+        result.failed++;
+        result.success = false;
+        result.details.push({
+          containerId: container.id,
+          name: container.name,
+          status: 'failed',
+          error: error.message,
+        });
+
+        console.error(`✗ Failed to migrate container ${container.id}:`, error.message);
+      }
+    }
+
+    console.debug(`Migration completed: ${result.migrated} succeeded, ${result.failed} failed`);
+
+    return result;
   }
 }
