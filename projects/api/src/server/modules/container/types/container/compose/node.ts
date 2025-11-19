@@ -30,8 +30,8 @@ export async function getNodeCompose(container: Container, build?: Build): Promi
   dockerCompose.push('    deploy-party:');
   dockerCompose.push('        external: true');
   dockerCompose.push('services:');
-  dockerCompose.push(`  ${container.name.replace(/\s/g, '_')}:`);
-  dockerCompose.push(`    container_name: ${container.name}`);
+  dockerCompose.push(`  ${container.name.trim().replace(/\s/g, '_')}:`);
+  dockerCompose.push(`    container_name: ${container.name.trim()}`);
   dockerCompose.push(`    build:`);
   dockerCompose.push(`      context: .`);
   dockerCompose.push(`      dockerfile: Dockerfile`);

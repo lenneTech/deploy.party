@@ -30,8 +30,8 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
   dockerCompose.push('    deploy-party:');
   dockerCompose.push('        external: true');
   dockerCompose.push('services:');
-  dockerCompose.push(`  ${container.name.replace(/\s/g, '_')}:`);
-  dockerCompose.push(`    container_name: ${container.name.replace(/\s/g, '_')}`);
+  dockerCompose.push(`  ${container.name.trim().replace(/\s/g, '_')}:`);
+  dockerCompose.push(`    container_name: ${container.name.trim().replace(/\s/g, '_')}`);
   dockerCompose.push(`    build:`);
   dockerCompose.push(`      context: .`);
   dockerCompose.push(`      dockerfile: Dockerfile`);

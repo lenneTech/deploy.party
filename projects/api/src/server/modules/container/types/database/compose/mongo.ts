@@ -7,8 +7,8 @@ export async function getMongoCompose(container: Container): Promise<string> {
   dockerCompose.push('    deploy-party:');
   dockerCompose.push('        external: true');
   dockerCompose.push('services:');
-  dockerCompose.push(`  ${container.id}_${container.name.replace(/\s/g, '_')}:`);
-  dockerCompose.push(`    container_name: ${container.id}_${container.name.replace(/\s/g, '_')}`);
+  dockerCompose.push(`  ${container.id}_${container.name.trim().replace(/\s/g, '_')}:`);
+  dockerCompose.push(`    container_name: ${container.id}_${container.name.trim().replace(/\s/g, '_')}`);
   dockerCompose.push(`    image: ${container.buildImage}`);
   dockerCompose.push(`    networks:`);
   dockerCompose.push(`      - deploy-party`);
