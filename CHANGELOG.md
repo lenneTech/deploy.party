@@ -1,3 +1,10 @@
+## [2.6.2](https://github.com/lenneTech/deploy.party/compare/v2.6.1...v2.6.2) (2025-11-19)
+
+
+### Bug Fixes
+
+* trim whitespace from container names in Docker Compose generation ([28d26a7](https://github.com/lenneTech/deploy.party/commit/28d26a74639969828b5370d77dec5dd3fef351ab))
+
 ## [2.6.1](https://github.com/lenneTech/deploy.party/compare/v2.6.0...v2.6.1) (2025-11-19)
 
 
