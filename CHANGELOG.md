@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/lenneTech/deploy.party/compare/v2.4.0...v2.5.0) (2025-11-19)
+
+
+### Features
+
+* add deploy.party auto-update to Traefik v3 upgrade script ([7ee94a9](https://github.com/lenneTech/deploy.party/commit/7ee94a97393a2bdac74a27f116559f270410fc38))
+
 # [2.4.0](https://github.com/lenneTech/deploy.party/compare/v2.3.0...v2.4.0) (2025-11-19)
 
 
