@@ -293,9 +293,7 @@ export class ExternController {
       .filter((c: Container) => c.kind !== ContainerKind.DATABASE)
       .map(c => c.id);
 
-    const totalContainers = deployedContainerIds.length;
-
-    console.debug(`[Traefik Migration] Starting background migration for ${totalContainers} containers...`);
+    console.debug(`[Traefik Migration] Starting background migration for ${deployedContainerIds.length} containers...`);
 
     // Run migration in background (don't await)
     this.runMigrationInBackground(deployedContainerIds).catch(error => {
@@ -306,7 +304,7 @@ export class ExternController {
     return {
       success: true,
       message: 'Migration started in background',
-      total: totalContainers,
+      total: deployedContainerIds.length,
       note: 'Check server logs for progress. Migration may take several minutes.',
     };
   }
