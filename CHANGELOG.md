@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/lenneTech/deploy.party/compare/v2.3.0...v2.4.0) (2025-11-19)
+
+
+### Features
+
+* add Traefik v3 middleware migration endpoint and update upgrade script ([2b0b176](https://github.com/lenneTech/deploy.party/commit/2b0b176e0161cc6fa9e14681c69a56dc7f4d0d46))
+
 # [2.3.0](https://github.com/lenneTech/deploy.party/compare/v2.2.0...v2.3.0) (2025-11-14)
 
 
