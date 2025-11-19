@@ -50,7 +50,7 @@ export class ExternController {
       return 'Invalid API Token';
     }
 
-    const containers = await this.containerService.findContainersForProject(projectId);
+    const containers = await this.containerService.findContainersForProject(projectId, { force: true });
 
     // loop through containers
     for (const container of containers) {
@@ -104,7 +104,7 @@ export class ExternController {
       return 'Invalid API Token';
     }
 
-    const containers = await this.containerService.findContainersForProject(projectId);
+    const containers = await this.containerService.findContainersForProject(projectId, { force: true });
     const dbContainer = containers.find((container) => container.kind === ContainerKind.DATABASE);
     if (!dbContainer) {
       throw new Error('No database container found');
@@ -268,11 +268,11 @@ export class ExternController {
   @Post('migrate/traefik-middleware')
   @ApiOperation({
     summary: 'Migrate Traefik middleware configuration',
-    description: 'Updates all deployed containers to use Traefik v3/v4 middleware syntax with @swarm provider suffix. Performs rolling update to minimize downtime.',
+    description: 'Updates all deployed containers to use Traefik v3/v4 middleware syntax with @swarm provider suffix. Performs rolling update to minimize downtime. This operation runs in the background and returns immediately.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Migration completed with details about success and failures',
+    description: 'Migration started successfully. Check server logs for progress.',
   })
   async migrateTraefikMiddleware(@Headers('dp-api-token') apiToken: string) {
     if (!apiToken) {
@@ -284,29 +284,66 @@ export class ExternController {
       return 'Invalid API Token';
     }
 
-    const allDeployed = await this.containerService.findForce({ filterQuery: { status: ContainerStatus.DEPLOYED } });
+    const allDeployed = await this.containerService.findForce({
+      filterQuery: { status: ContainerStatus.DEPLOYED }
+    });
 
     // Filter out database containers (they don't use Traefik)
-    const deployedContainers = allDeployed.filter(
-      (c: Container) => c.kind !== ContainerKind.DATABASE
-    );
+    const deployedContainerIds = allDeployed
+      .filter((c: Container) => c.kind !== ContainerKind.DATABASE)
+      .map(c => c.id);
 
+    const totalContainers = deployedContainerIds.length;
+
+    console.debug(`[Traefik Migration] Starting background migration for ${totalContainers} containers...`);
+
+    // Run migration in background (don't await)
+    this.runMigrationInBackground(deployedContainerIds).catch(error => {
+      console.error('[Traefik Migration] Unexpected error in background migration:', error);
+    });
+
+    // Return immediately
+    return {
+      success: true,
+      message: 'Migration started in background',
+      total: totalContainers,
+      note: 'Check server logs for progress. Migration may take several minutes.',
+    };
+  }
+
+  private async runMigrationInBackground(containerIds: string[]) {
     const result = {
       success: true,
-      total: deployedContainers.length,
+      total: containerIds.length,
       migrated: 0,
       failed: 0,
       details: [],
     };
 
-    console.debug(`Starting Traefik middleware migration for ${deployedContainers.length} containers...`);
+    for (let i = 0; i < containerIds.length; i++) {
+      const containerId = containerIds[i];
+      const progress = `[${i + 1}/${containerIds.length}]`;
+      let container: Container;
 
-    for (const container of deployedContainers) {
       try {
-        console.debug(`Migrating container ${container.id} (${container.name})...`);
+        // Load container with all relations (registry, source, etc.)
+        console.debug(`${progress} Loading container ${containerId}...`);
+        container = await this.containerService.get(containerId, {
+          populate: [{ path: 'registry' }, { path: 'source' }, { path: 'project' }]
+        });
 
+        console.debug(`${progress} Migrating container: ${container.name} (${container.id})`);
+
+        // Stop container
+        console.debug(`${progress} - Stopping container...`);
         await this.dockerService.stop(container);
+
+        // Regenerate docker-compose with updated middleware syntax
+        console.debug(`${progress} - Regenerating docker-compose.yml...`);
         await this.dockerService.createDockerComposeFile(container);
+
+        // Deploy container
+        console.debug(`${progress} - Deploying container...`);
         await this.dockerService.deploy(container);
 
         result.migrated++;
@@ -316,23 +353,43 @@ export class ExternController {
           status: 'success',
         });
 
-        console.debug(`✓ Successfully migrated container ${container.id}`);
+        console.debug(`${progress} ✓ Successfully migrated: ${container.name}`);
+
+        // Small delay between containers to avoid overwhelming Docker
+        if (i < containerIds.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       } catch (error) {
         result.failed++;
         result.success = false;
         result.details.push({
-          containerId: container.id,
-          name: container.name,
+          containerId: containerId,
+          name: container?.name || 'Unknown',
           status: 'failed',
           error: error.message,
+          stack: error.stack,
         });
 
-        console.error(`✗ Failed to migrate container ${container.id}:`, error.message);
+        console.error(`${progress} ✗ Failed to migrate: ${container?.name || containerId}`);
+        console.error(`${progress} Error:`, error.message);
+        console.error(`${progress} Stack:`, error.stack);
+
+        // Continue with next container even if this one failed
       }
     }
 
-    console.debug(`Migration completed: ${result.migrated} succeeded, ${result.failed} failed`);
+    console.debug(`[Traefik Migration] ========================================`);
+    console.debug(`[Traefik Migration] MIGRATION COMPLETED`);
+    console.debug(`[Traefik Migration] Total:    ${result.total}`);
+    console.debug(`[Traefik Migration] Migrated: ${result.migrated}`);
+    console.debug(`[Traefik Migration] Failed:   ${result.failed}`);
+    console.debug(`[Traefik Migration] ========================================`);
 
-    return result;
+    if (result.failed > 0) {
+      console.error('[Traefik Migration] Failed containers:');
+      result.details
+        .filter(d => d.status === 'failed')
+        .forEach(d => console.error(`  - ${d.name}: ${d.error}`));
+    }
   }
 }

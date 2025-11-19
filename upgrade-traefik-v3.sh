@@ -255,6 +255,17 @@ else
     exit 1
 fi
 
+# Create dynamic directory for Traefik file provider if it doesn't exist
+echo "--------------------------------------------------------------------------------"
+echo "Checking dynamic configuration directory..."
+if [ ! -d "dynamic" ]; then
+    echo "Creating dynamic directory..."
+    mkdir -p dynamic
+    echo -e "${GREEN}Dynamic directory created${NC}"
+else
+    echo "Dynamic directory already exists."
+fi
+
 # Ensure traefik-public network exists
 echo "--------------------------------------------------------------------------------"
 echo "Checking traefik-public network..."
@@ -268,7 +279,7 @@ fi
 # Start Traefik v3
 echo "--------------------------------------------------------------------------------"
 echo "Starting Traefik v3..."
-docker stack deploy -c docker-compose.traefik.yml traefik
+export $(cat /data/.env | grep -v '#' | awk '/=/ {print $1}') && docker stack deploy -c docker-compose.traefik.yml traefik
 
 # Wait for Traefik to start
 echo "--------------------------------------------------------------------------------"
@@ -309,7 +320,18 @@ while true; do
             echo "  docker logs \$(docker ps -q -f name=traefik)"
             echo ""
 
+            # Update deploy.party first (required for migration endpoint)
+            echo "--------------------------------------------------------------------------------"
+            echo "Updating deploy.party"
+            echo "--------------------------------------------------------------------------------"
+            echo ""
+            echo "Updating deploy.party to latest version (required for migration endpoint)..."
+            echo ""
+
+            update_deploy_party
+
             # Container Migration for Traefik v3 Middleware Syntax
+            echo ""
             echo "--------------------------------------------------------------------------------"
             echo "Container Migration for Traefik v3"
             echo "--------------------------------------------------------------------------------"
@@ -324,11 +346,6 @@ while true; do
                 echo ""
                 echo "To migrate containers later, run:"
                 echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
-                echo ""
-
-                # Update deploy.party before exit
-                update_deploy_party
-
                 echo ""
                 echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                 exit 0
@@ -351,11 +368,6 @@ while true; do
                         echo "To migrate containers later, run:"
                         echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" https://YOUR_API_URL/extern/migrate/traefik-middleware"
                         echo ""
-
-                        # Update deploy.party before exit
-                        update_deploy_party
-
-                        echo ""
                         echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                         exit 0
                     fi
@@ -368,7 +380,11 @@ while true; do
                 echo "API token required for automatic container migration."
                 echo "Get your token from: Settings → API Keys (starts with dp-)"
                 echo ""
-                read -sp "Enter your API token (or press Enter to skip): " API_TOKEN
+                # Use stty for compatibility with /bin/sh
+                printf "Enter your API token (or press Enter to skip): "
+                stty -echo
+                read API_TOKEN
+                stty echo
                 echo ""
 
                 if [ -z "$API_TOKEN" ]; then
@@ -376,11 +392,6 @@ while true; do
                     echo ""
                     echo "To migrate containers later, run:"
                     echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
-                    echo ""
-
-                    # Update deploy.party before exit
-                    update_deploy_party
-
                     echo ""
                     echo -e "${GREEN}Traefik v3 upgrade completed.${NC}"
                     exit 0
@@ -399,18 +410,26 @@ while true; do
                 "$API_URL/extern/migrate/traefik-middleware")
 
             if echo "$MIGRATION_RESULT" | grep -q '"success":true'; then
-                echo -e "${GREEN}Container migration completed successfully!${NC}"
+                TOTAL_CONTAINERS=$(echo "$MIGRATION_RESULT" | grep -o '"total":[0-9]*' | grep -o '[0-9]*')
+                echo -e "${GREEN}Container migration started successfully!${NC}"
                 echo ""
-                echo "Migration details:"
-                echo "$MIGRATION_RESULT" | grep -o '"migrated":[0-9]*' | sed 's/"migrated":/  Migrated: /'
-                echo "$MIGRATION_RESULT" | grep -o '"failed":[0-9]*' | sed 's/"failed":/  Failed:   /'
+                echo "Migration running in background for $TOTAL_CONTAINERS containers."
+                echo ""
+                echo -e "${YELLOW}NOTE: The migration is running in the background and may take several minutes.${NC}"
+                echo "Each container will be stopped, regenerated, and redeployed one by one."
+                echo ""
+                echo "To monitor progress, check the API logs:"
+                echo "  docker service logs -f deploy-party_api | grep 'Traefik Migration'"
+                echo ""
+                echo "Or check running containers:"
+                echo "  watch -n 2 'docker ps --format \"table {{.Names}}\t{{.Status}}\" | grep -v traefik'"
             elif echo "$MIGRATION_RESULT" | grep -q "Invalid API Token"; then
                 echo -e "${RED}Error: Invalid API token provided.${NC}"
                 echo ""
                 echo "To migrate containers manually with correct token, run:"
                 echo "  curl -X POST -H \"dp-api-token: YOUR_API_TOKEN\" $API_URL/extern/migrate/traefik-middleware"
             else
-                echo -e "${YELLOW}Warning: Container migration encountered issues.${NC}"
+                echo -e "${YELLOW}Warning: Could not start container migration.${NC}"
                 echo "Response: $MIGRATION_RESULT"
                 echo ""
                 echo "To retry migration manually, run:"
@@ -418,22 +437,20 @@ while true; do
             fi
 
             echo ""
-
-            # deploy.party Update Section
-            update_deploy_party
-
-            echo ""
             echo "================================================================================"
             echo -e "${GREEN}Upgrade completed successfully!${NC}"
             echo "================================================================================"
             echo ""
-            echo "✅ Traefik upgraded from v2 to v3"
-            if [ "$SKIP_MIGRATION" != true ]; then
-                MIGRATED_COUNT=$(echo "$MIGRATION_RESULT" | grep -o '"migrated":[0-9]*' | grep -o '[0-9]*')
-                echo "✅ Container middleware migrated ($MIGRATED_COUNT containers)"
-            fi
             if [ "$SKIP_DEPLOY_PARTY_UPDATE" != true ]; then
                 echo "✅ deploy.party updated to latest version"
+            fi
+            echo "✅ Traefik upgraded from v2 to v3"
+            if [ "$SKIP_MIGRATION" != true ]; then
+                if [ -n "$TOTAL_CONTAINERS" ]; then
+                    echo "✅ Container migration started for $TOTAL_CONTAINERS containers (running in background)"
+                else
+                    echo "⚠️  Container migration status unknown - check logs"
+                fi
             fi
             echo ""
             echo "Dashboard: lb.$APP_URL"

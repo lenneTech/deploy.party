@@ -35,11 +35,13 @@ After upgrading Traefik to v3, all deployed containers must be migrated to use t
 ### Automatic Migration (Recommended)
 
 The `upgrade-traefik-v3.sh` script will prompt you for a deploy.party API token and automatically:
-1. Find all deployed containers
-2. Stop each container
-3. Regenerate docker-compose.yml with updated middleware syntax
-4. Redeploy the container
-5. Continue with the next container (rolling update)
+1. Start the migration in the background
+2. Each container is processed sequentially:
+   - Stop container
+   - Regenerate docker-compose.yml with updated middleware syntax
+   - Redeploy container
+3. Migration runs asynchronously to avoid HTTP timeouts
+4. Progress can be monitored via API logs
 
 ### Manual Migration via REST API
 
@@ -145,10 +147,10 @@ The script will:
 - ✅ Stop Traefik v2 safely
 - ✅ Download the correct v3 configuration
 - ✅ Start Traefik v3
+- ✅ Update deploy.party to latest version (required for migration endpoint)
 - ✅ Auto-detect API URL from APP_URL environment variable
 - ✅ Prompt for API token or accept via parameter
 - ✅ Migrate all containers with rolling update
-- ✅ Update deploy.party to latest version
 - ✅ Verify the upgrade was successful
 - ✅ Provide rollback instructions if anything goes wrong
 
