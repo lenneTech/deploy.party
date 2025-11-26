@@ -23,18 +23,12 @@ const { data: buildData, refresh: refreshBuilds } = await useAsyncFindBuildsForC
 );
 const builds = computed(() => buildData.value || []);
 
-const { pause } = useIntervalFn(() => {
-  refreshBuilds();
-}, 2000);
+usePolling(refreshBuilds, { interval: 2000 });
 
 onMounted(async () => {
   if (builds.value?.length) {
     await navigateTo(`/projects/${projectId.value}/${containerId.value}/builds/${builds.value[0].id}`);
   }
-});
-
-onBeforeUnmount(() => {
-  pause();
 });
 
 function timeAgo(date: string) {

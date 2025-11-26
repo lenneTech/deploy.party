@@ -15,13 +15,7 @@ const containerId = ref<string>(route.params.containerId ? (route.params.contain
 const { data: logData, refresh: refreshLogs } = await useAsyncGetContainerQuery({ id: containerId.value }, ['logs']);
 const logs = computed(() => (logData.value?.logs as string[]) || null);
 
-const { pause } = useIntervalFn(() => {
-  refreshLogs();
-}, 5000);
-
-onBeforeUnmount(() => {
-  pause();
-});
+usePolling(refreshLogs, { interval: 5000 });
 </script>
 
 <template>

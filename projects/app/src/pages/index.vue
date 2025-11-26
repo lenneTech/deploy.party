@@ -46,9 +46,7 @@ const { open } = useModal();
 const { open: openMenu } = useContextMenu();
 const { currentUserState: user } = useAuthState();
 
-useIntervalFn(async () => {
-  await refresh();
-}, 2000);
+usePolling(refresh, { interval: 2000 });
 
 onMounted(() => {
   const expandedStorage = useLocalStorage<string[]>('expanded', []);

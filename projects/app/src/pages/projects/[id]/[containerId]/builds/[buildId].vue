@@ -16,15 +16,14 @@ const buildId = ref<string>(route.params.buildId ? (route.params.buildId as stri
 const { data: buildData, refresh: refreshBuild } = await useAsyncGetBuildQuery({ id: buildId.value }, null);
 const build = computed(() => buildData.value || null);
 
-const { pause } = useIntervalFn(() => {
-  if (build) {
-    refreshBuild();
-  }
-}, 2000);
-
-onBeforeUnmount(() => {
-  pause();
-});
+usePolling(
+  async () => {
+    if (build.value) {
+      await refreshBuild();
+    }
+  },
+  { interval: 2000 },
+);
 </script>
 
 <template>

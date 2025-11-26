@@ -88,9 +88,7 @@ if (container.value?.healthCheckCmd || container.value?.customDockerfile?.includ
   healthyState = computed(() => healthData.value);
 }
 
-useIntervalFn(async () => {
-  await refresh();
-}, 2000);
+usePolling(refresh, { interval: 2000 });
 
 onMounted(async () => {
   if (process.client) {

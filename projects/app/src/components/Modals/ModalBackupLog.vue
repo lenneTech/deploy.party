@@ -15,13 +15,7 @@ const { data, refresh } = await useAsyncGetBackupByDatabaseQuery(
 );
 const log = computed<string[]>(() => data.value?.log || []);
 
-const { pause } = useIntervalFn(() => {
-  refresh();
-}, 4000);
-
-onBeforeUnmount(() => {
-  pause();
-});
+usePolling(refresh, { interval: 4000 });
 </script>
 
 <template>

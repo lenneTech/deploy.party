@@ -15,9 +15,7 @@ const containerId = ref<string>(route.params.containerId ? (route.params.contain
 const { data, refresh } = await useAsyncGetContainerStatsQuery({ id: containerId.value }, null, true);
 const stats = computed(() => data?.value || null);
 
-useIntervalFn(() => {
-  refresh();
-}, 5000);
+usePolling(refresh, { interval: 5000 });
 </script>
 
 <template>
