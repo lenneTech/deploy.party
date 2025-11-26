@@ -29,17 +29,25 @@ definePageMeta({
 
 const route = useRoute();
 const { notify } = useNotification();
-const { data, refresh } = await useAsyncGetBackupByDatabaseQuery(
+const {
+  data,
+  refresh,
+  status: backupStatus,
+} = await useAsyncGetBackupByDatabaseQuery(
   {
     containerId: route.params.containerId as string,
   },
   null,
+  false,
+  { lazy: true },
 );
-const { data: containerData } = await useAsyncGetContainerQuery({ id: route.params.containerId as string }, [
-  'id',
-  'status',
-  'kind',
-]);
+const { data: containerData, status: containerStatus } = await useAsyncGetContainerQuery(
+  { id: route.params.containerId as string },
+  ['id', 'status', 'kind'],
+  false,
+  { lazy: true },
+);
+const isLoading = computed<boolean>(() => backupStatus.value === 'pending' || containerStatus.value === 'pending');
 const backup = computed<Backup>(() => data.value);
 const container = computed<Container>(() => containerData.value);
 const selectedBackup = ref(undefined);
@@ -342,141 +350,147 @@ async function uploadBackup(e: any) {
 
 <template>
   <div class="w-full dark:text-white">
-    <div
-      v-if="container?.kind === ContainerKind.SERVICE"
-      class="w-full m-2 p-2 border border-blue-500 text-white rounded-lg flex items-center gap-3 justify-start"
-    >
-      <i class="i-bi-info-circle text-blue-500 text-xl"></i>
-      <div class="text-blue-500 text-sm">
-        <p class="font-semibold">Service Backup Info:</p>
-        <p>• <strong>Service Backup:</strong> Backs up all containers and data (databases, uploads, etc.)</p>
-        <p>• <strong>Volume Backup:</strong> Backs up only the specified path from the main container</p>
-      </div>
+    <div v-if="isLoading" class="flex flex-col gap-4 p-4">
+      <Skeleton class="h-12 w-full" />
+      <Skeleton class="h-64 w-full" />
     </div>
-    <div
-      class="border-b border-white/10 pb-4 pt-4 text-sm text-light text-secondary-100/50 flex items-end justify-between"
-    >
-      <span v-if="backup?.lastBackup">Last backup at {{ timeAgo(backup?.lastBackup) }}</span>
-      <div v-if="container?.status === ContainerStatus.DEPLOYED" class="flex items-end gap-2">
-        <FormSelect
-          v-if="backupOptions?.length"
-          v-model="selectedBackup"
-          name="selectedBackup"
-          :options="backupOptions"
-          placeholder="Select backup"
-        />
-        <BaseButton
-          v-if="backupOptions?.length"
-          class="mb-2"
-          variant="outline"
-          :disabled="loading"
-          @click="handleRestore()"
-        >
-          Restore
-        </BaseButton>
-        <BaseButton class="mb-2" variant="outline" :disabled="loading" @click="showBackupLogs()">
-          <span class="i-bi-body-text"></span>
-        </BaseButton>
-        <div class="mb-2">
-          <input ref="inputFile" hidden accept="application/gzip, .gz" type="file" @change="uploadBackup" />
-          <BaseButton variant="outline" :disabled="loading" @click="inputFile?.click()">
-            <span class="i-bi-upload"></span>
+    <template v-else>
+      <div
+        v-if="container?.kind === ContainerKind.SERVICE"
+        class="w-full m-2 p-2 border border-blue-500 text-white rounded-lg flex items-center gap-3 justify-start"
+      >
+        <i class="i-bi-info-circle text-blue-500 text-xl"></i>
+        <div class="text-blue-500 text-sm">
+          <p class="font-semibold">Service Backup Info:</p>
+          <p>• <strong>Service Backup:</strong> Backs up all containers and data (databases, uploads, etc.)</p>
+          <p>• <strong>Volume Backup:</strong> Backs up only the specified path from the main container</p>
+        </div>
+      </div>
+      <div
+        class="border-b border-white/10 pb-4 pt-4 text-sm text-light text-secondary-100/50 flex items-end justify-between"
+      >
+        <span v-if="backup?.lastBackup">Last backup at {{ timeAgo(backup?.lastBackup) }}</span>
+        <div v-if="container?.status === ContainerStatus.DEPLOYED" class="flex items-end gap-2">
+          <FormSelect
+            v-if="backupOptions?.length"
+            v-model="selectedBackup"
+            name="selectedBackup"
+            :options="backupOptions"
+            placeholder="Select backup"
+          />
+          <BaseButton
+            v-if="backupOptions?.length"
+            class="mb-2"
+            variant="outline"
+            :disabled="loading"
+            @click="handleRestore()"
+          >
+            Restore
+          </BaseButton>
+          <BaseButton class="mb-2" variant="outline" :disabled="loading" @click="showBackupLogs()">
+            <span class="i-bi-body-text"></span>
+          </BaseButton>
+          <div class="mb-2">
+            <input ref="inputFile" hidden accept="application/gzip, .gz" type="file" @change="uploadBackup" />
+            <BaseButton variant="outline" :disabled="loading" @click="inputFile?.click()">
+              <span class="i-bi-upload"></span>
+            </BaseButton>
+          </div>
+          <BaseButton class="mb-2" variant="outline" :disabled="loading" @click="downloadBackup()">
+            <span class="i-bi-download"></span>
           </BaseButton>
         </div>
-        <BaseButton class="mb-2" variant="outline" :disabled="loading" @click="downloadBackup()">
-          <span class="i-bi-download"></span>
-        </BaseButton>
       </div>
-    </div>
 
-    <form novalidate @submit.prevent="null">
-      <div class="space-y-8 border-b border-border pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:pb-0">
-        <FormRow>
-          <template #label> Enable </template>
-          <template #help> Activate backup for this container. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormToggle name="active" class="mx-auto" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow v-if="showTypeSelection">
-          <template #label> Backup Type </template>
-          <template #help> Choose the backup strategy for this container. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormSelect name="type" class="w-full mx-auto max-w-2xl" :options="backupTypeOptions" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> Cron expression </template>
-          <template #help> Cron expression for backup. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormSelect
-                name="cronExpression"
-                class="w-full mx-auto max-w-2xl"
-                :options="getCronExpressionOptions()"
-              />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow v-if="showPathField">
-          <template #label> Path </template>
-          <template #help> File path to backup (only required for volume backups) </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="path" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> S3 Url </template>
-          <template #help> Backup storage url from s3. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="host" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> S3 Key </template>
-          <template #help> Backup storage key from s3. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="key" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> S3 Secret </template>
-          <template #help> Backup storage secret from s3. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="secret" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> S3 Region </template>
-          <template #help> Backup storage region from s3. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="region" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-        <FormRow>
-          <template #label> S3 Bucket </template>
-          <template #help> Backup storage bucket from s3. </template>
-          <template #default>
-            <div class="flex items-center w-full">
-              <FormInput name="bucket" class="w-full mx-auto max-w-2xl" type="text" />
-            </div>
-          </template>
-        </FormRow>
-      </div>
-    </form>
+      <form novalidate @submit.prevent="null">
+        <div class="space-y-8 border-b border-border pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:pb-0">
+          <FormRow>
+            <template #label> Enable </template>
+            <template #help> Activate backup for this container. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormToggle name="active" class="mx-auto" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow v-if="showTypeSelection">
+            <template #label> Backup Type </template>
+            <template #help> Choose the backup strategy for this container. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormSelect name="type" class="w-full mx-auto max-w-2xl" :options="backupTypeOptions" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> Cron expression </template>
+            <template #help> Cron expression for backup. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormSelect
+                  name="cronExpression"
+                  class="w-full mx-auto max-w-2xl"
+                  :options="getCronExpressionOptions()"
+                />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow v-if="showPathField">
+            <template #label> Path </template>
+            <template #help> File path to backup (only required for volume backups) </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="path" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> S3 Url </template>
+            <template #help> Backup storage url from s3. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="host" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> S3 Key </template>
+            <template #help> Backup storage key from s3. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="key" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> S3 Secret </template>
+            <template #help> Backup storage secret from s3. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="secret" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> S3 Region </template>
+            <template #help> Backup storage region from s3. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="region" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+          <FormRow>
+            <template #label> S3 Bucket </template>
+            <template #help> Backup storage bucket from s3. </template>
+            <template #default>
+              <div class="flex items-center w-full">
+                <FormInput name="bucket" class="w-full mx-auto max-w-2xl" type="text" />
+              </div>
+            </template>
+          </FormRow>
+        </div>
+      </form>
+    </template>
   </div>
 </template>

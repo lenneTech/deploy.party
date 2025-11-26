@@ -14,7 +14,7 @@ definePageMeta({
 });
 
 const { open: openMenu } = useContextMenu();
-const { data, pending, refresh } = await useAsyncFindSourcesQuery({}, null);
+const { data, refresh, status } = await useAsyncFindSourcesQuery({}, null, false, { lazy: true });
 const sources = computed<Source[]>(() => data.value || []);
 
 function select(source: Source) {
@@ -55,7 +55,7 @@ function showContextMenu(source: Source) {
 <template>
   <div class="pt-[63px] w-full">
     <List>
-      <template v-if="!pending">
+      <template v-if="status !== 'pending'">
         <ListItem
           v-for="source of sources"
           :key="source?.id"
@@ -74,7 +74,7 @@ function showContextMenu(source: Source) {
         </ListItem>
       </template>
       <template v-else>
-        <ListItem v-for="i of [1, 2]" :key="i" :pending="pending" />
+        <ListItem v-for="i of [1, 2]" :key="i" :pending="status === 'pending'" />
       </template>
     </List>
   </div>

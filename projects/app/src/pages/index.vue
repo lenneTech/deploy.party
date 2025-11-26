@@ -19,28 +19,32 @@ definePageMeta({
   breadcrumbs: 'Projects',
 });
 
-const { data, refresh } = await useAsyncFindProjectsQuery([
-  'id',
-  'identifier',
-  'name',
-  'healthStatus',
-  { subscribers: ['id'] },
-  {
-    containers: [
-      'id',
-      'kind',
-      'name',
-      'updatedAt',
-      'branch',
-      'url',
-      'status',
-      'repositoryId',
-      'healthStatus',
-      { lastBuild: ['id', 'createdAt'] },
-    ],
-  },
-]);
-const projects = computed(() => data.value || []);
+const { data, refresh, status } = await useAsyncFindProjectsQuery(
+  [
+    'id',
+    'identifier',
+    'name',
+    'healthStatus',
+    { subscribers: ['id'] },
+    {
+      containers: [
+        'id',
+        'kind',
+        'name',
+        'updatedAt',
+        'branch',
+        'url',
+        'status',
+        'repositoryId',
+        'healthStatus',
+        { lastBuild: ['id', 'createdAt'] },
+      ],
+    },
+  ],
+  false,
+  { lazy: true },
+);
+const projects = computed<Project[]>(() => data.value || []);
 const expanded = ref<string[]>([]);
 const { open } = useModal();
 const { open: openMenu } = useContextMenu();
@@ -272,7 +276,12 @@ function showProjectContextMenu(project: Project) {
 <template>
   <div class="pt-[63px] w-full">
     <ClientOnly>
-      <List>
+      <div v-if="status === 'pending'" class="flex flex-col gap-2 p-4">
+        <Skeleton class="h-14 w-full" />
+        <Skeleton class="h-14 w-full" />
+        <Skeleton class="h-14 w-full" />
+      </div>
+      <List v-else>
         <ListItem
           v-for="project of projects"
           :key="project.id"

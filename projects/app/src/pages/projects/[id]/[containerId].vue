@@ -17,11 +17,21 @@ const containerId = ref<string>(route.params.containerId ? (route.params.contain
 const showActions = ref(false);
 const { currentUserState: user } = useAuthState();
 
-const { data: project } = await useAsyncGetProjectQuery({ id: projectId.value }, ['name']);
-const projectName = computed(() => project.value?.name || null);
+const { data: project, status: projectStatus } = await useAsyncGetProjectQuery(
+  { id: projectId.value },
+  ['name'],
+  false,
+  { lazy: true },
+);
+const projectName = computed<null | string>(() => project.value?.name || null);
 
-const { data, refresh } = await useAsyncGetContainerQuery({ id: containerId.value }, null);
-const container = computed(() => data.value || null);
+const {
+  data,
+  refresh,
+  status: containerStatus,
+} = await useAsyncGetContainerQuery({ id: containerId.value }, null, false, { lazy: true });
+const container = computed<Container | null>(() => data.value || null);
+const isLoading = computed<boolean>(() => projectStatus.value === 'pending' || containerStatus.value === 'pending');
 
 const stoppable = computed(
   () =>
@@ -84,7 +94,12 @@ const tabs = computed(() => [
 
 let healthyState: any = null;
 if (container.value?.healthCheckCmd || container.value?.customDockerfile?.includes('HEALTHCHECK')) {
-  const { data: healthData } = await useAsyncGetContainerHealthStatusQuery({ id: containerId.value });
+  const { data: healthData } = await useAsyncGetContainerHealthStatusQuery(
+    { id: containerId.value },
+    undefined,
+    false,
+    { lazy: true },
+  );
   healthyState = computed(() => healthData.value);
 }
 
@@ -187,61 +202,68 @@ async function get1PasswordContent() {
 
 <template>
   <div class="w-full flex flex-col h-full">
-    <div class="mt-10 w-full sticky top-[64px] bg-background z-[1]">
-      <div class="flex items-center justify-between px-4 sm:px-6 lg:px-5">
-        <span class="line-clamp-1 text-secondary-100">{{ projectName }} / {{ container?.name }}</span>
-        <div class="flex items-center gap-3">
-          <div class="hidden md:inline">
-            <ClientOnly>
-              <onepassword-save-button
-                data-onepassword-type="login"
-                :value="get1PasswordContent()"
-                lang="en"
-                class="black"
-                data-theme="dark"
-                padding="compact"
-              />
-            </ClientOnly>
-          </div>
-          <HealthyBadge v-if="healthyState" :state="healthyState" />
-          <StatusBadge :status="container?.status!" size="MD" badge-style="STATUS" />
-          <div v-if="user?.roles?.includes('admin')" class="inline md:hidden">
-            <SmallButton @click="showActions = !showActions">
-              <Icon name="bi:three-dots-vertical" size="20" />
-            </SmallButton>
-          </div>
-          <div
-            class="items-center gap-3"
-            :class="
-              showActions
-                ? 'absolute right-5 top-16 z-[55] mt-2 origin-top-right rounded-md shadow-lg flex flex-col gap-2 transition-all duration-200'
-                : 'hidden md:flex'
-            "
-          >
-            <SmallButton v-if="stoppable" tooltip="Stop" placement="bottom" @click="stop(container.id!)">
-              <Icon name="ic:baseline-stop" class="text-red-500" size="20" />
-            </SmallButton>
-            <SmallButton v-if="deployable" tooltip="Deploy" placement="bottom" @click="deploy(container.id!)">
-              <Icon name="ic:baseline-play-arrow" class="dark:text-primary-500" size="20" />
-            </SmallButton>
-            <SmallButton v-if="redeployable" tooltip="Redeploy" placement="bottom" @click="deploy(container.id!)">
-              <Icon name="ic:baseline-restart-alt" class="dark:text-primary-500" size="20" />
-            </SmallButton>
-            <SmallButton
-              v-if="container?.status === ContainerStatus.DEPLOYED && container.url"
-              tooltip="Open"
-              placement="bottom"
-              @click="openContainerUrl(container)"
+    <div v-if="isLoading" class="mt-10 p-4 flex flex-col gap-4">
+      <Skeleton class="h-10 w-full" />
+      <Skeleton class="h-12 w-full" />
+      <Skeleton class="h-64 w-full" />
+    </div>
+    <template v-else>
+      <div class="mt-10 w-full sticky top-[64px] bg-background z-[1]">
+        <div class="flex items-center justify-between px-4 sm:px-6 lg:px-5">
+          <span class="line-clamp-1 text-secondary-100">{{ projectName }} / {{ container?.name }}</span>
+          <div class="flex items-center gap-3">
+            <div class="hidden md:inline">
+              <ClientOnly>
+                <onepassword-save-button
+                  data-onepassword-type="login"
+                  :value="get1PasswordContent()"
+                  lang="en"
+                  class="black"
+                  data-theme="dark"
+                  padding="compact"
+                />
+              </ClientOnly>
+            </div>
+            <HealthyBadge v-if="healthyState" :state="healthyState" />
+            <StatusBadge :status="container?.status!" size="MD" badge-style="STATUS" />
+            <div v-if="user?.roles?.includes('admin')" class="inline md:hidden">
+              <SmallButton @click="showActions = !showActions">
+                <Icon name="bi:three-dots-vertical" size="20" />
+              </SmallButton>
+            </div>
+            <div
+              class="items-center gap-3"
+              :class="
+                showActions
+                  ? 'absolute right-5 top-16 z-[55] mt-2 origin-top-right rounded-md shadow-lg flex flex-col gap-2 transition-all duration-200'
+                  : 'hidden md:flex'
+              "
             >
-              <Icon name="ic:twotone-open-in-new" class="hover:text-primary-500" size="20" />
-            </SmallButton>
+              <SmallButton v-if="stoppable" tooltip="Stop" placement="bottom" @click="stop(container.id!)">
+                <Icon name="ic:baseline-stop" class="text-red-500" size="20" />
+              </SmallButton>
+              <SmallButton v-if="deployable" tooltip="Deploy" placement="bottom" @click="deploy(container.id!)">
+                <Icon name="ic:baseline-play-arrow" class="dark:text-primary-500" size="20" />
+              </SmallButton>
+              <SmallButton v-if="redeployable" tooltip="Redeploy" placement="bottom" @click="deploy(container.id!)">
+                <Icon name="ic:baseline-restart-alt" class="dark:text-primary-500" size="20" />
+              </SmallButton>
+              <SmallButton
+                v-if="container?.status === ContainerStatus.DEPLOYED && container.url"
+                tooltip="Open"
+                placement="bottom"
+                @click="openContainerUrl(container)"
+              >
+                <Icon name="ic:twotone-open-in-new" class="hover:text-primary-500" size="20" />
+              </SmallButton>
+            </div>
           </div>
         </div>
+        <Tabs :tabs="tabs" />
       </div>
-      <Tabs :tabs="tabs" />
-    </div>
-    <div class="h-full w-full overflow-hidden p-5 mt-5">
-      <NuxtPage />
-    </div>
+      <div class="h-full w-full overflow-hidden p-5 mt-5">
+        <NuxtPage />
+      </div>
+    </template>
   </div>
 </template>

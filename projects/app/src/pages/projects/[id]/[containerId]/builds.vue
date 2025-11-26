@@ -17,10 +17,11 @@ const route = useRoute();
 const projectId = ref<string>(route.params.id ? (route.params.id as string) : '');
 const containerId = ref<string>(route.params.containerId ? (route.params.containerId as string) : '');
 
-const { data: buildData, refresh: refreshBuilds } = await useAsyncFindBuildsForContainerQuery(
-  { containerId: containerId.value },
-  null,
-);
+const {
+  data: buildData,
+  refresh: refreshBuilds,
+  status,
+} = await useAsyncFindBuildsForContainerQuery({ containerId: containerId.value }, null, false, { lazy: true });
 const builds = computed(() => buildData.value || []);
 
 usePolling(refreshBuilds, { interval: 2000 });
@@ -55,7 +56,11 @@ async function stop(id: string) {
 
 <template>
   <div class="w-full h-full overflow-hidden relative">
-    <div v-if="builds?.length" class="w-full h-full flex flex-col md:flex-row relative gap-2 lg:gap-5">
+    <div v-if="status === 'pending'" class="flex flex-col gap-2 p-4">
+      <Skeleton class="h-32 w-full" />
+      <Skeleton class="h-32 w-full" />
+    </div>
+    <div v-else-if="builds?.length" class="w-full h-full flex flex-col md:flex-row relative gap-2 lg:gap-5">
       <div class="w-5/12 md:4/12 lg:w-3/12 xl:2/12 max-h-[100%] overflow-y-scroll">
         <div class="flex flex-col h-full gap-3 mb-5 lg:mb-0">
           <NuxtLink
