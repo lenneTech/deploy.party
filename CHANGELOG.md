@@ -1,3 +1,10 @@
+# [2.10.0](https://github.com/lenneTech/deploy.party/compare/v2.9.1...v2.10.0) (2025-11-26)
+
+
+### Features
+
+* add skeleton loading states to improve perceived performance ([700b6d6](https://github.com/lenneTech/deploy.party/commit/700b6d6f10d846dc2f8a8f9cb46be417a51d6934))
+
 ## [2.9.1](https://github.com/lenneTech/deploy.party/compare/v2.9.0...v2.9.1) (2025-11-26)
 
 
