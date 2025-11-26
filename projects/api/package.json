@@ -1,6 +1,6 @@
 {
   "name": "@lenne.tech/deploy-party-api",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "private": true,
   "description": "API for deploy.party app",
   "keywords": [

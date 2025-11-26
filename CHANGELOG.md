@@ -1,3 +1,10 @@
+# [2.9.0](https://github.com/lenneTech/deploy.party/compare/v2.8.0...v2.9.0) (2025-11-26)
+
+
+### Features
+
+* simplify GitHub/GitLab composables and enhance loader with request tracking ([d949977](https://github.com/lenneTech/deploy.party/commit/d9499773ef33068f0977260531d557ff920579e8))
+
 # [2.8.0](https://github.com/lenneTech/deploy.party/compare/v2.7.0...v2.8.0) (2025-11-26)
 
 
