@@ -1,28 +1,45 @@
 import type { Source } from '~/base/default';
 
+import { useLoader } from '~/composables/use-loader';
+
 export function useGithub(source: Source) {
   const config = useRuntimeConfig();
   const apiUrl = source.url.includes('//api.') ? source.url : 'https://api.github.com';
+  const { start, stop } = useLoader();
 
   async function getRepos() {
+    start();
     const params: URLSearchParams = new URLSearchParams({
       page: '1',
       per_page: '150',
     });
 
-    return useFetch(`${apiUrl}/user/repos?${params}`, {
+    const result = useFetch(`${apiUrl}/user/repos?${params}`, {
       headers: {
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function getBranches(fullName: string) {
-    return useFetch(`${apiUrl}/repos/${fullName}/branches`, {
+    start();
+    const result = useFetch(`${apiUrl}/repos/${fullName}/branches`, {
       headers: {
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function checkWebhookExist(fullName: string) {

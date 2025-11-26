@@ -1,38 +1,55 @@
 import type { Source } from '~/base/default';
 
+import { useLoader } from '~/composables/use-loader';
+
 export function useGitlab(source: Source) {
   const config = useRuntimeConfig();
   const apiUrl = source.url.includes('/api/') ? source.url : source.url + '/api/v4';
+  const { start, stop } = useLoader();
 
   async function getGroups() {
+    start();
     const params: URLSearchParams = new URLSearchParams({
       page: '1',
       per_page: '100',
     });
 
-    return useFetch(`${apiUrl}/groups?${params}`, {
+    const result = useFetch(`${apiUrl}/groups?${params}`, {
       headers: {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function getProjects() {
+    start();
     const params: URLSearchParams = new URLSearchParams({
       membership: 'true',
       page: '1',
       per_page: '100',
     });
 
-    return useFetch(`${apiUrl}/projects?${params}`, {
+    const result = useFetch(`${apiUrl}/projects?${params}`, {
       headers: {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function getProjectById(id: string) {
@@ -46,33 +63,47 @@ export function useGitlab(source: Source) {
   }
 
   async function getBranches(id: string) {
+    start();
     const params: URLSearchParams = new URLSearchParams({
       page: '1',
       per_page: '100',
     });
 
-    return useFetch(`${apiUrl}/projects/${id}/repository/branches?${params}`, {
+    const result = useFetch(`${apiUrl}/projects/${id}/repository/branches?${params}`, {
       headers: {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function getReleases(id: string) {
+    start();
     const params: URLSearchParams = new URLSearchParams({
       page: '1',
       per_page: '100',
     });
 
-    return useFetch(`${apiUrl}/projects/${id}/releases?${params}`, {
+    const result = useFetch(`${apiUrl}/projects/${id}/releases?${params}`, {
       headers: {
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         Authorization: `Bearer ${source.token}`,
       },
     });
+
+    result.finally(() => {
+      stop();
+    });
+
+    return result;
   }
 
   async function checkWebhookExist(id: string) {
@@ -109,7 +140,7 @@ export function useGitlab(source: Source) {
       return { data: { id: webhookExist.id } };
     }
 
-    const body: any = {
+    const body: Record<string, unknown> = {
       merge_requests_events: true,
       push_events: true,
       releases_events: true,
