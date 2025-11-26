@@ -1,3 +1,10 @@
+# [2.7.0](https://github.com/lenneTech/deploy.party/compare/v2.6.2...v2.7.0) (2025-11-26)
+
+
+### Features
+
+* add global polling indicator to track active data sync requests ([7f4947e](https://github.com/lenneTech/deploy.party/commit/7f4947e380f7116aabae7bda594c0e680b333bef))
+
 ## [2.6.2](https://github.com/lenneTech/deploy.party/compare/v2.6.1...v2.6.2) (2025-11-19)
 
 
