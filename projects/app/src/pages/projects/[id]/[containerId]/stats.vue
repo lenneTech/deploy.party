@@ -22,7 +22,7 @@ usePolling(refresh, { interval: 5000 });
 
 <template>
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 py-4 mt-4 w-full">
-    <template v-if="status === 'pending'">
+    <template v-if="status === 'pending' && !data">
       <Skeleton class="h-24 w-full" />
       <Skeleton class="h-24 w-full" />
       <Skeleton class="h-24 w-full" />

@@ -50,7 +50,7 @@ const { open } = useModal();
 const { open: openMenu } = useContextMenu();
 const { currentUserState: user } = useAuthState();
 
-usePolling(refresh, { interval: 2000 });
+usePolling(refresh, { interval: 5000 });
 
 onMounted(() => {
   const expandedStorage = useLocalStorage<string[]>('expanded', []);
@@ -276,7 +276,7 @@ function showProjectContextMenu(project: Project) {
 <template>
   <div class="pt-[63px] w-full">
     <ClientOnly>
-      <div v-if="status === 'pending'" class="flex flex-col gap-2 p-4">
+      <div v-if="status === 'pending' && !data?.length" class="flex flex-col gap-2 p-4">
         <Skeleton class="h-14 w-full" />
         <Skeleton class="h-14 w-full" />
         <Skeleton class="h-14 w-full" />

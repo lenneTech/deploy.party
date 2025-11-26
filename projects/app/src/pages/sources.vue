@@ -55,7 +55,7 @@ function showContextMenu(source: Source) {
 <template>
   <div class="pt-[63px] w-full">
     <List>
-      <template v-if="status !== 'pending'">
+      <template v-if="status !== 'pending' || data?.length">
         <ListItem
           v-for="source of sources"
           :key="source?.id"
@@ -74,7 +74,7 @@ function showContextMenu(source: Source) {
         </ListItem>
       </template>
       <template v-else>
-        <ListItem v-for="i of [1, 2]" :key="i" :pending="status === 'pending'" />
+        <ListItem v-for="i of [1, 2]" :key="i" :pending="true" />
       </template>
     </List>
   </div>

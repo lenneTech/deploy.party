@@ -25,13 +25,34 @@ const { data: project, status: projectStatus } = await useAsyncGetProjectQuery(
 );
 const projectName = computed<null | string>(() => project.value?.name || null);
 
+// Only fetch fields needed for the container detail view - excludes heavy logs array
 const {
   data,
   refresh,
   status: containerStatus,
-} = await useAsyncGetContainerQuery({ id: containerId.value }, null, false, { lazy: true });
+} = await useAsyncGetContainerQuery(
+  { id: containerId.value },
+  [
+    'id',
+    'name',
+    'status',
+    'kind',
+    'url',
+    'ssl',
+    'exposedPort',
+    'healthCheckCmd',
+    'customDockerfile',
+    'lastEditedAt',
+    'lastDeployedAt',
+    { basicAuth: ['username', 'pw'] },
+  ],
+  false,
+  { lazy: true },
+);
 const container = computed<Container | null>(() => data.value || null);
-const isLoading = computed<boolean>(() => projectStatus.value === 'pending' || containerStatus.value === 'pending');
+const isInitialLoading = computed<boolean>(
+  () => (projectStatus.value === 'pending' && !project.value) || (containerStatus.value === 'pending' && !data.value),
+);
 
 const stoppable = computed(
   () =>
@@ -202,7 +223,7 @@ async function get1PasswordContent() {
 
 <template>
   <div class="w-full flex flex-col h-full">
-    <div v-if="isLoading" class="mt-10 p-4 flex flex-col gap-4">
+    <div v-if="isInitialLoading" class="mt-10 p-4 flex flex-col gap-4">
       <Skeleton class="h-10 w-full" />
       <Skeleton class="h-12 w-full" />
       <Skeleton class="h-64 w-full" />

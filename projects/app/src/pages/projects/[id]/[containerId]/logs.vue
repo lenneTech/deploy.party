@@ -24,7 +24,7 @@ usePolling(refreshLogs, { interval: 5000 });
 
 <template>
   <div class="w-full h-full">
-    <div v-if="status === 'pending'" class="flex flex-col gap-2 p-4">
+    <div v-if="status === 'pending' && !logData" class="flex flex-col gap-2 p-4">
       <Skeleton class="h-6 w-full" />
       <Skeleton class="h-6 w-full" />
       <Skeleton class="h-6 w-3/4" />

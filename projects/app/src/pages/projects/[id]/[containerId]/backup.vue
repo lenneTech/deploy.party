@@ -47,7 +47,10 @@ const { data: containerData, status: containerStatus } = await useAsyncGetContai
   false,
   { lazy: true },
 );
-const isLoading = computed<boolean>(() => backupStatus.value === 'pending' || containerStatus.value === 'pending');
+const isInitialLoading = computed<boolean>(
+  () =>
+    (backupStatus.value === 'pending' && !data.value) || (containerStatus.value === 'pending' && !containerData.value),
+);
 const backup = computed<Backup>(() => data.value);
 const container = computed<Container>(() => containerData.value);
 const selectedBackup = ref(undefined);
@@ -350,7 +353,7 @@ async function uploadBackup(e: any) {
 
 <template>
   <div class="w-full dark:text-white">
-    <div v-if="isLoading" class="flex flex-col gap-4 p-4">
+    <div v-if="isInitialLoading" class="flex flex-col gap-4 p-4">
       <Skeleton class="h-12 w-full" />
       <Skeleton class="h-64 w-full" />
     </div>

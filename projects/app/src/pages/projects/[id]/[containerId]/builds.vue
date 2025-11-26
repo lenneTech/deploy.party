@@ -21,10 +21,18 @@ const {
   data: buildData,
   refresh: refreshBuilds,
   status,
-} = await useAsyncFindBuildsForContainerQuery({ containerId: containerId.value }, null, false, { lazy: true });
+  // Only fetch fields needed for the list - excludes heavy `log` array
+} = await useAsyncFindBuildsForContainerQuery(
+  { containerId: containerId.value },
+  ['id', 'status', 'createdAt', 'finishedAt'],
+  false,
+  {
+    lazy: true,
+  },
+);
 const builds = computed(() => buildData.value || []);
 
-usePolling(refreshBuilds, { interval: 2000 });
+usePolling(refreshBuilds, { interval: 5000 });
 
 onMounted(async () => {
   if (builds.value?.length) {
@@ -56,7 +64,7 @@ async function stop(id: string) {
 
 <template>
   <div class="w-full h-full overflow-hidden relative">
-    <div v-if="status === 'pending'" class="flex flex-col gap-2 p-4">
+    <div v-if="status === 'pending' && !buildData?.length" class="flex flex-col gap-2 p-4">
       <Skeleton class="h-32 w-full" />
       <Skeleton class="h-32 w-full" />
     </div>
