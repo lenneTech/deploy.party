@@ -165,11 +165,11 @@ async function loadBranches(sourceId: string, repositoryId: string) {
 
   let branches: any[] = [];
   if (source.type === SourceType.GITLAB) {
-    const gitlab = useGitlab(source!, false);
+    const gitlab = useGitlab(source!);
     const { data } = await gitlab.getBranches(repositoryId);
     branches = (data.value as any[]) || [];
   } else {
-    const github = useGithub(source!, false);
+    const github = useGithub(source!);
     const { data } = await github.getBranches(repositoryId);
     branches = (data.value as any[]) || [];
   }
@@ -191,11 +191,11 @@ async function loadTags(sourceId: string, repositoryId: string) {
 
   let releases: any[] = [];
   if (source?.type === SourceType.GITLAB) {
-    const gitlab = useGitlab(source!, false);
+    const gitlab = useGitlab(source!);
     const { data } = await gitlab.getReleases(repositoryId);
     releases = (data.value as any[]) || [];
   } else {
-    const github = useGithub(source!, false);
+    const github = useGithub(source!);
     const { data } = await github.getBranches(repositoryId);
     releases = (data.value as any[]) || [];
   }
@@ -221,7 +221,7 @@ async function loadProjects(sourceId: string) {
   }
 
   if (source.type === SourceType.GITLAB) {
-    const gitlab = useGitlab(source!, false);
+    const gitlab = useGitlab(source!);
     const { data: projects } = await gitlab.getProjects();
 
     gitProjects.value = (projects.value as any[]) || null;
@@ -231,7 +231,7 @@ async function loadProjects(sourceId: string) {
       return { label: e.name, value: e.id + '' };
     });
   } else {
-    const github = useGithub(source!, false);
+    const github = useGithub(source!);
     const { data: projects } = await github.getRepos();
 
     gitProjects.value = (projects.value as any[]) || null;
@@ -258,7 +258,7 @@ async function submit() {
   if (data && data.repositoryId) {
     const source = sources?.find((e) => e.id === data.source.id);
     if (source?.type === SourceType.GITLAB) {
-      const { addProjectWebhook } = useGitlab(source!, false);
+      const { addProjectWebhook } = useGitlab(source!);
       const project = gitProjects.value.find((e) => Number(e.id) === Number(data.repositoryId));
       if (project) {
         data.repositoryUrl = (project as any)?.web_url;
@@ -266,7 +266,7 @@ async function submit() {
         data.webhookId = (webhookData as any).value?.id + '';
       }
     } else {
-      const { addProjectWebhook } = useGithub(source!, false);
+      const { addProjectWebhook } = useGithub(source!);
       const project = gitProjects.value.find((e: any) => e.full_name === data.repositoryId);
       if (project) {
         data.repositoryUrl = (project as any)?.html_url;
