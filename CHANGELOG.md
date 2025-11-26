@@ -1,3 +1,10 @@
+## [2.10.1](https://github.com/lenneTech/deploy.party/compare/v2.10.0...v2.10.1) (2025-11-26)
+
+
+### Bug Fixes
+
+* optimize data fetching and skeleton loading states ([baa906c](https://github.com/lenneTech/deploy.party/commit/baa906caae5c3fbfbb1e67ab00986cef8a72e829))
+
 # [2.10.0](https://github.com/lenneTech/deploy.party/compare/v2.9.1...v2.10.0) (2025-11-26)
 
 
