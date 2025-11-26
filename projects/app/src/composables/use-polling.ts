@@ -1,5 +1,7 @@
 import type { PollingOptions, PollingReturn } from '~/interfaces/polling.interface';
 
+import { usePollingState } from '~/states/polling';
+
 /**
  * Composable for sequential polling that waits for the previous request to complete
  * before starting the next interval timer.
@@ -26,6 +28,7 @@ export function usePolling(fn: () => Promise<unknown>, options: PollingOptions):
   // Variables
   // ============================================================================
   const { immediate = true, interval, maxConsecutiveErrors = 3, onError } = options;
+  const { decrement, increment } = usePollingState();
 
   const errorCount = ref<number>(0);
   const isActive = ref<boolean>(immediate);
@@ -58,6 +61,7 @@ export function usePolling(fn: () => Promise<unknown>, options: PollingOptions):
     }
 
     isPending.value = true;
+    increment();
 
     try {
       await fn();
@@ -76,6 +80,7 @@ export function usePolling(fn: () => Promise<unknown>, options: PollingOptions):
       }
     } finally {
       isPending.value = false;
+      decrement();
 
       if (isActive.value) {
         scheduleNext();

@@ -92,6 +92,7 @@ async function uploadTemplate(e: any) {
         </div>
       </div>
       <div class="flex flex-1 items-center justify-end gap-x-5">
+        <PollingIndicator />
         <div class="hidden lg:flex text-white/80">
           {{ version }}
         </div>
