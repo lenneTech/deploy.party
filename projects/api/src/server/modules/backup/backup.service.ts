@@ -57,8 +57,37 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
   }
 
   // ===================================================================================================================
+  // Constants
+  // ===================================================================================================================
+
+  private readonly LOG_LIMIT = 1000;
+
+  // ===================================================================================================================
   // Methods
   // ===================================================================================================================
+
+  /**
+   * Push a log entry with slice limit to prevent document size overflow
+   */
+  private async pushLog(backupId: string, logEntry: string, additionalSet?: Record<string, unknown>): Promise<void> {
+    const update: Record<string, unknown> = {
+      $push: { log: { $each: [logEntry], $slice: -this.LOG_LIMIT } },
+    };
+    if (additionalSet) {
+      update.$set = additionalSet;
+    }
+    await this.mainDbModel.updateOne({ _id: backupId }, update).exec();
+  }
+
+  /**
+   * Push a restore log entry with slice limit to prevent document size overflow
+   */
+  private async pushRestoreLog(backupId: string, logEntry: string): Promise<void> {
+    await this.mainDbModel.updateOne(
+      { _id: backupId },
+      { $push: { restoreLog: { $each: [logEntry], $slice: -this.LOG_LIMIT } } }
+    ).exec();
+  }
 
   async onApplicationBootstrap() {
     const backups = await this.findForce({filterQuery: {active: true}}, {populate: ['container']});
@@ -288,14 +317,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (data.toString()) {
         const lines = data.toString().split('\n');
         lines.forEach((line) => {
-          this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-            $push: {
-              log: line,
-            },
-            $set: {
-              lastBackup: new Date()
-            }
-          }).exec();
+          this.pushLog(getStringIds(backup.id), line, { lastBackup: new Date() });
         });
       }
     });
@@ -497,14 +519,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                log: `[${fileName}] ${line}`,
-              },
-              $set: {
-                lastBackup: new Date()
-              }
-            }).exec();
+            this.pushLog(getStringIds(backup.id), `[${fileName}] ${line}`, { lastBackup: new Date() });
           });
         }
       });
@@ -513,11 +528,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                log: `[${fileName}] ERROR: ${line}`,
-              }
-            }).exec();
+            this.pushLog(getStringIds(backup.id), `[${fileName}] ERROR: ${line}`);
           });
         }
       });
@@ -570,14 +581,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                log: `[${fileName}] ${line}`,
-              },
-              $set: {
-                lastBackup: new Date()
-              }
-            }).exec();
+            this.pushLog(getStringIds(backup.id), `[${fileName}] ${line}`, { lastBackup: new Date() });
           });
         }
       });
@@ -586,11 +590,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                log: `[${fileName}] ERROR: ${line}`,
-              }
-            }).exec();
+            this.pushLog(getStringIds(backup.id), `[${fileName}] ERROR: ${line}`);
           });
         }
       });
@@ -653,14 +653,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (data.toString()) {
         const lines = data.toString().split('\n');
         lines.forEach((line) => {
-          this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-            $push: {
-              log: line,
-            },
-            $set: {
-              lastBackup: new Date()
-            }
-          }).exec();
+          this.pushLog(getStringIds(backup.id), line, { lastBackup: new Date() });
         });
       }
     });
@@ -757,11 +750,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: line,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), line);
           });
         }
       });
@@ -838,11 +827,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: line,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), line);
           });
         }
       });
@@ -850,11 +835,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: line,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), line);
           });
         }
       });
@@ -980,11 +961,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (data.toString()) {
         const lines = data.toString().split('\n');
         lines.forEach((line) => {
-          this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-            $push: {
-              restoreLog: line,
-            }
-          }).exec();
+          this.pushRestoreLog(getStringIds(backup.id), line);
         });
       }
     });
@@ -994,11 +971,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       if (data.toString()) {
         const lines = data.toString().split('\n');
         lines.forEach((line) => {
-          this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-            $push: {
-              restoreLog: line,
-            }
-          }).exec();
+          this.pushRestoreLog(getStringIds(backup.id), line);
         });
       }
     });
@@ -1176,11 +1149,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: `[${fileName}] ${line}`,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), `[${fileName}] ${line}`);
           });
         }
       });
@@ -1189,11 +1158,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: `[${fileName}] ERROR: ${line}`,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), `[${fileName}] ERROR: ${line}`);
           });
         }
       });
@@ -1244,11 +1209,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: `[${fileName}] ${line}`,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), `[${fileName}] ${line}`);
           });
         }
       });
@@ -1257,11 +1218,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         if (data.toString()) {
           const lines = data.toString().split('\n');
           lines.forEach((line) => {
-            this.mainDbModel.updateOne({_id: getStringIds(backup.id)}, {
-              $push: {
-                restoreLog: `[${fileName}] ERROR: ${line}`,
-              }
-            }).exec();
+            this.pushRestoreLog(getStringIds(backup.id), `[${fileName}] ERROR: ${line}`);
           });
         }
       });

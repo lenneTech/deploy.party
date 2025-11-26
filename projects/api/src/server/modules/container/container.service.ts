@@ -318,7 +318,9 @@ export class ContainerService extends CrudService<Container> implements OnApplic
   }
 
   async updateLog(id: string, logs: string[]) {
-    return this.containerModel.updateOne({ _id: id }, { $push: { logs: {$each: logs, $slice: -1000} } }).exec();
+    // Limit incoming logs to prevent update document from exceeding 16MB
+    const limitedLogs = logs.slice(-1000);
+    return this.containerModel.updateOne({ _id: id }, { $push: { logs: {$each: limitedLogs, $slice: -1000} } }).exec();
   }
 
   async getStats(containerId: string) {

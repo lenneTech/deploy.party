@@ -179,7 +179,7 @@ export class BuildService extends CrudService<Build> {
         break;
     }
 
-    await this.buildModel.updateOne({_id: id}, {$push: {log}}).exec();
+    await this.buildModel.updateOne({_id: id}, {$push: {log: {$each: [log], $slice: -5000}}}).exec();
   }
 
   async stop(id: string, serviceOptions?: ServiceOptions) {
