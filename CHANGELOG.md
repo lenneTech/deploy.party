@@ -1,3 +1,10 @@
+# [2.8.0](https://github.com/lenneTech/deploy.party/compare/v2.7.0...v2.8.0) (2025-11-26)
+
+
+### Features
+
+* add log rotation to prevent MongoDB document size overflow ([297b4aa](https://github.com/lenneTech/deploy.party/commit/297b4aa02cc1043b1efd4b7a627a96c6323a8b45))
+
 # [2.7.0](https://github.com/lenneTech/deploy.party/compare/v2.6.2...v2.7.0) (2025-11-26)
 
 
