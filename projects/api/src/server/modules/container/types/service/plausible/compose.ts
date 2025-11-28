@@ -1,6 +1,6 @@
 import { Container } from "../../../container.model";
 
-export function getPlausible(container: Container): string {
+export function getPlausible(container: Container, basePath: string): string {
   return `
 networks:
   traefik-public:
@@ -33,9 +33,9 @@ services:
     volumes:
       - clickhouseData:/var/lib/clickhouse
       - clickhouseLogs:/var/log/clickhouse-server
-      - ./plausible-ce/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro
-      - ./plausible-ce/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro
-      - ./plausible-ce/clickhouse/low-resources.xml:/etc/clickhouse-server/config.d/low-resources.xml:ro
+      - ${basePath}/plausible-ce/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro
+      - ${basePath}/plausible-ce/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro
+      - ${basePath}/plausible-ce/clickhouse/low-resources.xml:/etc/clickhouse-server/config.d/low-resources.xml:ro
     environment:
       CLICKHOUSE_SKIP_USER_SETUP: "1"
     ulimits:

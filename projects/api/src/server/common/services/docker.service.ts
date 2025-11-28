@@ -203,7 +203,7 @@ DISABLE_REGISTRATION=false
           await this.createEnvFile(container);
         }
         await this.clonePlausibleRepo(container);
-        compose = getPlausible(container);
+        compose = getPlausible(container, this.getPath(container));
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;
