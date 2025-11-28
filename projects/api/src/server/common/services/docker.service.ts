@@ -177,15 +177,19 @@ REDIS_PASSWORD=
           const secretKeyBase = randomBytes(64).toString('base64');
 
           container.env = `
-# Plausible Configuration
+# Required
 BASE_URL=https://${container.url}
 SECRET_KEY_BASE=${secretKeyBase}
 
-# Database (uses internal service names)
-DATABASE_URL=postgres://postgres:postgres@postgres:5432/plausible
+# Database
+DATABASE_URL=postgres://postgres:postgres@plausible_db:5432/plausible
+CLICKHOUSE_DATABASE_URL=http://plausible_events_db:8123/plausible
 
-# ClickHouse (uses internal service name)
-CLICKHOUSE_DATABASE_URL=http://clickhouse:8123/plausible
+# Tmp directory
+TMPDIR=/var/lib/plausible/tmp
+
+# Registration (set to invite_only to disable public registration)
+DISABLE_REGISTRATION=false
 
 # SMTP Configuration (replace with your SMTP settings)
 MAILER_EMAIL=hello@example.com
@@ -194,9 +198,6 @@ SMTP_HOST_PORT=587
 SMTP_USER_NAME=your-smtp-user
 SMTP_USER_PWD=your-smtp-password
 SMTP_HOST_SSL_ENABLED=true
-
-# Registration (set to invite_only to disable public registration)
-DISABLE_REGISTRATION=false
 `;
 
           await this.containerService.updateForce(container.id, { env: container.env });

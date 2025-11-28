@@ -7,18 +7,14 @@ networks:
     external: true
   deploy-party:
     external: true
-  plausible-internal:
-    driver: overlay
 
 services:
-  postgres:
+  plausible_db:
     image: postgres:16-alpine
     volumes:
-      - plausibleDb:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: postgres
-    networks:
-      - plausible-internal
+      - POSTGRES_PASSWORD=postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       start_period: 1m
@@ -28,24 +24,22 @@ services:
         max_attempts: 3
         window: 120s
 
-  clickhouse:
+  plausible_events_db:
     image: clickhouse/clickhouse-server:24.12-alpine
     volumes:
-      - clickhouseData:/var/lib/clickhouse
-      - clickhouseLogs:/var/log/clickhouse-server
+      - event-data:/var/lib/clickhouse
+      - event-logs:/var/log/clickhouse-server
       - ${basePath}/plausible-ce/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro
       - ${basePath}/plausible-ce/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro
       - ${basePath}/plausible-ce/clickhouse/low-resources.xml:/etc/clickhouse-server/config.d/low-resources.xml:ro
-    environment:
-      CLICKHOUSE_SKIP_USER_SETUP: "1"
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
-    networks:
-      - plausible-internal
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O - http://127.0.0.1:8123/ping || exit 1"]
       start_period: 1m
     deploy:
       restart_policy:
@@ -55,22 +49,22 @@ services:
 
   plausible:
     image: ghcr.io/plausible/community-edition:${container.buildImage || 'v3.1.0'}
-    command: sh -c "sleep 10 && /app/bin/plausible eval Plausible.Release.setup_clickhouse && /app/bin/plausible eval Plausible.Release.migrate && /app/bin/plausible start"
+    command: sh -c "sleep 15 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
     depends_on:
-      - postgres
-      - clickhouse
+      - plausible_db
+      - plausible_events_db
     volumes:
-      - plausibleData:/var/lib/plausible
-    env_file:
-      - .env
+      - plausible-data:/var/lib/plausible
     ulimits:
       nofile:
         soft: 65535
         hard: 65535
+    env_file:
+      - .env
     networks:
       - traefik-public
-      - plausible-internal
       - deploy-party
+      - default
     labels:
       - deploy.party.id=${container.id}
     deploy:
@@ -103,9 +97,9 @@ services:
         - traefik.http.services.${container.id}.loadbalancer.server.port=8000
 
 volumes:
-  plausibleDb:
-  plausibleData:
-  clickhouseData:
-  clickhouseLogs:
+  db-data:
+  event-data:
+  event-logs:
+  plausible-data:
   `;
 }
