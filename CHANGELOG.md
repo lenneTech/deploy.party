@@ -1,3 +1,10 @@
+# [2.12.0](https://github.com/lenneTech/deploy.party/compare/v2.11.5...v2.12.0) (2025-11-28)
+
+
+### Features
+
+* add metrics enabled for traefik ([e66d7e5](https://github.com/lenneTech/deploy.party/commit/e66d7e50d21482e818b2636cf2da00e31e383531))
+
 ## [2.11.5](https://github.com/lenneTech/deploy.party/compare/v2.11.4...v2.11.5) (2025-11-28)
 
 
