@@ -1,3 +1,10 @@
+# [2.11.0](https://github.com/lenneTech/deploy.party/compare/v2.10.1...v2.11.0) (2025-11-28)
+
+
+### Features
+
+* add plausible service ([a5981c3](https://github.com/lenneTech/deploy.party/commit/a5981c3da29e6cf508ad8a76c6aa61ad80d18d37))
+
 ## [2.10.1](https://github.com/lenneTech/deploy.party/compare/v2.10.0...v2.10.1) (2025-11-26)
 
 
