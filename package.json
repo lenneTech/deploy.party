@@ -1,6 +1,6 @@
 {
   "name": "deploy-party",
-  "version": "2.11.2",
+  "version": "2.11.3",
   "description": "",
   "author": "Pascal Klesse",
   "main": "index.js",
