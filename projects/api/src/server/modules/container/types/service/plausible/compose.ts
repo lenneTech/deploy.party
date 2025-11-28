@@ -10,54 +10,6 @@ networks:
   plausible-internal:
     driver: overlay
 
-configs:
-  clickhouse_logs_config:
-    content: |
-      <clickhouse>
-          <logger>
-              <level>warning</level>
-              <console>true</console>
-          </logger>
-          <query_log replace="1">
-              <database>system</database>
-              <table>query_log</table>
-              <flush_interval_milliseconds>7500</flush_interval_milliseconds>
-              <engine>
-                  ENGINE = MergeTree
-                  PARTITION BY event_date
-                  ORDER BY (event_time)
-                  TTL event_date + interval 30 day
-                  SETTINGS ttl_only_drop_parts=1
-              </engine>
-          </query_log>
-          <metric_log remove="remove" />
-          <asynchronous_metric_log remove="remove" />
-          <query_thread_log remove="remove" />
-          <text_log remove="remove" />
-          <trace_log remove="remove" />
-          <session_log remove="remove" />
-          <part_log remove="remove" />
-      </clickhouse>
-  clickhouse_ipv4_config:
-    content: |
-      <clickhouse>
-          <listen_host>0.0.0.0</listen_host>
-      </clickhouse>
-  clickhouse_resources_config:
-    content: |
-      <clickhouse>
-          <mark_cache_size>524288000</mark_cache_size>
-          <profile>
-              <default>
-                  <max_threads>1</max_threads>
-                  <max_block_size>8192</max_block_size>
-                  <max_download_threads>1</max_download_threads>
-                  <input_format_parallel_parsing>0</input_format_parallel_parsing>
-                  <output_format_parallel_formatting>0</output_format_parallel_formatting>
-              </default>
-          </profile>
-      </clickhouse>
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -81,13 +33,9 @@ services:
     volumes:
       - clickhouseData:/var/lib/clickhouse
       - clickhouseLogs:/var/log/clickhouse-server
-    configs:
-      - source: clickhouse_logs_config
-        target: /etc/clickhouse-server/config.d/logs.xml
-      - source: clickhouse_ipv4_config
-        target: /etc/clickhouse-server/config.d/ipv4-only.xml
-      - source: clickhouse_resources_config
-        target: /etc/clickhouse-server/config.d/low-resources.xml
+      - ./plausible-ce/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro
+      - ./plausible-ce/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro
+      - ./plausible-ce/clickhouse/low-resources.xml:/etc/clickhouse-server/config.d/low-resources.xml:ro
     environment:
       CLICKHOUSE_SKIP_USER_SETUP: "1"
     ulimits:

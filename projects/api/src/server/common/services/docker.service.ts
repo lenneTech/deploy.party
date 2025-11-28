@@ -202,6 +202,7 @@ DISABLE_REGISTRATION=false
           await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
+        await this.clonePlausibleRepo(container);
         compose = getPlausible(container);
         break;
       case ContainerType.CUSTOM:
@@ -248,6 +249,20 @@ DISABLE_REGISTRATION=false
       } catch (e) {
         console.error(e);
       }
+    }
+  }
+
+  async clonePlausibleRepo(container: Container) {
+    const repoPath = `${this.getPath(container)}/plausible-ce`;
+    const version = container.buildImage || 'v3.1.0';
+
+    try {
+      await fs.access(repoPath);
+    } catch {
+      await execa(
+        `git clone --depth 1 --branch ${version} https://github.com/plausible/community-edition.git ${repoPath}`,
+        { shell: true }
+      );
     }
   }
 
