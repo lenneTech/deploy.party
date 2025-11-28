@@ -13,12 +13,13 @@ const props = defineProps<{
 }>();
 
 const typeOptions = [
-  { label: 'Directus', value: 'DIRECTUS' },
-  { label: 'RocketAdmin', value: 'ROCKET_ADMIN' },
-  { label: 'MongoExpress', value: 'MONGO_EXPRESS' },
-  { label: 'Redis UI', value: 'REDIS_UI' },
   { label: 'Adminer', value: 'ADMINER' },
   { label: 'Custom', value: 'CUSTOM' },
+  { label: 'Directus', value: 'DIRECTUS' },
+  { label: 'MongoExpress', value: 'MONGO_EXPRESS' },
+  { label: 'Plausible', value: 'PLAUSIBLE' },
+  { label: 'Redis UI', value: 'REDIS_UI' },
+  { label: 'RocketAdmin', value: 'ROCKET_ADMIN' },
 ];
 
 const basicAuth = ref(false);

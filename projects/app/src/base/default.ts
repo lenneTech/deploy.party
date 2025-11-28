@@ -1,25 +1,25 @@
 export type Maybe<T> = T;
 export type InputMaybe<T> = T;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = { [SubKey in K]?: Maybe<T[SubKey]> } & Omit<T, K>;
-export type MakeMaybe<T, K extends keyof T> = { [SubKey in K]: Maybe<T[SubKey]> } & Omit<T, K>;
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never } | T;
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export interface Scalars {
+  ID: { input: string; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
   /** Any scalar type */
-  Any: { input: any; output: any };
-  Boolean: { input: boolean; output: boolean };
+  Any: { input: any; output: any; }
   /** Date custom scalar type */
-  Date: { input: any; output: any };
-  Float: { input: number; output: number };
-  ID: { input: string; output: string };
-  Int: { input: number; output: number };
+  Date: { input: any; output: any; }
   /** JSON scalar type. Information on the exact schema of the JSON object is contained in the description of the field. */
-  JSON: { input: any; output: any };
-  String: { input: string; output: string };
+  JSON: { input: any; output: any; }
   /** The `Upload` scalar type represents a file upload. */
-  Upload: { input: any; output: any };
+  Upload: { input: any; output: any; }
 }
 
 /** All Types of Container */
@@ -31,9 +31,10 @@ export enum AllContainerTypes {
   MONGO = 'MONGO',
   MONGO_EXPRESS = 'MONGO_EXPRESS',
   NODE = 'NODE',
+  PLAUSIBLE = 'PLAUSIBLE',
   REDIS_UI = 'REDIS_UI',
   ROCKET_ADMIN = 'ROCKET_ADMIN',
-  STATIC = 'STATIC',
+  STATIC = 'STATIC'
 }
 
 /** ApiKey */
@@ -210,7 +211,7 @@ export interface BackupInput {
 export enum BackupType {
   DATABASE = 'DATABASE',
   SERVICE = 'SERVICE',
-  VOLUME = 'VOLUME',
+  VOLUME = 'VOLUME'
 }
 
 /** Address Object that references the location */
@@ -278,7 +279,7 @@ export enum BuildStatus {
   QUEUE = 'QUEUE',
   RUNNING = 'RUNNING',
   SKIPPED = 'SKIPPED',
-  SUCCESS = 'SUCCESS',
+  SUCCESS = 'SUCCESS'
 }
 
 /** Combination of multiple filters via logical operator */
@@ -299,7 +300,7 @@ export enum ComparisonOperatorEnum {
   LTE = 'LTE',
   NE = 'NE',
   NIN = 'NIN',
-  REGEX = 'REGEX',
+  REGEX = 'REGEX'
 }
 
 /** Container */
@@ -483,7 +484,7 @@ export enum ContainerHealthStatus {
   HEALTHY = 'HEALTHY',
   IDLE = 'IDLE',
   STARTING = 'STARTING',
-  UNHEALTHY = 'UNHEALTHY',
+  UNHEALTHY = 'UNHEALTHY'
 }
 
 /** Input data to update an existing Container */
@@ -567,7 +568,7 @@ export enum ContainerKind {
   APPLICATION = 'APPLICATION',
   CUSTOM = 'CUSTOM',
   DATABASE = 'DATABASE',
-  SERVICE = 'SERVICE',
+  SERVICE = 'SERVICE'
 }
 
 /** Stats of Containers */
@@ -588,7 +589,7 @@ export enum ContainerStatus {
   DRAFT = 'DRAFT',
   RESTORING = 'RESTORING',
   STOPPED = 'STOPPED',
-  STOPPED_BY_SYSTEM = 'STOPPED_BY_SYSTEM',
+  STOPPED_BY_SYSTEM = 'STOPPED_BY_SYSTEM'
 }
 
 /** Defines a volume for a container */
@@ -613,7 +614,7 @@ export interface ContainerVolumeInput {
 
 /** Volume types of Container */
 export enum ContainerVolumeType {
-  DIRECTORY_MOUNT = 'DIRECTORY_MOUNT',
+  DIRECTORY_MOUNT = 'DIRECTORY_MOUNT'
 }
 
 /** CoreAuth */
@@ -653,7 +654,7 @@ export interface CoreUserModel {
 /** Deployment types of Container */
 export enum DeploymentType {
   BRANCH = 'BRANCH',
-  TAG = 'TAG',
+  TAG = 'TAG'
 }
 
 /** docker container with stats */
@@ -772,7 +773,7 @@ export interface FindAndCountWebPushsResult {
 export enum LogicalOperatorEnum {
   AND = 'AND',
   NOR = 'NOR',
-  OR = 'OR',
+  OR = 'OR'
 }
 
 /** Metadata of API */
@@ -885,201 +886,247 @@ export interface Mutation {
   verifyUser: Scalars['Boolean']['output'];
 }
 
+
 export interface MutationCreateApiKeyArgs {
   input: ApiKeyCreateInput;
 }
+
 
 export interface MutationCreateBackupArgs {
   input: BackupCreateInput;
 }
 
+
 export interface MutationCreateBuildArgs {
   input: BuildCreateInput;
 }
+
 
 export interface MutationCreateContainerArgs {
   input: ContainerCreateInput;
   projectId: Scalars['String']['input'];
 }
 
+
 export interface MutationCreateProjectArgs {
   input: ProjectCreateInput;
   teamId: Scalars['String']['input'];
 }
+
 
 export interface MutationCreateRegistryArgs {
   input: RegistryCreateInput;
   teamId: Scalars['String']['input'];
 }
 
+
 export interface MutationCreateSourceArgs {
   input: SourceCreateInput;
 }
+
 
 export interface MutationCreateTeamArgs {
   input: TeamCreateInput;
 }
 
+
 export interface MutationCreateUserArgs {
   input: UserCreateInput;
 }
+
 
 export interface MutationCreateWebPushArgs {
   input: WebPushCreateInput;
 }
 
+
 export interface MutationDeleteApiKeyArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteBackupArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeleteBuildArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteContainerArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeleteFileArgs {
   filename: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteProjectArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeleteRegistryArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteSourceArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeleteTeamArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteUserArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeleteVolumeArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationDeleteWebPushArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDeployContainerArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationDuplicateContainerArgs {
   containerId: Scalars['String']['input'];
 }
+
 
 export interface MutationInviteTeamMemberArgs {
   input: UserCreateInput;
   teamId: Scalars['String']['input'];
 }
 
+
 export interface MutationLogoutArgs {
   allDevices?: InputMaybe<Scalars['Boolean']['input']>;
 }
+
 
 export interface MutationResetPasswordArgs {
   password: Scalars['String']['input'];
   token: Scalars['String']['input'];
 }
 
+
 export interface MutationRestartBuildArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationRestoreBackupArgs {
   containerId: Scalars['String']['input'];
   s3Key: Scalars['String']['input'];
 }
 
+
 export interface MutationRestoreBackupVolumeArgs {
   containerId: Scalars['String']['input'];
   s3Key: Scalars['String']['input'];
 }
 
+
 export interface MutationSignInArgs {
   input: AuthSignInInput;
 }
+
 
 export interface MutationSignUpArgs {
   input: AuthSignUpInput;
 }
 
+
 export interface MutationStopBuildArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface MutationStopContainerArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface MutationUpdateBackupArgs {
   id: Scalars['String']['input'];
   input: BackupInput;
 }
 
+
 export interface MutationUpdateBuildArgs {
   id: Scalars['String']['input'];
   input: BuildInput;
 }
+
 
 export interface MutationUpdateContainerArgs {
   id: Scalars['String']['input'];
   input: ContainerInput;
 }
 
+
 export interface MutationUpdateProjectArgs {
   id: Scalars['String']['input'];
   input: ProjectInput;
 }
+
 
 export interface MutationUpdateRegistryArgs {
   id: Scalars['String']['input'];
   input: RegistryInput;
 }
 
+
 export interface MutationUpdateSourceArgs {
   id: Scalars['String']['input'];
   input: SourceInput;
 }
+
 
 export interface MutationUpdateTeamArgs {
   id: Scalars['String']['input'];
   input: TeamInput;
 }
 
+
 export interface MutationUpdateUserArgs {
   id: Scalars['String']['input'];
   input: UserInput;
 }
+
 
 export interface MutationUpdateWebPushArgs {
   id: Scalars['String']['input'];
   input: WebPushInput;
 }
 
+
 export interface MutationUploadFileArgs {
   file: Scalars['Upload']['input'];
 }
 
+
 export interface MutationUploadFilesArgs {
   files: Array<Scalars['Upload']['input']>;
 }
+
 
 export interface MutationVerifyUserArgs {
   token: Scalars['String']['input'];
@@ -1225,6 +1272,7 @@ export interface Query {
   requestPasswordResetMail: Scalars['Boolean']['output'];
 }
 
+
 export interface QueryFindAndCountBackupsArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1234,6 +1282,7 @@ export interface QueryFindAndCountBackupsArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindAndCountBuildsArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1245,6 +1294,7 @@ export interface QueryFindAndCountBuildsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindAndCountContainersArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1254,6 +1304,7 @@ export interface QueryFindAndCountContainersArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindAndCountProjectsArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1265,6 +1316,7 @@ export interface QueryFindAndCountProjectsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindAndCountRegistrysArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1274,6 +1326,7 @@ export interface QueryFindAndCountRegistrysArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindAndCountTeamsArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1285,6 +1338,7 @@ export interface QueryFindAndCountTeamsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindAndCountUsersArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1294,6 +1348,7 @@ export interface QueryFindAndCountUsersArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindAndCountWebPushsArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1305,6 +1360,7 @@ export interface QueryFindAndCountWebPushsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindApiKeysArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1314,6 +1370,7 @@ export interface QueryFindApiKeysArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindBackupsArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1325,6 +1382,7 @@ export interface QueryFindBackupsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindBuildsArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1335,9 +1393,11 @@ export interface QueryFindBuildsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindBuildsForContainerArgs {
   containerId: Scalars['String']['input'];
 }
+
 
 export interface QueryFindContainersArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1349,6 +1409,7 @@ export interface QueryFindContainersArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindRegistrysArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1358,6 +1419,7 @@ export interface QueryFindRegistrysArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindSourcesArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1369,6 +1431,7 @@ export interface QueryFindSourcesArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindTeamsArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1378,6 +1441,7 @@ export interface QueryFindTeamsArgs {
   sort?: InputMaybe<Array<SortInput>>;
   take?: InputMaybe<Scalars['Int']['input']>;
 }
+
 
 export interface QueryFindUsersArgs {
   filter?: InputMaybe<FilterInput>;
@@ -1389,6 +1453,7 @@ export interface QueryFindUsersArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryFindWebPushsArgs {
   filter?: InputMaybe<FilterInput>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1399,82 +1464,102 @@ export interface QueryFindWebPushsArgs {
   take?: InputMaybe<Scalars['Int']['input']>;
 }
 
+
 export interface QueryGetBackupArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetBackupByDatabaseArgs {
   containerId: Scalars['String']['input'];
 }
 
+
 export interface QueryGetBuildArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetBuildCountArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryGetContainerArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetContainerCountArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryGetContainerHealthStatusArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetContainerLogsArgs {
   id: Scalars['String']['input'];
   since?: InputMaybe<Scalars['String']['input']>;
 }
 
+
 export interface QueryGetContainerStatsArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetFileInfoArgs {
   filename: Scalars['String']['input'];
 }
 
+
 export interface QueryGetProjectArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetRegistryArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryGetSourceArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetSystemStatsArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryGetTeamArgs {
   id: Scalars['String']['input'];
 }
+
 
 export interface QueryGetUserArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryGetVerifiedStateArgs {
   token: Scalars['String']['input'];
 }
+
 
 export interface QueryGetWebPushArgs {
   id: Scalars['String']['input'];
 }
 
+
 export interface QueryListBackupsArgs {
   containerId: Scalars['String']['input'];
 }
+
 
 export interface QueryRequestPasswordResetMailArgs {
   email: Scalars['String']['input'];
@@ -1563,7 +1648,7 @@ export interface SortInput {
 /** SortInput order of items */
 export enum SortOrderEnum {
   ASC = 'ASC',
-  DESC = 'DESC',
+  DESC = 'DESC'
 }
 
 /** Source */
@@ -1621,7 +1706,7 @@ export interface SourceInput {
 /** Type of Source */
 export enum SourceType {
   GITHUB = 'GITHUB',
-  GITLAB = 'GITLAB',
+  GITLAB = 'GITLAB'
 }
 
 export interface Subscription {
@@ -1648,7 +1733,7 @@ export interface SystemStats {
 /** Tag matching type for deployment configuration */
 export enum TagMatchType {
   EXACT = 'EXACT',
-  PATTERN = 'PATTERN',
+  PATTERN = 'PATTERN'
 }
 
 /** Team */

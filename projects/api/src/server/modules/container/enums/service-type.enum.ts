@@ -1,12 +1,13 @@
 import {registerEnumType} from '@nestjs/graphql';
 
 export enum ServiceType {
-  DIRECTUS = 'DIRECTUS',
-  ROCKET_ADMIN = 'ROCKET_ADMIN',
-  MONGO_EXPRESS = 'MONGO_EXPRESS',
-  REDIS_UI = 'REDIS_UI',
   ADMINER = 'ADMINER',
   CUSTOM = 'CUSTOM',
+  DIRECTUS = 'DIRECTUS',
+  MONGO_EXPRESS = 'MONGO_EXPRESS',
+  PLAUSIBLE = 'PLAUSIBLE',
+  REDIS_UI = 'REDIS_UI',
+  ROCKET_ADMIN = 'ROCKET_ADMIN',
 }
 
 registerEnumType(ServiceType, {

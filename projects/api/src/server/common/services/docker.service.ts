@@ -23,6 +23,7 @@ import { getMongoCompose } from "../../modules/container/types/database/compose/
 import { getAdminer } from "../../modules/container/types/service/adminer/compose";
 import { getDirectus } from "../../modules/container/types/service/directus/compose";
 import { getMongoExpress } from "../../modules/container/types/service/mongo-express/compose";
+import { getPlausible } from "../../modules/container/types/service/plausible/compose";
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
 import { Registry } from "../../modules/registry/registry.model";
@@ -170,6 +171,44 @@ REDIS_PASSWORD=
           await this.createEnvFile(container);
         }
         compose = await getRedisUi(container);
+        break;
+      case ServiceType.PLAUSIBLE:
+        if (!container.env) {
+          const secretKeyBase = randomBytes(64).toString('base64');
+          const dbPassword = randomBytes(16).toString('hex');
+
+          container.env = `
+# Plausible Configuration
+BASE_URL=https://${container.url}
+SECRET_KEY_BASE=${secretKeyBase}
+
+# Database
+DATABASE_URL=postgres://plausible:${dbPassword}@${container.id}_postgres:5432/plausible
+
+# ClickHouse
+CLICKHOUSE_DATABASE_URL=http://${container.id}_clickhouse:8123/plausible
+
+# SMTP Configuration (replace with your SMTP settings)
+MAILER_EMAIL=hello@example.com
+SMTP_HOST_ADDR=smtp.example.com
+SMTP_HOST_PORT=587
+SMTP_USER_NAME=your-smtp-user
+SMTP_USER_PWD=your-smtp-password
+SMTP_HOST_SSL_ENABLED=true
+
+# Registration (set to invite_only to disable public registration)
+DISABLE_REGISTRATION=false
+
+# PostgreSQL (internal - must match DATABASE_URL)
+POSTGRES_USER=plausible
+POSTGRES_PASSWORD=${dbPassword}
+POSTGRES_DB=plausible
+`;
+
+          await this.containerService.updateForce(container.id, { env: container.env });
+          await this.createEnvFile(container);
+        }
+        compose = getPlausible(container);
         break;
       case ContainerType.CUSTOM:
         compose = container.customDockerCompose;

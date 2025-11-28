@@ -1,16 +1,17 @@
 import {registerEnumType} from '@nestjs/graphql';
 
 export enum AllContainerTypes {
-  NODE = 'NODE',
-  STATIC = 'STATIC',
-  MONGO = 'MONGO',
-  MARIA_DB = 'MARIA_DB',
-  DIRECTUS = 'DIRECTUS',
   ADMINER = 'ADMINER',
-  ROCKET_ADMIN = 'ROCKET_ADMIN',
-  MONGO_EXPRESS = 'MONGO_EXPRESS',
-  REDIS_UI = 'REDIS_UI',
   CUSTOM = 'CUSTOM',
+  DIRECTUS = 'DIRECTUS',
+  MARIA_DB = 'MARIA_DB',
+  MONGO = 'MONGO',
+  MONGO_EXPRESS = 'MONGO_EXPRESS',
+  NODE = 'NODE',
+  PLAUSIBLE = 'PLAUSIBLE',
+  REDIS_UI = 'REDIS_UI',
+  ROCKET_ADMIN = 'ROCKET_ADMIN',
+  STATIC = 'STATIC',
 }
 
 registerEnumType(AllContainerTypes, {
