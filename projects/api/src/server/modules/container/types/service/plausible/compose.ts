@@ -107,12 +107,10 @@ services:
 
   plausible:
     image: ghcr.io/plausible/community-edition:${container.buildImage || 'v3.1.0'}
-    command: sh -c "/app/bin/plausible eval Plausible.Release.setup_clickhouse && /app/bin/plausible eval Plausible.Release.migrate && /app/bin/plausible start"
+    command: sh -c "sleep 10 && /app/bin/plausible eval Plausible.Release.setup_clickhouse && /app/bin/plausible eval Plausible.Release.migrate && /app/bin/plausible start"
     depends_on:
-      postgres:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
+      - postgres
+      - clickhouse
     volumes:
       - plausibleData:/var/lib/plausible
     env_file:
