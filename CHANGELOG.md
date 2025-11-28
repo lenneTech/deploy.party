@@ -1,3 +1,10 @@
+## [2.11.5](https://github.com/lenneTech/deploy.party/compare/v2.11.4...v2.11.5) (2025-11-28)
+
+
+### Bug Fixes
+
+* fix ([014aa7a](https://github.com/lenneTech/deploy.party/commit/014aa7a7c197bf346c06a3cfa5abc0fcc8067e03))
+
 ## [2.11.4](https://github.com/lenneTech/deploy.party/compare/v2.11.3...v2.11.4) (2025-11-28)
 
 
