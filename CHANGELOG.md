@@ -1,3 +1,10 @@
+## [2.11.2](https://github.com/lenneTech/deploy.party/compare/v2.11.1...v2.11.2) (2025-11-28)
+
+
+### Bug Fixes
+
+* fix plausible service ([17744fb](https://github.com/lenneTech/deploy.party/commit/17744fbacfcee8fe40b76f541be2952ac8f1317d))
+
 ## [2.11.1](https://github.com/lenneTech/deploy.party/compare/v2.11.0...v2.11.1) (2025-11-28)
 
 
