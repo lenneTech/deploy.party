@@ -1,3 +1,10 @@
+## [2.12.1](https://github.com/lenneTech/deploy.party/compare/v2.12.0...v2.12.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* enable metrics endpoint ([0757e1b](https://github.com/lenneTech/deploy.party/commit/0757e1ba6e9d252983e25582782fe1b3d3871247))
+
 # [2.12.0](https://github.com/lenneTech/deploy.party/compare/v2.11.5...v2.12.0) (2025-11-28)
 
 
