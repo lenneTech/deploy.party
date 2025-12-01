@@ -8,6 +8,8 @@ services:
       - 80:80
       # Listen on port 443, default for HTTPS
       - 443:443
+      # Expose port 8082 for Prometheus metrics
+      - 8082:8082
     deploy:
       placement:
         constraints:
@@ -85,7 +87,10 @@ services:
       - --log
       # Enable the Dashboard and API
       - --api
+      # Enable metrics with Prometheus
       - --metrics.prometheus=true
+      - --metrics.prometheus.entrypoint=metrics
+      - --entrypoints.metrics.address=:8082
     networks:
       # Use the public network created to be shared between Traefik and
       # any other service that needs to be publicly available with HTTPS
