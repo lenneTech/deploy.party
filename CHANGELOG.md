@@ -1,3 +1,10 @@
+# [2.13.0](https://github.com/lenneTech/deploy.party/compare/v2.12.1...v2.13.0) (2025-12-05)
+
+
+### Features
+
+* remove minio s3 ([a49a454](https://github.com/lenneTech/deploy.party/commit/a49a454a69055c1eebef1a978b2a1dc22d07e116))
+
 ## [2.12.1](https://github.com/lenneTech/deploy.party/compare/v2.12.0...v2.12.1) (2025-12-01)
 
 
