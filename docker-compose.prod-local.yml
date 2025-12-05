@@ -7,7 +7,6 @@ networks:
 volumes:
   data:
   redis:
-  minio-data:
 
 services:
   app:
@@ -105,33 +104,3 @@ services:
       - .env
     volumes:
       - data:/data/db
-
-  minio:
-    image: quay.io/minio/minio:latest
-    command: 'server /data --console-address ":9001"'
-    networks:
-      - traefik-public
-    env_file:
-      - .env
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    volumes:
-      - 'minio-data:/data'
-    healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-        interval: 5s
-        timeout: 20s
-        retries: 10
-    deploy:
-      update_config:
-        order: start-first
-        failure_action: rollback
-        delay: 10s
-      rollback_config:
-        order: stop-first
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 3
-        window: 120s

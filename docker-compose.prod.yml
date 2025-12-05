@@ -7,7 +7,6 @@ networks:
 volumes:
   data:
   redis:
-  minio-data:
 
 services:
   app:
@@ -142,56 +141,3 @@ services:
       - .env
     volumes:
       - data:/data/db
-
-  minio:
-    image: quay.io/minio/minio:latest
-    command: 'server /data --console-address ":9001"'
-    networks:
-      - traefik-public
-    env_file:
-      - .env
-    volumes:
-      - 'minio-data:/data'
-    healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-        interval: 5s
-        timeout: 20s
-        retries: 10
-    deploy:
-      update_config:
-        order: start-first
-        failure_action: rollback
-        delay: 10s
-      rollback_config:
-        order: stop-first
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-      labels:
-        - traefik.enable=true
-        - traefik.docker.network=traefik-public
-        - traefik.constraint-label=traefik-public
-        # API Router
-        - traefik.http.routers.minio-3-api-http.rule=Host(`s3.${APP_URL}`)
-        - traefik.http.routers.minio-3-api-http.entrypoints=http
-        - traefik.http.routers.minio-3-api-http.middlewares=https-redirect@swarm
-        - traefik.http.routers.minio-3-api-https.rule=Host(`s3.${APP_URL}`)
-        - traefik.http.routers.minio-3-api-https.entrypoints=https
-        - traefik.http.routers.minio-3-api-https.tls=true
-        - traefik.http.routers.minio-3-api-https.tls.certresolver=le
-        - traefik.http.routers.minio-3-api-http.service=minio-3-api-service
-        - traefik.http.routers.minio-3-api-https.service=minio-3-api-service
-        - traefik.http.services.minio-3-api-service.loadbalancer.server.port=9000
-        # Console Router
-        - traefik.http.routers.minio-3-ui-http.rule=Host(`console.s3.${APP_URL}`)
-        - traefik.http.routers.minio-3-ui-http.entrypoints=http
-        - traefik.http.routers.minio-3-ui-http.middlewares=https-redirect@swarm
-        - traefik.http.routers.minio-3-ui-https.rule=Host(`console.s3.${APP_URL}`)
-        - traefik.http.routers.minio-3-ui-https.entrypoints=https
-        - traefik.http.routers.minio-3-ui-https.tls=true
-        - traefik.http.routers.minio-3-ui-https.tls.certresolver=le
-        - traefik.http.routers.minio-3-ui-http.service=minio-3-ui-service
-        - traefik.http.routers.minio-3-ui-https.service=minio-3-ui-service
-        - traefik.http.services.minio-3-ui-service.loadbalancer.server.port=9001

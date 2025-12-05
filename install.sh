@@ -293,18 +293,9 @@ echo "NSC__EMAIL__DEFAULT_SENDER__NAME=" >> $ENV_PATH
 
 if [ $LOCAL_SETUP != 0 ]; then
   echo "NSC__EMAIL__PASSWORD_RESET_LINK=http://$HOST_IP:3001/auth/password-set?token=" >> $ENV_PATH
-  echo "# Minio configuration" >> $ENV_PATH
-  echo "MINIO_SERVER_URL=" >> $ENV_PATH
-  echo "MINIO_BROWSER_REDIRECT_URL="  >> $ENV_PATH
 else
   echo "NSC__EMAIL__PASSWORD_RESET_LINK=https://$URL/auth/password-set?token=" >> $ENV_PATH
-  echo "# Minio configuration" >> $ENV_PATH
-  echo "MINIO_SERVER_URL=https://s3.$URL" >> $ENV_PATH
-  echo "MINIO_BROWSER_REDIRECT_URL=https://s3.$URL"  >> $ENV_PATH
 fi
-
-echo "MINIO_ROOT_USER=root" >> $ENV_PATH
-echo "MINIO_ROOT_PASSWORD=$(openssl rand -base64 32)"  >> $ENV_PATH
 
 echo "# TRAEFIK" >> $ENV_PATH
 echo "EMAIL=$EMAIL" >> $ENV_PATH
@@ -391,7 +382,6 @@ while true; do
         if [ $LOCAL_SETUP != 0 ]; then
           echo "\nCongratulations! Your deploy.party instance is ready to use. \n"
           echo "deploy.party is running on http://$HOST_IP:3001 \n"
-          echo "Minio is running on http://$HOST_IP:9000 \n"
           exit 0
         else
           echo "\n--------------------------------------------------------------------------------"
