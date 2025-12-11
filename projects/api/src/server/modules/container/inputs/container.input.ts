@@ -142,6 +142,14 @@ export class ContainerInput extends CoreInput {
 
   @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => Boolean, {
+    description: 'passHostHeader of Container',
+    nullable: true,
+  })
+  @IsOptional()
+  passHostHeader?: boolean = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => Boolean, {
     description: 'isCustomRule of Container',
     nullable: true,
   })

@@ -116,6 +116,7 @@ const baseFormSchema = object({
   installCmd: string().default('npm install').nullable(),
   isCustomRule: boolean().nullable().default(false),
   name: string().nullable().max(14),
+  passHostHeader: boolean().nullable().default(true),
   port: string().nullable(),
   registry: object({
     id: string(),
@@ -741,6 +742,14 @@ async function submit() {
           <template #label> Enable WWW redirect </template>
           <template #default>
             <FormToggle name="www" class="mx-auto" :disabled="disabled" />
+          </template>
+        </FormRow>
+
+        <FormRow>
+          <template #label> Pass Host Header </template>
+          <template #help> Forward the original Host header to the backend service </template>
+          <template #default>
+            <FormToggle name="passHostHeader" class="mx-auto" :disabled="disabled" />
           </template>
         </FormRow>
 

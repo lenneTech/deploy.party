@@ -180,6 +180,14 @@ export class Container extends PersistenceModel {
 
   @Restricted(RoleEnum.S_EVERYONE)
   @Field(() => Boolean, {
+    description: 'passHostHeader of Container',
+    nullable: true,
+  })
+  @Prop({default: true})
+  passHostHeader: boolean = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => Boolean, {
     description: 'isCustomRule of Container',
     nullable: true,
   })

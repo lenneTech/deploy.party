@@ -150,6 +150,9 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
   }
 
   dockerCompose.push(`          - traefik.http.services.${container.id}.loadbalancer.server.port=80`);
+  if (container.passHostHeader !== false) {
+    dockerCompose.push(`          - traefik.http.services.${container.id}.loadbalancer.passhostheader=true`);
+  }
 
   return dockerCompose.join('\n');
 }

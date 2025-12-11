@@ -361,6 +361,8 @@ export interface Container {
   maxMemory?: Maybe<Scalars['Float']['output']>;
   /** name of Container */
   name: Scalars['String']['output'];
+  /** passHostHeader of Container */
+  passHostHeader?: Maybe<Scalars['Boolean']['output']>;
   /** port of Container */
   port?: Maybe<Scalars['String']['output']>;
   /** registry of Container */
@@ -443,6 +445,8 @@ export interface ContainerCreateInput {
   maxMemory?: InputMaybe<Scalars['Float']['input']>;
   /** Name of Container */
   name: Scalars['String']['input'];
+  /** passHostHeader of Container */
+  passHostHeader?: InputMaybe<Scalars['Boolean']['input']>;
   /** Port of Container */
   port?: InputMaybe<Scalars['String']['input']>;
   /** Registry of Container */
@@ -527,6 +531,8 @@ export interface ContainerInput {
   maxMemory?: InputMaybe<Scalars['Float']['input']>;
   /** Name of Container */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** passHostHeader of Container */
+  passHostHeader?: InputMaybe<Scalars['Boolean']['input']>;
   /** Port of Container */
   port?: InputMaybe<Scalars['String']['input']>;
   /** Registry of Container */

@@ -150,6 +150,9 @@ export async function getNodeCompose(container: Container, build?: Build): Promi
   }
 
   dockerCompose.push(`          - traefik.http.services.${container.id}.loadbalancer.server.port=${container.port}`);
+  if (container.passHostHeader !== false) {
+    dockerCompose.push(`          - traefik.http.services.${container.id}.loadbalancer.passhostheader=true`);
+  }
 
   return dockerCompose.join('\n');
 }
