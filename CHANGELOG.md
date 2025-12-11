@@ -1,3 +1,10 @@
+# [2.14.0](https://github.com/lenneTech/deploy.party/compare/v2.13.0...v2.14.0) (2025-12-11)
+
+
+### Features
+
+* add passHostHeader property to Container model and input ([5b8edc2](https://github.com/lenneTech/deploy.party/commit/5b8edc23c1e41de74878dabd1acbfa13574e292a))
+
 # [2.13.0](https://github.com/lenneTech/deploy.party/compare/v2.12.1...v2.13.0) (2025-12-05)
 
 
