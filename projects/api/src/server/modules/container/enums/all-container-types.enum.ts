@@ -2,6 +2,7 @@ import {registerEnumType} from '@nestjs/graphql';
 
 export enum AllContainerTypes {
   ADMINER = 'ADMINER',
+  CLICKHOUSE_UI = 'CLICKHOUSE_UI',
   CUSTOM = 'CUSTOM',
   DIRECTUS = 'DIRECTUS',
   MARIA_DB = 'MARIA_DB',

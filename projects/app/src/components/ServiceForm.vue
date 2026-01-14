@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const typeOptions = [
   { label: 'Adminer', value: 'ADMINER' },
+  { label: 'ClickHouse UI', value: 'CLICKHOUSE_UI' },
   { label: 'Custom', value: 'CUSTOM' },
   { label: 'Directus', value: 'DIRECTUS' },
   { label: 'MongoExpress', value: 'MONGO_EXPRESS' },

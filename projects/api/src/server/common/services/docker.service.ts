@@ -24,6 +24,7 @@ import { getAdminer } from "../../modules/container/types/service/adminer/compos
 import { getDirectus } from "../../modules/container/types/service/directus/compose";
 import { getMongoExpress } from "../../modules/container/types/service/mongo-express/compose";
 import { getPlausible } from "../../modules/container/types/service/plausible/compose";
+import { getClickhouseUi } from "../../modules/container/types/service/clickhouse-ui/compose";
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
 import { Registry } from "../../modules/registry/registry.model";
@@ -120,6 +121,18 @@ export class DockerService {
         break;
       case ServiceType.ADMINER:
         compose = await getAdminer(container);
+        break;
+      case ServiceType.CLICKHOUSE_UI:
+        if (!container.env) {
+          container.env = `
+VITE_CLICKHOUSE_URL=http://[CLICKHOUSE_HOST]:8123
+VITE_CLICKHOUSE_USER=default
+VITE_CLICKHOUSE_PASS=
+`;
+          await this.containerService.updateForce(container.id, { env: container.env });
+          await this.createEnvFile(container);
+        }
+        compose = await getClickhouseUi(container);
         break;
       case ServiceType.ROCKET_ADMIN:
         if (!container.env) {
