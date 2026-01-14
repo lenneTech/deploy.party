@@ -1,3 +1,10 @@
+# [2.15.0](https://github.com/lenneTech/deploy.party/compare/v2.14.0...v2.15.0) (2026-01-14)
+
+
+### Features
+
+* add ClickHouse UI support in Docker service and UI ([0e17dd2](https://github.com/lenneTech/deploy.party/commit/0e17dd275ea5cf633274f2277c5165c0d3df63ff))
+
 # [2.14.0](https://github.com/lenneTech/deploy.party/compare/v2.13.0...v2.14.0) (2025-12-11)
 
 
