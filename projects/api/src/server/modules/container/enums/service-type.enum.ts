@@ -2,6 +2,7 @@ import {registerEnumType} from '@nestjs/graphql';
 
 export enum ServiceType {
   ADMINER = 'ADMINER',
+  CHOUSE_UI = 'CHOUSE_UI',
   CLICKHOUSE_UI = 'CLICKHOUSE_UI',
   CUSTOM = 'CUSTOM',
   DIRECTUS = 'DIRECTUS',

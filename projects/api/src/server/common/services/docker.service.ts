@@ -24,6 +24,7 @@ import { getAdminer } from "../../modules/container/types/service/adminer/compos
 import { getDirectus } from "../../modules/container/types/service/directus/compose";
 import { getMongoExpress } from "../../modules/container/types/service/mongo-express/compose";
 import { getPlausible } from "../../modules/container/types/service/plausible/compose";
+import { getChouseUi } from "../../modules/container/types/service/chouse-ui/compose";
 import { getClickhouseUi } from "../../modules/container/types/service/clickhouse-ui/compose";
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
@@ -121,6 +122,34 @@ export class DockerService {
         break;
       case ServiceType.ADMINER:
         compose = await getAdminer(container);
+        break;
+      case ServiceType.CHOUSE_UI:
+        if (!container.env) {
+          const jwtSecret = randomBytes(32).toString('hex');
+          const encryptionKey = randomBytes(32).toString('hex');
+
+          container.env = `
+# Core Settings
+PORT=5521
+NODE_ENV=production
+
+# Authentication & Security
+JWT_SECRET=${jwtSecret}
+RBAC_ENCRYPTION_KEY=${encryptionKey}
+RBAC_ADMIN_PASSWORD=admin123!
+
+# Database (SQLite by default)
+RBAC_DB_TYPE=sqlite
+RBAC_SQLITE_PATH=/app/data/rbac.db
+
+# For PostgreSQL, uncomment and configure:
+# RBAC_DB_TYPE=postgres
+# RBAC_POSTGRES_URL=postgres://user:password@host:5432/dbname
+`;
+          await this.containerService.updateForce(container.id, { env: container.env });
+          await this.createEnvFile(container);
+        }
+        compose = await getChouseUi(container);
         break;
       case ServiceType.CLICKHOUSE_UI:
         if (!container.env) {
