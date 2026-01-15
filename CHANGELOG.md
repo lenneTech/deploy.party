@@ -1,3 +1,10 @@
+# [2.18.0](https://github.com/lenneTech/deploy.party/compare/v2.17.0...v2.18.0) (2026-01-15)
+
+
+### Features
+
+* add adminerDefaultServer field to ServiceForm for Adminer type ([1f448c5](https://github.com/lenneTech/deploy.party/commit/1f448c5a5efd8b59cf26edc569097a4fb95272a7))
+
 # [2.17.0](https://github.com/lenneTech/deploy.party/compare/v2.16.0...v2.17.0) (2026-01-15)
 
 
