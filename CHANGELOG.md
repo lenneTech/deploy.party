@@ -1,3 +1,10 @@
+# [2.16.0](https://github.com/lenneTech/deploy.party/compare/v2.15.0...v2.16.0) (2026-01-15)
+
+
+### Features
+
+* add support for CHouse UI in Docker service and UI ([77ff4b7](https://github.com/lenneTech/deploy.party/commit/77ff4b7d0b890597317c668273ea87dd9fbf18ed))
+
 # [2.15.0](https://github.com/lenneTech/deploy.party/compare/v2.14.0...v2.15.0) (2026-01-14)
 
 
