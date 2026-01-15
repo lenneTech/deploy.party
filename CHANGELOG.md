@@ -1,3 +1,10 @@
+# [2.17.0](https://github.com/lenneTech/deploy.party/compare/v2.16.0...v2.17.0) (2026-01-15)
+
+
+### Features
+
+* **ServiceForm:** add support for additional networks input ([7fac10e](https://github.com/lenneTech/deploy.party/commit/7fac10e9b2dbb83902f51638a56955a47804d790))
+
 # [2.16.0](https://github.com/lenneTech/deploy.party/compare/v2.15.0...v2.16.0) (2026-01-15)
 
 
