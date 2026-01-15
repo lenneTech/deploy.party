@@ -1,6 +1,15 @@
 import { Container } from "../../../container.model";
 
 export function getDirectus(container: Container): string {
+  // Additional networks configuration
+  const additionalNetworks = container.additionalNetworks || [];
+  const extraNetworkDefinitions = additionalNetworks
+    .map(n => `      ${n}:\n        external: true`)
+    .join('\n');
+  const extraNetworkConnections = additionalNetworks
+    .map(n => `          - ${n}`)
+    .join('\n');
+
   return `
     networks:
       traefik-public:
@@ -9,6 +18,7 @@ export function getDirectus(container: Container): string {
         external: true
       directus-internal:
         driver: overlay
+${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
 
     services:
       database:
@@ -44,6 +54,7 @@ export function getDirectus(container: Container): string {
           - traefik-public
           - directus-internal
           - deploy-party
+${extraNetworkConnections ? extraNetworkConnections + '\n' : ''}
         labels:
           - deploy.party.id=${container.id}
         deploy:

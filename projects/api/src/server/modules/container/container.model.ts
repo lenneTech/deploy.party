@@ -358,6 +358,14 @@ export class Container extends PersistenceModel {
   @Prop({ default: ['[skip ci]', '[ci skip]', '[no ci]', '[skip build]'] })
   skipCiPatterns?: string[] = undefined;
 
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Additional Docker networks to connect to',
+    nullable: true,
+  })
+  @Prop({ default: [] })
+  additionalNetworks?: string[] = undefined;
+
   // ===================================================================================================================
   // Methods
   // ===================================================================================================================

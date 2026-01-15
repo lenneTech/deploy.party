@@ -33,6 +33,7 @@ const basicAuthSchema = object({
 });
 
 const baseFormSchema = object({
+  additionalNetworks: string().nullable().optional(),
   buildImage: string()
     .nullable()
     .optional()
@@ -55,13 +56,26 @@ const formSchema = computed(() => {
   return toTypedSchema(basicAuth.value ? baseFormSchema.concat(basicAuthSchema) : baseFormSchema);
 });
 
+// Transform container data for form (convert arrays to strings for input fields)
+const getInitialValues = () => {
+  if (!props.container) {
+    return undefined;
+  }
+  const values = { ...props.container } as any;
+  // Convert additionalNetworks array to comma-separated string
+  if (Array.isArray(values.additionalNetworks)) {
+    values.additionalNetworks = values.additionalNetworks.join(', ');
+  }
+  return values;
+};
+
 const {
   controlledValues: values,
   isSubmitting,
   meta,
   validate,
 } = useForm({
-  initialValues: props.container as any,
+  initialValues: getInitialValues(),
   validateOnMount: false,
   validationSchema: formSchema,
 });
@@ -89,10 +103,19 @@ async function submit() {
 
   isSubmitting.value = true;
 
+  // Convert comma-separated networks string to array
+  const input = { ...values.value } as { additionalNetworks?: string | string[] } & ContainerInput;
+  if (typeof input.additionalNetworks === 'string') {
+    input.additionalNetworks = input.additionalNetworks
+      .split(',')
+      .map((n: string) => n.trim())
+      .filter((n: string) => n.length > 0);
+  }
+
   const { data, error } = await useUpdateContainerMutation(
     {
       id: props.containerId as string,
-      input: values.value as ContainerInput,
+      input: input as ContainerInput,
     },
     ['id'],
   );
@@ -168,6 +191,20 @@ async function submit() {
         <template #help> Content of .env file </template>
         <template #default>
           <FormCode name="env" class="w-full mx-auto max-w-3xl" :disabled="disabled" />
+        </template>
+      </FormRow>
+
+      <FormRow v-if="values.type !== 'CUSTOM'">
+        <template #label> Zusätzliche Netzwerke </template>
+        <template #help> Docker-Netzwerke für Zugriff auf andere Container (kommasepariert) </template>
+        <template #default>
+          <FormInput
+            name="additionalNetworks"
+            class="w-full mx-auto max-w-2xl"
+            type="text"
+            placeholder="z.B. myapp_default, clickhouse-net"
+            :disabled="disabled"
+          />
         </template>
       </FormRow>
 

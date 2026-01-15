@@ -17,12 +17,22 @@ export async function getAdminer(container: Container): Promise<string> {
     middlewares.unshift(`${container.id}-auth`);
   }
 
+  // Additional networks configuration
+  const additionalNetworks = container.additionalNetworks || [];
+  const extraNetworkDefinitions = additionalNetworks
+    .map(n => `      ${n}:\n        external: true`)
+    .join('\n');
+  const extraNetworkConnections = additionalNetworks
+    .map(n => `          - ${n}`)
+    .join('\n');
+
   return `
     networks:
       traefik-public:
         external: true
       deploy-party:
         external: true
+${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
 
     services:
       adminer:
@@ -34,6 +44,7 @@ export async function getAdminer(container: Container): Promise<string> {
         networks:
           - traefik-public
           - deploy-party
+${extraNetworkConnections ? extraNetworkConnections + '\n' : ''}
         deploy:
           update_config:
             order: start-first

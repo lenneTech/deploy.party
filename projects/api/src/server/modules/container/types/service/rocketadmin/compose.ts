@@ -17,6 +17,15 @@ export async function getRocketAdmin(container: Container): Promise<string> {
     middlewares.unshift(`${container.id}-auth`);
   }
 
+  // Additional networks configuration
+  const additionalNetworks = container.additionalNetworks || [];
+  const extraNetworkDefinitions = additionalNetworks
+    .map(n => `      ${n}:\n        external: true`)
+    .join('\n');
+  const extraNetworkConnections = additionalNetworks
+    .map(n => `          - ${n}`)
+    .join('\n');
+
   return `
     networks:
       traefik-public:
@@ -25,6 +34,7 @@ export async function getRocketAdmin(container: Container): Promise<string> {
         external: true
       rocket-internal:
         driver: overlay
+${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
 
     volumes:
       rocketDb:
@@ -49,6 +59,7 @@ export async function getRocketAdmin(container: Container): Promise<string> {
           - traefik-public
           - deploy-party
           - rocket-internal
+${extraNetworkConnections ? extraNetworkConnections + '\n' : ''}
         deploy:
           update_config:
             order: start-first

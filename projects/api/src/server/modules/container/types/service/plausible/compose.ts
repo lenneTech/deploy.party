@@ -1,12 +1,22 @@
 import { Container } from "../../../container.model";
 
 export function getPlausible(container: Container, basePath: string): string {
+  // Additional networks configuration
+  const additionalNetworks = container.additionalNetworks || [];
+  const extraNetworkDefinitions = additionalNetworks
+    .map(n => `  ${n}:\n    external: true`)
+    .join('\n');
+  const extraNetworkConnections = additionalNetworks
+    .map(n => `      - ${n}`)
+    .join('\n');
+
   return `
 networks:
   traefik-public:
     external: true
   deploy-party:
     external: true
+${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
 
 services:
   plausible_db:
@@ -65,7 +75,7 @@ services:
       - traefik-public
       - deploy-party
       - default
-    labels:
+${extraNetworkConnections ? extraNetworkConnections + '\n' : ''}    labels:
       - deploy.party.id=${container.id}
     deploy:
       placement:

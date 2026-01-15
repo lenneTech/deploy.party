@@ -318,4 +318,12 @@ export class ContainerInput extends CoreInput {
   })
   @IsOptional()
   skipCiPatterns?: string[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Additional Docker networks to connect to',
+    nullable: true,
+  })
+  @IsOptional()
+  additionalNetworks?: string[] = undefined;
 }

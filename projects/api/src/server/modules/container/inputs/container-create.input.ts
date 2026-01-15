@@ -271,4 +271,12 @@ export class ContainerCreateInput extends ContainerInput {
   })
   @IsOptional()
   override skipCiPatterns?: string[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => [String], {
+    description: 'Additional Docker networks to connect to',
+    nullable: true,
+  })
+  @IsOptional()
+  override additionalNetworks?: string[] = undefined;
 }
