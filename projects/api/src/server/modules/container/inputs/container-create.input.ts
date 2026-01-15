@@ -279,4 +279,12 @@ export class ContainerCreateInput extends ContainerInput {
   })
   @IsOptional()
   override additionalNetworks?: string[] = undefined;
+
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => String, {
+    description: 'Default server for Adminer login',
+    nullable: true,
+  })
+  @IsOptional()
+  override adminerDefaultServer?: string = undefined;
 }

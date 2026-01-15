@@ -34,6 +34,7 @@ const basicAuthSchema = object({
 
 const baseFormSchema = object({
   additionalNetworks: string().nullable().optional(),
+  adminerDefaultServer: string().nullable().optional(),
   buildImage: string()
     .nullable()
     .optional()
@@ -203,6 +204,20 @@ async function submit() {
             class="w-full mx-auto max-w-2xl"
             type="text"
             placeholder="z.B. myapp_default, clickhouse-net"
+            :disabled="disabled"
+          />
+        </template>
+      </FormRow>
+
+      <FormRow v-if="values.type === 'ADMINER'">
+        <template #label> Standard Server </template>
+        <template #help> Vorausgefüllter Server im Login-Formular </template>
+        <template #default>
+          <FormInput
+            name="adminerDefaultServer"
+            class="w-full mx-auto max-w-2xl"
+            type="text"
+            placeholder="z.B. clickhouse:8123, mongo:27017"
             :disabled="disabled"
           />
         </template>

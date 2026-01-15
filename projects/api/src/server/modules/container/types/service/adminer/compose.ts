@@ -40,7 +40,7 @@ ${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
         labels:
           - deploy.party.id=${container.id}
         environment:
-          ADMINER_DESIGN: dracula
+          ADMINER_DESIGN: dracula${container.adminerDefaultServer ? `\n          ADMINER_DEFAULT_SERVER: ${container.adminerDefaultServer}` : ''}
         networks:
           - traefik-public
           - deploy-party

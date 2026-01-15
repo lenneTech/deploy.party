@@ -366,6 +366,14 @@ export class Container extends PersistenceModel {
   @Prop({ default: [] })
   additionalNetworks?: string[] = undefined;
 
+  @Restricted(RoleEnum.S_EVERYONE)
+  @Field(() => String, {
+    description: 'Default server for Adminer login',
+    nullable: true,
+  })
+  @Prop()
+  adminerDefaultServer?: string = undefined;
+
   // ===================================================================================================================
   // Methods
   // ===================================================================================================================
