@@ -63,8 +63,9 @@ export class MigrationController {
       name: project.name,
       identifier: project.identifier,
       containers: ((project.containers || []) as Container[]).map((container: Container) => {
-        const registry = container.registry as Registry;
-        const source = container.source as Source;
+        // Type assertion is safe here because we explicitly populate registry and source above
+        const registry = typeof container.registry === 'string' ? null : container.registry as Registry | undefined;
+        const source = typeof container.source === 'string' ? null : container.source as Source | undefined;
         
         const containerDto: MigrationContainerDetailDto = {
           id: container.id || (container as any)._id?.toString(),

@@ -1,5 +1,6 @@
 import { MigrationRegistryDto } from './migration-registry.dto';
 import { MigrationSourceDto } from './migration-source.dto';
+import { ContainerVolume } from '../../modules/container/container-volume.model';
 
 export class MigrationContainerDto {
   id: string;
@@ -25,7 +26,7 @@ export class MigrationContainerDetailDto extends MigrationContainerDto {
   maxMemory?: number;
   baseDir?: string;
   repositoryUrl?: string;
-  volumes?: any[];
+  volumes?: ContainerVolume[];
   additionalNetworks?: string[];
   registry?: MigrationRegistryDto | null;
   source?: MigrationSourceDto | null;
