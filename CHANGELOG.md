@@ -1,3 +1,10 @@
+## [2.19.5](https://github.com/lenneTech/deploy.party/compare/v2.19.4...v2.19.5) (2026-03-03)
+
+
+### Bug Fixes
+
+* add RegistryModule and SourceModule to InternalMigrationModule ([a258d7b](https://github.com/lenneTech/deploy.party/commit/a258d7b286fe80a5cb56c782daed24ae4419ba04))
+
 ## [2.19.4](https://github.com/lenneTech/deploy.party/compare/v2.19.3...v2.19.4) (2026-03-03)
 
 
