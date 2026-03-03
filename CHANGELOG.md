@@ -1,3 +1,10 @@
+## [2.19.1](https://github.com/lenneTech/deploy.party/compare/v2.19.0...v2.19.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* add GraphQL scalars to InternalMigrationModule ([a9c7197](https://github.com/lenneTech/deploy.party/commit/a9c71977b0b85493b4243b15e3a9fb4e92f80cd4))
+
 # [2.19.0](https://github.com/lenneTech/deploy.party/compare/v2.18.0...v2.19.0) (2026-03-03)
 
 
