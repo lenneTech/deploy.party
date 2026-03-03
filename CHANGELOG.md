@@ -1,3 +1,10 @@
+# [2.19.0](https://github.com/lenneTech/deploy.party/compare/v2.18.0...v2.19.0) (2026-03-03)
+
+
+### Features
+
+* add internal migration API for TurboOps integration ([bb5c867](https://github.com/lenneTech/deploy.party/commit/bb5c86708a8249dab8ef6e125f3b6a1642de2284))
+
 # [2.18.0](https://github.com/lenneTech/deploy.party/compare/v2.17.0...v2.18.0) (2026-01-15)
 
 
