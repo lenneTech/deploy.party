@@ -30,4 +30,5 @@ export class MigrationContainerDetailDto extends MigrationContainerDto {
   additionalNetworks?: string[];
   registry?: MigrationRegistryDto | null;
   source?: MigrationSourceDto | null;
+  env?: string;
 }
