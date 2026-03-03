@@ -6,6 +6,7 @@ import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
 import envConfig from './config.env';
 import {ServerModule} from './server/server.module';
+import {InternalMigrationModule} from './server/internal-migration.module';
 import * as bodyParser from 'body-parser';
 import {DocumentBuilder, SwaggerModule} from "@nestjs/swagger";
 
@@ -69,6 +70,19 @@ async function bootstrap() {
 
   // Start server on configured port
   await server.listen(envConfig.port);
+
+  // Internal migration server (localhost only, port 9090)
+  try {
+    const internalServer = await NestFactory.create<NestExpressApplication>(
+      InternalMigrationModule,
+      { logger: ['error', 'warn'] },
+    );
+    await internalServer.listen(9090, '127.0.0.1');
+    console.log('Internal migration server started on 127.0.0.1:9090');
+  } catch (error) {
+    console.error('Failed to start internal migration server:', error.message);
+    // Non-fatal: main server continues running
+  }
 
   // Run command after server init
   if (envConfig.execAfterInit) {
