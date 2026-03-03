@@ -80,7 +80,8 @@ async function bootstrap() {
     await internalServer.listen(9090, '127.0.0.1');
     console.log('Internal migration server started on 127.0.0.1:9090');
   } catch (error) {
-    console.error('Failed to start internal migration server:', error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Failed to start internal migration server:', errorMessage);
     // Non-fatal: main server continues running
   }
 
