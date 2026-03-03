@@ -1,3 +1,10 @@
+# [2.20.0](https://github.com/lenneTech/deploy.party/compare/v2.19.5...v2.20.0) (2026-03-03)
+
+
+### Features
+
+* expose env field in migration API container details ([825913d](https://github.com/lenneTech/deploy.party/commit/825913d2b4d1561862e5252a1792a823ae7b5fa0))
+
 ## [2.19.5](https://github.com/lenneTech/deploy.party/compare/v2.19.4...v2.19.5) (2026-03-03)
 
 
