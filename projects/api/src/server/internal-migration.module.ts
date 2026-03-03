@@ -1,4 +1,4 @@
-import { CoreAuthService, CoreModule } from '@lenne.tech/nest-server';
+import { Any, CoreAuthService, CoreModule, DateScalar, JSON } from '@lenne.tech/nest-server';
 import { Module } from '@nestjs/common';
 import envConfig from '../config.env';
 import { MigrationController } from './migration.controller';
@@ -12,5 +12,6 @@ import { ProjectModule } from './modules/project/project.module';
     ProjectModule,
   ],
   controllers: [MigrationController],
+  providers: [Any, DateScalar, JSON],
 })
 export class InternalMigrationModule {}
