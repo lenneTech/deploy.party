@@ -104,6 +104,7 @@ export class MigrationController {
                 url: source.url,
               }
             : null,
+          env: container.env,
         };
         return containerDto;
       }),
