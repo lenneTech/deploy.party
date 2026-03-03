@@ -1,3 +1,10 @@
+## [2.19.4](https://github.com/lenneTech/deploy.party/compare/v2.19.3...v2.19.4) (2026-03-03)
+
+
+### Bug Fixes
+
+* allow Docker bridge IPs in LocalhostGuard ([c3c0418](https://github.com/lenneTech/deploy.party/commit/c3c0418e1fe61f166c8b40f684e9a6849b5968b3))
+
 ## [2.19.3](https://github.com/lenneTech/deploy.party/compare/v2.19.2...v2.19.3) (2026-03-03)
 
 
