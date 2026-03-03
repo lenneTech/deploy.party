@@ -1,3 +1,10 @@
+## [2.19.3](https://github.com/lenneTech/deploy.party/compare/v2.19.2...v2.19.3) (2026-03-03)
+
+
+### Bug Fixes
+
+* make migration API reachable from host in Docker Swarm ([3843347](https://github.com/lenneTech/deploy.party/commit/384334769959a25f486f257cbc2202024e52e435))
+
 ## [2.19.2](https://github.com/lenneTech/deploy.party/compare/v2.19.1...v2.19.2) (2026-03-03)
 
 
