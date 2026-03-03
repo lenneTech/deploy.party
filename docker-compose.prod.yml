@@ -70,7 +70,10 @@ services:
       - traefik-public
       - default
     ports:
-      - '127.0.0.1:9090:9090'
+      - target: 9090
+        published: 9090
+        protocol: tcp
+        mode: host
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/data:/data'
