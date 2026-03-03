@@ -1,3 +1,10 @@
+## [2.19.2](https://github.com/lenneTech/deploy.party/compare/v2.19.1...v2.19.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* expose internal migration API port 9090 on localhost ([8df07c1](https://github.com/lenneTech/deploy.party/commit/8df07c11ba9c1f4acce6ed6ebcae1e51cd532f5c))
+
 ## [2.19.1](https://github.com/lenneTech/deploy.party/compare/v2.19.0...v2.19.1) (2026-03-03)
 
 
