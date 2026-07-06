@@ -1,4 +1,5 @@
 import { Container } from "../../../container.model";
+import envConfig from "../../../../../../config.env";
 
 export function getDirectus(container: Container): string {
   // Additional networks configuration
@@ -43,8 +44,13 @@ ${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
         image: directus/directus:${container.buildImage || 'latest'}
         volumes:
           - uploads:/directus/uploads
-          # If you want to load extensions from the host
-          # - ./extensions:/directus/extensions
+          # Load host-provided extensions from the project's extensions folder.
+          # Absolute path (Swarm bind mounts require it). Swarm does NOT create a
+          # missing bind source (it rejects the task), so createDockerComposeFile()
+          # mkdir's this folder before deploy. Empty folder = no extensions =
+          # unchanged behaviour. To let the Directus Marketplace write installs
+          # here, chown the folder to 1000:1000 (the directus container user).
+          - ${envConfig.projectsDir}/${container.id}/extensions:/directus/extensions
         depends_on:
           - cache
           - database

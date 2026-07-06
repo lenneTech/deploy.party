@@ -118,6 +118,9 @@ export class DockerService {
           await this.containerService.updateForce(container.id, { env: container.env });
           await this.createEnvFile(container);
         }
+        // Swarm rejects a service whose bind-mount source path is missing, so the
+        // per-project extensions folder (see getDirectus) must exist before deploy.
+        await fs.mkdir(`${envConfig.projectsDir}/${container.id}/extensions`, { recursive: true });
         compose = getDirectus(container);
         break;
       case ServiceType.ADMINER:
