@@ -1,4 +1,5 @@
 import { Container } from "../../../container.model";
+import envConfig from "../../../../../../config.env";
 
 export function getDirectus(container: Container): string {
   // Additional networks configuration
@@ -43,8 +44,11 @@ ${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
         image: directus/directus:${container.buildImage || 'latest'}
         volumes:
           - uploads:/directus/uploads
-          # If you want to load extensions from the host
-          # - ./extensions:/directus/extensions
+          # Load host-provided extensions from the project's extensions folder.
+          # Absolute path (Swarm bind mounts require it); the folder is created
+          # automatically (root-owned, empty = no extensions = default behaviour).
+          # To let the Directus Marketplace write here, chown it to 1000:1000.
+          - ${envConfig.projectsDir}/${container.id}/extensions:/directus/extensions
         depends_on:
           - cache
           - database
