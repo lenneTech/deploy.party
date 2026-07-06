@@ -1,3 +1,15 @@
+# [2.21.0](https://github.com/lenneTech/deploy.party/compare/v2.20.0...v2.21.0) (2026-07-06)
+
+
+### Bug Fixes
+
+* **directus:** create extensions folder before deploy so Swarm doesn't reject ([9b76b03](https://github.com/lenneTech/deploy.party/commit/9b76b0318810a93d30392e7a99006ea217bca670))
+
+
+### Features
+
+* **directus:** mount per-project extensions folder into Directus service ([84def3f](https://github.com/lenneTech/deploy.party/commit/84def3f5580af9b696f2467a2400b2ad2fc2ac22))
+
 # [2.20.0](https://github.com/lenneTech/deploy.party/compare/v2.19.5...v2.20.0) (2026-03-03)
 
 
