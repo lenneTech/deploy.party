@@ -45,9 +45,11 @@ ${extraNetworkDefinitions ? '\n' + extraNetworkDefinitions : ''}
         volumes:
           - uploads:/directus/uploads
           # Load host-provided extensions from the project's extensions folder.
-          # Absolute path (Swarm bind mounts require it); the folder is created
-          # automatically (root-owned, empty = no extensions = default behaviour).
-          # To let the Directus Marketplace write here, chown it to 1000:1000.
+          # Absolute path (Swarm bind mounts require it). Swarm does NOT create a
+          # missing bind source (it rejects the task), so createDockerComposeFile()
+          # mkdir's this folder before deploy. Empty folder = no extensions =
+          # unchanged behaviour. To let the Directus Marketplace write installs
+          # here, chown the folder to 1000:1000 (the directus container user).
           - ${envConfig.projectsDir}/${container.id}/extensions:/directus/extensions
         depends_on:
           - cache
