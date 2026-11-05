@@ -318,12 +318,17 @@ fi
 echo "--------------------------------------------------------------------------------"
 echo "Start registry"
 # Check if registry container already exists
+# Loopback only (DEV-4027): the registry has no authentication, and Docker bypasses UFW, so
+# `-p 5000:5000` made every image readable from the internet unless the provider firewall blocked
+# the port. deploy.party and Swarm push and pull `localhost:5000` on this node only.
 if ! docker ps -a --format '{{.Names}}' | grep -q '^registry$'; then
     echo "Starting Docker registry..."
-    docker run -d -p 5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='true' --name registry registry:2
+    docker run -d -p 127.0.0.1:5000:5000 --restart=always -e REGISTRY_STORAGE_DELETE_ENABLED='true' -v deploy-party-registry:/var/lib/registry --name registry registry:2
 else
     echo "Registry container already exists, ensuring it's running..."
     docker start registry 2>/dev/null || true
+    echo "Existing registries from older installs listen on all interfaces. Bind it to 127.0.0.1 with:"
+    echo "  curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/secure-registry.sh -o secure-registry.sh && bash secure-registry.sh"
 fi
 
 echo "--------------------------------------------------------------------------------"

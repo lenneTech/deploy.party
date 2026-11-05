@@ -28,6 +28,7 @@ import { getChouseUi } from "../../modules/container/types/service/chouse-ui/com
 import { getClickhouseUi } from "../../modules/container/types/service/clickhouse-ui/compose";
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
+import { getBuildContextDockerignore } from "../helpers/build-context-dockerignore.helper";
 import { Registry } from "../../modules/registry/registry.model";
 import { FileService } from "./file.service";
 
@@ -69,6 +70,7 @@ export class DockerService {
     }
 
     await fs.writeFile(`${this.getPath(container)}/Dockerfile`, image);
+    await fs.writeFile(`${this.getPath(container)}/.dockerignore`, getBuildContextDockerignore());
   }
 
   async createDockerComposeFile(container: Container): Promise<void> {

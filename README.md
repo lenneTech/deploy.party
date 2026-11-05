@@ -91,6 +91,20 @@ sh /var/opt/deploy-party/reconfigure.sh
 sh /var/opt/deploy-party/update.sh
 ```
 
+### Registry only on localhost (installs before DEV-4027)
+
+Older installs started the local registry with `-p 5000:5000`. It has no authentication, and Docker bypasses UFW, so every image (including its `.env`) was readable from the internet unless the provider firewall blocked port 5000. New installs bind it to `127.0.0.1`. For an existing install, run once:
+
+```bash
+cd /var/opt/deploy-party
+curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/secure-registry.sh -o secure-registry.sh
+bash secure-registry.sh --check   # exit 2: still public
+bash secure-registry.sh           # switch; keeps the data volume, rolls back by itself on any difference
+bash secure-registry.sh --cleanup # after the next successful deploy: remove the stopped old container
+```
+
+The script refuses on a multi-node swarm (other nodes pull from this registry) and while a push is running. `--rollback` restores the previous container. Once `secure-registry.sh` sits next to `update.sh`, every update runs it as well.
+
 ## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
@@ -121,9 +135,11 @@ Default credentails are:
 2. Click on plus in topbar and create new source
 3. Enter name of source for example GitLab
 4. Enter the URL of the GitLab instance for example https://gitlab.com
-5. Enter the personal access token for the GitLab API [GitLab Docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
-    - Create personal access token with following scopes: `api, read_api, read_registry, write_registry`
-    - Personal access token global (-/user_settings/personal_access_tokens) or Personal access token for project (/GROUP/PROJECT/-/settings/access_tokens)
+5. Enter an access token for the GitLab API [GitLab Docs](https://docs.gitlab.com/user/project/settings/project_access_tokens/)
+    - **Use a project or group access token, not a personal one.** deploy.party uses the token to clone, to list projects, branches and releases, and to create the webhook, so it needs the role Maintainer and the scope `api`. Add `read_registry, write_registry` only if you push to the GitLab registry.
+    - A personal access token reaches every project of its owner. If it leaks, all of them are exposed, not only the deployed ones. A project token (`/GROUP/PROJECT/-/settings/access_tokens`) or group token (`/groups/GROUP/-/settings/access_tokens`) is limited to what deploy.party deploys.
+    - Give the token an expiry date and note where it is used.
+    - Since DEV-4027 the token is passed to `git clone` as a header and no longer stored in the clone (`.git/config`), in the image or in the build log.
 
 ### Create your first project
 1. Click on plus in topbar and create new project

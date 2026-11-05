@@ -8,6 +8,7 @@ import {Container} from '../container/container.model';
 import {ContainerService} from '../container/container.service';
 import {Build, BuildDocument} from './build.model';
 import {BuildStatus} from './enums/build-status.enum';
+import {buildGitCloneCommand, buildGitCredentialEnv} from './git-clone.helper';
 import {ContainerStatus} from "../container/enums/container-status.enum";
 import {WebPushService} from "../web-push/web-push.service";
 import {ProjectService} from "../project/project.service";
@@ -372,14 +373,20 @@ export class BuildService extends CrudService<Build> {
     await this.checkBuildIsCancel(build);
     await this.updateBuildLog(build.id, `Cloning ${container.name}:${this.containerService.getContainerSource(container)}...`, 'info');
 
-    const url = container.repositoryUrl.replace('https://', '').replace('http://', '');
     try {
       await this.checkBuildIsCancel(build);
       await this.fileService.recreateFolder(`${this.dockerService.getPath(container)}/code`);
       await this.checkBuildIsCancel(build);
+      // DEV-4027: the token goes to git as a header via the environment. It is no longer part of
+      // the URL, so it lands neither in `.git/config` (and with it in the image) nor in the build
+      // log of a failed clone.
       await execa(
-        `git clone -b ${this.containerService.getContainerSource(container)} https://gitlab-ci-token:${token}@${url} ${this.dockerService.getPath(container)}/code`,
-        {shell: true}
+        buildGitCloneCommand({
+          branch: this.containerService.getContainerSource(container),
+          repositoryUrl: container.repositoryUrl,
+          target: `${this.dockerService.getPath(container)}/code`,
+        }),
+        {shell: true, env: buildGitCredentialEnv(token)}
       );
     } catch (e) {
       console.error(e);
