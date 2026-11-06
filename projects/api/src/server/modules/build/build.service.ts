@@ -8,7 +8,7 @@ import {Container} from '../container/container.model';
 import {ContainerService} from '../container/container.service';
 import {Build, BuildDocument} from './build.model';
 import {BuildStatus} from './enums/build-status.enum';
-import {buildGitCloneCommand, buildGitCredentialEnv} from './git-clone.helper';
+import {buildGitCloneArgs, buildGitCredentialEnv} from './git-clone.helper';
 import {ContainerStatus} from "../container/enums/container-status.enum";
 import {WebPushService} from "../web-push/web-push.service";
 import {ProjectService} from "../project/project.service";
@@ -380,17 +380,21 @@ export class BuildService extends CrudService<Build> {
       // DEV-4027: the token goes to git as a header via the environment. It is no longer part of
       // the URL, so it lands neither in `.git/config` (and with it in the image) nor in the build
       // log of a failed clone.
+      // DEV-4081: no shell. The branch or tag can come from the webhook and goes to git as one
+      // argument; a name with shell or git special characters is rejected before git runs.
       await execa(
-        buildGitCloneCommand({
+        'git',
+        buildGitCloneArgs({
           branch: this.containerService.getContainerSource(container),
           repositoryUrl: container.repositoryUrl,
           target: `${this.dockerService.getPath(container)}/code`,
         }),
-        {shell: true, env: buildGitCredentialEnv(token)}
+        {env: buildGitCredentialEnv(token)}
       );
     } catch (e) {
       console.error(e);
-      await this.updateBuildLog(build.id, JSON.stringify(e), 'error');
+      // `message` carries git's own error output; JSON.stringify drops it for a plain Error.
+      await this.updateBuildLog(build.id, e?.message ?? String(e), 'error');
       await this.updateBuildLog(build.id, ` ❌ Cloning failed!`, 'error');
       await this.setBuildStatus(build.id, BuildStatus.FAILED);
     }
