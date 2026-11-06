@@ -105,14 +105,23 @@ export class BuildProcessor {
       throw new Error('Container source is not defined');
     }
 
+    let cloned = false;
     try {
-      await this.buildService.cloneGitLab(container, build, (container.source as Source).token);
+      cloned = await this.buildService.cloneGitLab(container, build, (container.source as Source).token, job.data.additionalInfos);
     } catch (e) {
       this.logger.error(e.message, e.stack);
       if (!e.message.includes('Build was canceled')) {
         await this.buildService.updateBuildLog(job.data.buildId, 'Build was canceled', 'error');
         await this.buildService.setBuildStatus(build.id, BuildStatus.FAILED, job.data.additionalInfos);
       }
+    }
+
+    // DEV-4068: without a fresh clone there is nothing to build. Going on used to build stale or
+    // empty code and could end in SUCCESS. The build is already FAILED (or canceled) at this point.
+    if (!cloned) {
+      await this.buildService.updateBuildLog(job.data.buildId, 'Build stopped before building: the source was not cloned', 'error');
+      this.logger.debug(`Stopped job ${job.id}: clone failed or build canceled`);
+      return;
     }
 
     try {

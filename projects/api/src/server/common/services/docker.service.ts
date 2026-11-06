@@ -30,6 +30,17 @@ import { getRedisUi } from "../../modules/container/types/service/redis-ui/compo
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
 import { getBuildContextDockerignore } from "../helpers/build-context-dockerignore.helper";
 import { addCustomComposeUpdateDefaults } from "../helpers/custom-compose-update-config.helper";
+import {
+  DeployCheck,
+  evaluateServiceDeploy,
+  FAILED_TASK_LOG_LINES,
+  parseStackServices,
+  pickFailedTask,
+  resolveDeployVerifyTimeoutMs,
+  STACK_VERIFY_POLL_MS,
+  summarizeStackDeploy,
+  tailTaskLog,
+} from "../helpers/stack-deploy-verification.helper";
 import { Registry } from "../../modules/registry/registry.model";
 import { FileService } from "./file.service";
 
@@ -459,6 +470,100 @@ SMTP_HOST_SSL_ENABLED=true
     );
 
     return containers.length ? containers[0] : null;
+  }
+
+  /**
+   * DEV-4068: waits after `docker stack deploy` until every service of the stack has settled.
+   *
+   * `docker stack deploy` returns once Swarm has accepted the new specs. Whether the new version
+   * runs, or crashed and was rolled back, only shows afterwards; until now the build reported
+   * SUCCESS either way. The decision is made by the pure functions in
+   * stack-deploy-verification.helper; this loop only runs docker (argument arrays, no shell) and
+   * polls until ok, failed or the timeout (NSC__DEPLOY_VERIFY_TIMEOUT_SECONDS).
+   *
+   * Returns the lines for the build log: on failure the reason, the error of the failed task and
+   * the end of its log.
+   */
+  async verifyStackDeploy(
+    container: Container,
+    deployStartedAt: Date,
+    onProgress?: (detail: string) => Promise<unknown>,
+  ): Promise<{ lines: string[]; ok: boolean }> {
+    const stack = container.id;
+    const timeoutMs = resolveDeployVerifyTimeoutMs(envConfig.deployVerifyTimeoutSeconds);
+    const verifyStartedAt = new Date();
+    let lastDetail = '';
+
+    for (;;) {
+      const now = new Date();
+      let checks: { check: DeployCheck; service: string }[] = [];
+
+      try {
+        const { stdout } = await execa('docker', ['stack', 'services', stack, '--format', '{{json .}}']);
+        for (const service of parseStackServices(stdout)) {
+          const { stdout: inspect } = await execa('docker', ['service', 'inspect', service.name, '--format', '{{json .}}']);
+          checks.push({
+            service: service.name,
+            check: evaluateServiceDeploy({ deployStartedAt, inspect: JSON.parse(inspect), now, replicas: service.replicas, verifyStartedAt }),
+          });
+        }
+      } catch (e) {
+        // A failing docker call is no verdict about the deploy; poll again until the timeout.
+        checks = [{ service: stack, check: { state: 'pending', detail: `docker did not answer (${e?.shortMessage ?? e?.message ?? e})` } }];
+      }
+
+      const verdict = summarizeStackDeploy({ checks, now, timeoutMs, verifyStartedAt });
+      if (verdict.state === 'ok') {
+        return { ok: true, lines: [verdict.detail] };
+      }
+      if (verdict.state === 'failed') {
+        return { ok: false, lines: [verdict.detail, ...(await this.describeFailedTasks(verdict.services.filter((s) => s !== stack)))] };
+      }
+
+      if (verdict.detail !== lastDetail) {
+        lastDetail = verdict.detail;
+        await onProgress?.(verdict.detail)?.catch(() => undefined);
+      }
+      await new Promise((resolve) => setTimeout(resolve, STACK_VERIFY_POLL_MS));
+    }
+  }
+
+  /**
+   * Error and last log lines of the most recent failed task of each service (at most three), so the
+   * build log shows why the new version did not come up, for example the stack trace of a crash on start.
+   */
+  private async describeFailedTasks(services: string[]): Promise<string[]> {
+    const lines: string[] = [];
+
+    for (const service of services.slice(0, 3)) {
+      try {
+        const { stdout } = await execa('docker', ['service', 'ps', service, '--no-trunc', '--format', '{{json .}}']);
+        const task = pickFailedTask(stdout);
+        if (!task?.ID) {
+          lines.push(`${service}: no failed task found`);
+          continue;
+        }
+
+        lines.push(`${service}: task ${task.ID.slice(0, 12)} (${task.CurrentState ?? 'unknown state'}): ${task.Error?.trim() || 'no error reported'}`);
+
+        // `all` interleaves stdout and stderr in the order the task wrote them. No reject: a missing
+        // log (log driver, removed container) must not hide the error line above.
+        const { all } = await execa('docker', ['service', 'logs', '--raw', '--tail', String(FAILED_TASK_LOG_LINES), task.ID], {
+          all: true,
+          reject: false,
+          timeout: 15000,
+        });
+        const log = tailTaskLog(all ?? '', FAILED_TASK_LOG_LINES);
+        if (log.length) {
+          lines.push(`${service}: last ${log.length} log lines of task ${task.ID.slice(0, 12)}:`);
+          lines.push(...log.map((line) => `  ${line}`));
+        }
+      } catch (e) {
+        lines.push(`${service}: task details unavailable (${e?.shortMessage ?? e?.message ?? e})`);
+      }
+    }
+
+    return lines;
   }
 
   async stop(container: Container): Promise<string | null> {
