@@ -135,6 +135,7 @@
     "strip-ansi": "7.1.0",
     "systeminformation": "5.21.24",
     "web-push": "3.6.6",
+    "yaml": "2.4.1",
     "yuml-diagram": "1.2.0"
   },
   "devDependencies": {

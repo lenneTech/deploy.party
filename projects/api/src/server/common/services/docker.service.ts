@@ -29,6 +29,7 @@ import { getClickhouseUi } from "../../modules/container/types/service/clickhous
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
 import { getBuildContextDockerignore } from "../helpers/build-context-dockerignore.helper";
+import { addCustomComposeUpdateDefaults } from "../helpers/custom-compose-update-config.helper";
 import { Registry } from "../../modules/registry/registry.model";
 import { FileService } from "./file.service";
 
@@ -254,7 +255,9 @@ SMTP_HOST_SSL_ENABLED=true
         compose = getPlausible(container, this.getPath(container));
         break;
       case ContainerType.CUSTOM:
-        compose = container.customDockerCompose;
+        // DEV-4068: services without an own update_config get rollback (stop-first), so a failing
+        // new version no longer leaves the stage stopped with a paused update.
+        compose = addCustomComposeUpdateDefaults(container.customDockerCompose);
         break;
     }
 
