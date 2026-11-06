@@ -10,6 +10,12 @@ import { BuildService } from "../../modules/build/build.service";
 import { Container } from "../../modules/container/container.model";
 import { ContainerService } from "../../modules/container/container.service";
 import { ContainerHealthStatus } from "../../modules/container/enums/container-health-status.enum";
+import {
+  dockerHealthOf,
+  hasActiveHealthcheck,
+  parseRunningContainersHealth,
+  RunningContainersHealth,
+} from "../../modules/container/helpers/container-health.helper";
 import { ContainerType } from '../../modules/container/enums/container-type.enum';
 import { DatabaseType } from '../../modules/container/enums/database-type.enum';
 import { ServiceType } from "../../modules/container/enums/service-type.enum";
@@ -627,21 +633,45 @@ SMTP_HOST_SSL_ENABLED=true
     }
   }
 
-  async getHealthStatus(source: Container): Promise<ContainerHealthStatus> {
+  /**
+   * Health of the running containers of deploy.party, by deploy.party id, with a single `docker ps`
+   * (DEV-4068); optionally for one container only. null when docker cannot be asked.
+   *
+   * Only running containers count. `docker ps -a` would also return the exited task of a crash loop,
+   * or of an update Swarm rolled back while the previous version runs fine.
+   */
+  async getRunningContainersHealth(containerId?: string): Promise<RunningContainersHealth | null> {
     try {
-      const dockerId = await this.getId(source.id);
-
-      if (!dockerId) {
-        throw new Error('Docker container not found');
-      }
-
-      const { stdout } = await execa(`docker inspect --format='{{json .State.Health.Status}}' ${dockerId}`, {
-        shell: true,
-      });
-      return stdout.replace(/"/g, '').toUpperCase() as ContainerHealthStatus;
+      const { stdout } = await execa('docker', [
+        'ps',
+        '--filter',
+        containerId ? `label=deploy.party.id=${containerId}` : 'label=deploy.party.id',
+        '--format',
+        '{{.Label "deploy.party.id"}} {{.Status}}',
+      ]);
+      return parseRunningContainersHealth(stdout);
     } catch (e) {
-      return ContainerHealthStatus.UNHEALTHY;
+      return null;
     }
+  }
+
+  /**
+   * Docker health of one container: UNHEALTHY when none of its containers runs, null when it runs
+   * without a healthcheck (the caller decides what that means).
+   */
+  async getHealthStatus(source: Container): Promise<ContainerHealthStatus | null> {
+    const id = String(source.id);
+    const running = await this.getRunningContainersHealth(id);
+    return running ? dockerHealthOf(id, running) : ContainerHealthStatus.UNHEALTHY;
+  }
+
+  /**
+   * Whether a Docker container has an active healthcheck (from its image or its service spec).
+   * Throws when the container does not exist (any more).
+   */
+  async hasHealthcheck(dockerId: string): Promise<boolean> {
+    const { stdout } = await execa('docker', ['inspect', '--format', '{{json .Config.Healthcheck}}', dockerId]);
+    return hasActiveHealthcheck(stdout);
   }
 
   getPath(container: Container) {

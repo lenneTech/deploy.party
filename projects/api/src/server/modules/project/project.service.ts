@@ -11,6 +11,7 @@ import {ContainerService} from "../container/container.service";
 import {ContainerHealthStatus} from "../container/enums/container-health-status.enum";
 import {ContainerStatus} from "../container/enums/container-status.enum";
 import {ContainerCreateInput} from "../container/inputs/container-create.input";
+import {resolveOverviewHealth} from "../container/helpers/container-health.helper";
 
 /**
  * Project service
@@ -69,16 +70,16 @@ export class ProjectService extends CrudService<Project> {
       {...serviceOptions, populate: [{path: 'containers', populate: 'lastBuild'}, {path: 'subscribers'}]}
     );
 
+    // DEV-4068: NODE containers have a healthcheck by default now, so their health comes from Docker
+    // like for containers with healthCheckCmd; DEPLOYED alone no longer means healthy. One docker
+    // call for all containers, since the overview polls this every few seconds.
+    const runningHealth = await this.containerService.getRunningContainersHealth();
+
     for (const project of projects) {
     const containerHealths = [];
       for (const container of project.containers) {
         if ((container as Container)?.id) {
-          let containerHealth: ContainerHealthStatus;
-          if (!(container as Container)?.healthCheckCmd) {
-            containerHealth = (container as Container).status === ContainerStatus.DEPLOYED ? ContainerHealthStatus.HEALTHY : (container as Container).status === ContainerStatus.BUILDING ? ContainerHealthStatus.IDLE : ContainerHealthStatus.UNHEALTHY;
-          } else {
-            containerHealth = await this.containerService.getDockerHealthStatus((container as Container)?.id);
-          }
+          const containerHealth = resolveOverviewHealth(container as Container, runningHealth);
 
           (container as Container).healthStatus = containerHealth
           containerHealths.push(containerHealth);
