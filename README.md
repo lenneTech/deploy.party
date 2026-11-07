@@ -129,6 +129,10 @@ One line per container: `UNCHANGED`, `EXPECTED` (only the healthcheck, the updat
    ```
 3. Watch the API log for `came with no X-Gitlab-Token` / `a wrong X-Gitlab-Token` (for example CI jobs that call the webhook themselves). When nothing shows up any more, set `NSC__WEBHOOK_TOKEN_MODE=enforce` and run `update.sh`.
 
+### Swagger (off since 2.21.2)
+
+The API served Swagger UI under `api.YOUR_URL/api` and the OpenAPI document under `/api-json` to everyone. Both are off now; deploy.party itself does not use them. To switch them on for an instance, set `NSC__SWAGGER=true` in the `.env` and run `update.sh`.
+
 ## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
