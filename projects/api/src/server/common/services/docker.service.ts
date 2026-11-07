@@ -6,6 +6,18 @@ import * as utc from 'dayjs/plugin/utc';
 import { execa } from 'execa';
 import { promises as fs } from 'fs';
 import envConfig from "../../../config.env";
+import {
+  composeBuildArgs,
+  composePushArgs,
+  containerIdsByLabelArgs,
+  containerStatsArgs,
+  deployArgs,
+  logsArgs,
+  runningContainersByLabelArgs,
+  runningContainersByNamePrefixArgs,
+  stopArgs,
+  volumeRmArgs,
+} from "../helpers/docker-command.helper";
 import { BuildService } from "../../modules/build/build.service";
 import { Container } from "../../modules/container/container.model";
 import { ContainerService } from "../../modules/container/container.service";
@@ -360,10 +372,7 @@ SMTP_HOST_SSL_ENABLED=true
     try {
       await fs.access(repoPath);
     } catch {
-      await execa(
-        `git clone --depth 1 --branch ${version} https://github.com/plausible/community-edition.git ${repoPath}`,
-        { shell: true }
-      );
+      await execa('git', ['clone', '--depth', '1', '--branch', version, '--', 'https://github.com/plausible/community-edition.git', repoPath]);
     }
   }
 
@@ -389,29 +398,24 @@ SMTP_HOST_SSL_ENABLED=true
   }
 
   async deleteVolume(container: Container) {
-    const process = execa(
-      `docker volume rm ${container.id}_${container.id}`,
-      { shell: true }
-    );
+    // Not awaited, as before. A volume still in use or already gone must not end in an unhandled
+    // rejection, which would stop the API process.
+    execa('docker', volumeRmArgs(container.id)).catch((e) => {
+      console.error(`docker volume rm ${container.id}_${container.id} failed: ${e?.shortMessage ?? e?.message ?? e}`);
+    });
 
     return true;
   }
 
   async buildImage(container: Container, buildId: string) {
-    const process = execa(
-      `docker compose --project-directory ${this.getPath(container)} build`,
-      { shell: true }
-    );
+    const process = execa('docker', composeBuildArgs(this.getPath(container)));
 
     return this.prepareProcess(process, buildId);
   }
 
   async pushImage(container: Container, buildId: string) {
     const configExist = await this.fileService.checkConfigExist(container);
-    const process = execa(
-      `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} compose --project-directory ${this.getPath(container)} push`,
-      { shell: true }
-    );
+    const process = execa('docker', composePushArgs(this.getPath(container), configExist));
 
     return this.prepareProcess(process, buildId);
   }
@@ -452,10 +456,7 @@ SMTP_HOST_SSL_ENABLED=true
   }
 
   async getId(containerId: string): Promise<string | null> {
-    const { stdout: ids } = await execa(
-      `docker ps -a --filter 'label=deploy.party.id=${containerId}' --format {{.ID}}`,
-      { shell: true }
-    );
+    const { stdout: ids } = await execa('docker', containerIdsByLabelArgs(containerId));
 
     const idsArray = ids.split('\n');
     return idsArray.length ? idsArray[0] : null;
@@ -463,18 +464,12 @@ SMTP_HOST_SSL_ENABLED=true
 
   async getServiceContainers(containerId: string): Promise<any[]> {
     // First try to find containers with the deploy.party.id label
-    const { stdout: labelContainerList } = await execa(
-      `docker ps --filter 'label=deploy.party.id=${containerId}' --format '{{json .}}'`,
-      { shell: true }
-    );
+    const { stdout: labelContainerList } = await execa('docker', runningContainersByLabelArgs(containerId));
 
     // If we find containers with the label, also search for related containers by name prefix
     if (labelContainerList.trim()) {
       // Search for all containers that start with the containerId prefix (like 6870e11f3af612ab0693d5b8_*)
-      const { stdout: nameContainerList } = await execa(
-        `docker ps --filter 'name=^${containerId}_' --format '{{json .}}'`,
-        { shell: true }
-      );
+      const { stdout: nameContainerList } = await execa('docker', runningContainersByNamePrefixArgs(containerId));
 
       const labelContainers = labelContainerList
         .split('\n')
@@ -502,10 +497,8 @@ SMTP_HOST_SSL_ENABLED=true
     const configExist = await this.fileService.checkConfigExist(container);
 
     const { stdout: containers } = await execa(
-      envConfig.dockerSwarm
-        ? `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} stack deploy -c ${this.getPath(container)}/docker-compose.yml ${container.id}`
-        : `docker ${configExist ? `--config ${this.getPath(container)}/.docker` : ''} compose --project-directory ${this.getPath(container)} up -d`,
-      { shell: true }
+      'docker',
+      deployArgs({ configExist, path: this.getPath(container), stack: container.id, swarm: !!envConfig.dockerSwarm }),
     );
 
     return containers.length ? containers[0] : null;
@@ -607,10 +600,8 @@ SMTP_HOST_SSL_ENABLED=true
 
   async stop(container: Container): Promise<string | null> {
     const { stdout: containers } = await execa(
-      envConfig.dockerSwarm
-        ? `docker stack rm ${container.id}`
-        : `docker compose --project-directory ${this.getPath(container)} down`,
-      { shell: true }
+      'docker',
+      stopArgs({ path: this.getPath(container), stack: container.id, swarm: !!envConfig.dockerSwarm }),
     );
 
     return containers.length ? containers[0] : null;
@@ -623,12 +614,7 @@ SMTP_HOST_SSL_ENABLED=true
       return [];
     }
 
-    const { stdout, stderr } = await execa(
-      `docker logs ${since ? `--since ${since}` : ''} --tail 2000 --timestamps ${dockerId}`,
-      {
-        shell: true,
-      }
-    );
+    const { stdout, stderr } = await execa('docker', logsArgs(dockerId, since));
     const stripLogsStdout = stdout
       .toString()
       .split('\n')
@@ -651,10 +637,7 @@ SMTP_HOST_SSL_ENABLED=true
         throw new Error('Docker container not found');
       }
 
-      const { stdout } = await execa(
-        `docker container stats ${dockerId} --no-stream --no-trunc --format "{{json .}}"`,
-        { shell: true }
-      );
+      const { stdout } = await execa('docker', containerStatsArgs(dockerId));
       return JSON.parse(stdout);
     } catch (e) {
       console.error(e);

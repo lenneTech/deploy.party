@@ -9,6 +9,7 @@ import {ServerModule} from './server/server.module';
 import {InternalMigrationModule} from './server/internal-migration.module';
 import * as bodyParser from 'body-parser';
 import {DocumentBuilder, SwaggerModule} from "@nestjs/swagger";
+import {isSwaggerEnabled} from './server/common/helpers/swagger.helper';
 
 /**
  * Preparations for server start
@@ -60,13 +61,16 @@ async function bootstrap() {
   server.use(bodyParser.json({limit: '900mb'}));
   server.use(bodyParser.urlencoded({limit: '900mb', extended: true}));
 
-  const config = new DocumentBuilder()
-    .setTitle('API description')
-    .setDescription('The deploy.party API description')
-    .setVersion('1.0')
-    .build();
-  const documentFactory = () => SwaggerModule.createDocument(server, config);
-  SwaggerModule.setup('api', server, documentFactory);
+  // Swagger UI (`/api`) and the OpenAPI document (`/api-json`) only with NSC__SWAGGER=true
+  if (isSwaggerEnabled(process.env.NSC__SWAGGER)) {
+    const config = new DocumentBuilder()
+      .setTitle('API description')
+      .setDescription('The deploy.party API description')
+      .setVersion('1.0')
+      .build();
+    const documentFactory = () => SwaggerModule.createDocument(server, config);
+    SwaggerModule.setup('api', server, documentFactory);
+  }
 
   // Start server on configured port
   await server.listen(envConfig.port);
