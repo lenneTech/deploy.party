@@ -258,6 +258,8 @@ echo "NSC__BUILD_CONCURRENCY=3" >> $ENV_PATH
 echo "NSC__ENABLE_METRICS=false" >> $ENV_PATH
 # DEV-4068: builds write Dockerfile and compose file from the container settings
 echo "NSC__REFRESH_BUILD_FILES=true" >> $ENV_PATH
+# DEV-4068: the webhook only builds for requests with the secret of the source (X-Gitlab-Token)
+echo "NSC__WEBHOOK_TOKEN_MODE=enforce" >> $ENV_PATH
 
 echo "# JWT" >> $ENV_PATH
 echo "NSC__JWT__SECRET=$(openssl rand -base64 32)" >> $ENV_PATH

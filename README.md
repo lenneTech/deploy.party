@@ -115,6 +115,20 @@ docker exec $(docker ps -qf name=deploy-party_api) node dist/src/server/scripts/
 
 One line per container: `UNCHANGED`, `EXPECTED` (only the healthcheck, the update and rollback settings or a basic-auth label in the new hash format) or `OTHER` with the keys that differ (never values). Settle every `OTHER` first: settings that were changed but never deployed, or a file edited by hand on the server. Then add `NSC__REFRESH_BUILD_FILES=true` to `/var/opt/deploy-party/.env` and run `update.sh`.
 
+### Webhook secret (installs before DEV-4068)
+
+`POST /webhook` used to accept every request: whoever knew a GitLab project id could start builds, and for containers with a tag pattern choose the tag that gets deployed. Every source now has its own secret (created by a migration for existing sources), which GitLab sends as `X-Gitlab-Token`; new hooks created from the UI carry it. `NSC__WEBHOOK_TOKEN_MODE` switches the check: `off` (default), `report` (accept, but log every request without the right secret) or `enforce` (build only with the secret; otherwise HTTP 401). New installs set `enforce`. For an existing install:
+
+1. Run `update.sh` (the migration creates the secrets), set `NSC__WEBHOOK_TOKEN_MODE=report` and run `update.sh` again.
+2. Put the secrets into the existing hooks. The GitLab token goes in on stdin and needs Maintainer rights with scope `api`; the script prints only project and hook ids:
+   ```bash
+   printf '%s\n' "$GITLAB_ADMIN_TOKEN" | docker exec -i $(docker ps -qf name=deploy-party_api) \
+     node dist/src/server/scripts/webhook-secret-hooks.js --gitlab-host gitlab.example.com          # dry run
+   printf '%s\n' "$GITLAB_ADMIN_TOKEN" | docker exec -i $(docker ps -qf name=deploy-party_api) \
+     node dist/src/server/scripts/webhook-secret-hooks.js --gitlab-host gitlab.example.com --apply
+   ```
+3. Watch the API log for `came with no X-Gitlab-Token` / `a wrong X-Gitlab-Token` (for example CI jobs that call the webhook themselves). When nothing shows up any more, set `NSC__WEBHOOK_TOKEN_MODE=enforce` and run `update.sh`.
+
 ## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.

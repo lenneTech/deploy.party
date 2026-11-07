@@ -7,6 +7,7 @@ import {Source, SourceDocument} from "./source.model";
 import {SourceType} from "./enums/source-type.enum";
 import {SourceInput} from "./inputs/source.input";
 import {SourceCreateInput} from "./inputs/source-create.input";
+import {generateWebhookSecret} from "../../common/helpers/webhook-token.helper";
 
 /**
  * Source service
@@ -42,7 +43,14 @@ export class SourceService extends CrudService<Source> {
     }
 
     // Create source
-    return await super.create(input, serviceOptions);
+    const source = await super.create(input, serviceOptions);
+
+    // DEV-4068: every source gets its own webhook secret. Written directly, because it is not part of
+    // the create input: a client never chooses it.
+    const webhookSecret = generateWebhookSecret();
+    await this.mainDbModel.updateOne({ _id: source.id }, { $set: { webhookSecret } }).exec();
+    source.webhookSecret = webhookSecret;
+    return source;
   }
 
   override async update(id: string, input: SourceInput, serviceOptions?: ServiceOptions): Promise<Source> {

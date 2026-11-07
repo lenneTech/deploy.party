@@ -22,7 +22,7 @@ const loadingGitlab = ref(false);
 const gitProjects = ref<{ id: number }[]>([]);
 const branchOptions = ref<{ label: string; value: string }[]>([]);
 const tagOptions = ref<{ label: string; value: string }[]>([]);
-const { data: sources } = await useFindSourcesQuery({}, ['id', 'name', 'token', 'url', 'type']);
+const { data: sources } = await useFindSourcesQuery({}, ['id', 'name', 'token', 'url', 'type', 'webhookSecret']);
 const sourceOptions = sources?.map((e) => {
   return { label: e.name, value: e.id };
 });

@@ -1693,6 +1693,8 @@ export interface Source {
   updatedBy?: Maybe<User>;
   /** url of Source */
   url: Scalars['String']['output'];
+  /** Secret that GitLab sends as X-Gitlab-Token with the webhooks of this source */
+  webhookSecret?: Maybe<Scalars['String']['output']>;
 }
 
 /** Input data to create a new Source */
