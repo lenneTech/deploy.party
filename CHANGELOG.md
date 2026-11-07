@@ -1,3 +1,10 @@
+## [2.21.2](https://github.com/lenneTech/deploy.party/compare/v2.21.1...v2.21.2) (2026-11-07)
+
+
+### Bug Fixes
+
+* **security:** docker commands without a shell, internal port only from the host, Swagger off ([df09966](https://github.com/lenneTech/deploy.party/commit/df09966ac31ae71f391c85ac163681c05192db5b))
+
 ## [2.21.1](https://github.com/lenneTech/deploy.party/compare/v2.21.0...v2.21.1) (2026-11-07)
 
 
