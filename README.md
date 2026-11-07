@@ -91,6 +91,44 @@ sh /var/opt/deploy-party/reconfigure.sh
 sh /var/opt/deploy-party/update.sh
 ```
 
+### Registry only on localhost (installs before DEV-4027)
+
+Older installs started the local registry with `-p 5000:5000`. It has no authentication, and Docker bypasses UFW, so every image (including its `.env`) was readable from the internet unless the provider firewall blocked port 5000. New installs bind it to `127.0.0.1`. For an existing install, run once:
+
+```bash
+cd /var/opt/deploy-party
+curl -fsSL https://raw.githubusercontent.com/lenneTech/deploy.party/main/secure-registry.sh -o secure-registry.sh
+bash secure-registry.sh --check   # exit 2: still public
+bash secure-registry.sh           # switch; keeps the data volume, rolls back by itself on any difference
+bash secure-registry.sh --cleanup # after the next successful deploy: remove the stopped old container
+```
+
+The script refuses on a multi-node swarm (other nodes pull from this registry) and while a push is running. `--rollback` restores the previous container. Once `secure-registry.sh` sits next to `update.sh`, every update runs it as well.
+
+### Build files from the container settings (installs before DEV-4068)
+
+A build used to take the `Dockerfile` and `docker-compose.yml` that were on disk. Only a deploy from the UI and a tag build wrote them again from the container settings, so a changed setting went live only after a deploy, and the healthcheck of NODE containers and the rollback settings of CUSTOM containers reached existing containers only that way. With `NSC__REFRESH_BUILD_FILES=true` every build writes both files from the settings first; a file whose content changes is kept as `Dockerfile.prev` or `docker-compose.yml.prev`, and the build log says which file changed. New installs set it. For an existing install, check first what the first builds would change:
+
+```bash
+docker exec $(docker ps -qf name=deploy-party_api) node dist/src/server/scripts/build-files-drift.js
+```
+
+One line per container: `UNCHANGED`, `EXPECTED` (only the healthcheck, the update and rollback settings or a basic-auth label in the new hash format) or `OTHER` with the keys that differ (never values). Settle every `OTHER` first: settings that were changed but never deployed, or a file edited by hand on the server. Then add `NSC__REFRESH_BUILD_FILES=true` to `/var/opt/deploy-party/.env` and run `update.sh`.
+
+### Webhook secret (installs before DEV-4068)
+
+`POST /webhook` used to accept every request: whoever knew a GitLab project id could start builds, and for containers with a tag pattern choose the tag that gets deployed. Every source now has its own secret (created by a migration for existing sources), which GitLab sends as `X-Gitlab-Token`; new hooks created from the UI carry it. `NSC__WEBHOOK_TOKEN_MODE` switches the check: `off` (default), `report` (accept, but log every request without the right secret) or `enforce` (build only with the secret; otherwise HTTP 401). New installs set `enforce`. For an existing install:
+
+1. Run `update.sh` (the migration creates the secrets), set `NSC__WEBHOOK_TOKEN_MODE=report` and run `update.sh` again.
+2. Put the secrets into the existing hooks. The GitLab token goes in on stdin and needs Maintainer rights with scope `api`; the script prints only project and hook ids:
+   ```bash
+   printf '%s\n' "$GITLAB_ADMIN_TOKEN" | docker exec -i $(docker ps -qf name=deploy-party_api) \
+     node dist/src/server/scripts/webhook-secret-hooks.js --gitlab-host gitlab.example.com          # dry run
+   printf '%s\n' "$GITLAB_ADMIN_TOKEN" | docker exec -i $(docker ps -qf name=deploy-party_api) \
+     node dist/src/server/scripts/webhook-secret-hooks.js --gitlab-host gitlab.example.com --apply
+   ```
+3. Watch the API log for `came with no X-Gitlab-Token` / `a wrong X-Gitlab-Token` (for example CI jobs that call the webhook themselves). When nothing shows up any more, set `NSC__WEBHOOK_TOKEN_MODE=enforce` and run `update.sh`.
+
 ## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
@@ -121,9 +159,11 @@ Default credentails are:
 2. Click on plus in topbar and create new source
 3. Enter name of source for example GitLab
 4. Enter the URL of the GitLab instance for example https://gitlab.com
-5. Enter the personal access token for the GitLab API [GitLab Docs](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html)
-    - Create personal access token with following scopes: `api, read_api, read_registry, write_registry`
-    - Personal access token global (-/user_settings/personal_access_tokens) or Personal access token for project (/GROUP/PROJECT/-/settings/access_tokens)
+5. Enter an access token for the GitLab API [GitLab Docs](https://docs.gitlab.com/user/project/settings/project_access_tokens/)
+    - **Use a project or group access token, not a personal one.** deploy.party uses the token to clone, to list projects, branches and releases, and to create the webhook, so it needs the role Maintainer and the scope `api`. Add `read_registry, write_registry` only if you push to the GitLab registry.
+    - A personal access token reaches every project of its owner. If it leaks, all of them are exposed, not only the deployed ones. A project token (`/GROUP/PROJECT/-/settings/access_tokens`) or group token (`/groups/GROUP/-/settings/access_tokens`) is limited to what deploy.party deploys.
+    - Give the token an expiry date and note where it is used.
+    - Since DEV-4027 the token is passed to `git clone` as a header and no longer stored in the clone (`.git/config`), in the image or in the build log.
 
 ### Create your first project
 1. Click on plus in topbar and create new project

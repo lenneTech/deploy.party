@@ -10,6 +10,12 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
 fi
 
+# DEV-4027: bind an older registry, published on all interfaces, to 127.0.0.1. The script keeps the
+# data volume, refuses during a push and rolls back by itself if anything differs afterwards.
+if [ -f ./secure-registry.sh ]; then
+    bash ./secure-registry.sh || echo "Registry not switched to 127.0.0.1, see the output above. The update continues."
+fi
+
 docker stack rm deploy-party
 sleep 10
 docker pull ghcr.io/lennetech/deploy.party/app:latest

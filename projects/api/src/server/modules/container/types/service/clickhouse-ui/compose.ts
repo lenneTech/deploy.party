@@ -1,5 +1,5 @@
 import {Container} from '../../../container.model';
-import {execa} from 'execa';
+import { getBasicAuthUsersLabelValue } from "../../../../../common/helpers/basic-auth.helper";
 
 export async function getClickhouseUi(container: Container): Promise<string> {
   const basicAuth = !!(container?.basicAuth?.username && container?.basicAuth?.pw);
@@ -7,11 +7,8 @@ export async function getClickhouseUi(container: Container): Promise<string> {
   const middlewares = ['secure-headers@swarm'];
 
   if (basicAuth) {
-    const {stdout: creds} = await execa(
-      `echo $(htpasswd -nb ${container.basicAuth.username} ${container.basicAuth.pw})`,
-      {shell: true}
-    );
-    additionalLabels.push(`        - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds.replace(/\$/gi, '$$$')}`);
+    const creds = await getBasicAuthUsersLabelValue(container.id, container.basicAuth.username, container.basicAuth.pw);
+    additionalLabels.push(`        - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds}`);
     middlewares.unshift(`${container.id}-auth`);
   }
 

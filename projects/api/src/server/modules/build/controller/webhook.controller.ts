@@ -1,4 +1,5 @@
-import {Body, Controller, Post} from '@nestjs/common';
+import {Body, Controller, Headers, Logger, Post, UnauthorizedException} from '@nestjs/common';
+import {isValidWebhookToken, resolveWebhookTokenMode} from "../../../common/helpers/webhook-token.helper";
 import {ContainerService} from '../../container/container.service';
 import {BuildService} from '../build.service';
 import {ContainerStatus} from "../../container/enums/container-status.enum";
@@ -16,8 +17,10 @@ export class WebhookController {
     private webPushService: WebPushService,
   ) {}
 
+  private readonly logger = new Logger(WebhookController.name);
+
   @Post()
-  async triggerBuild(@Body() input: any) {
+  async triggerBuild(@Body() input: any, @Headers('x-gitlab-token') token?: string) {
     // check if release or push webhook
     const release = input?.object_kind === 'release';
     const push = input?.object_kind === 'push';
@@ -34,11 +37,18 @@ export class WebhookController {
 
     const source = push ? input.ref.split('/')[2] : input.tag;
     const id = input?.project?.id ?? input?.repository?.full_name;
-    const containers = await this.containerService.getContainerForWebhook(id, source);
+    const found = await this.containerService.getContainerForWebhook(id, source);
 
     // check if no containers found
-    if (!containers?.length) {
+    if (!found?.length) {
       return true;
+    }
+
+    // DEV-4068: before anything else touches a container (the tag refresh below writes to the
+    // database), keep only the containers whose source secret came with the request.
+    const containers = this.filterByWebhookToken(found, token, { id, source });
+    if (!containers.length) {
+      throw new UnauthorizedException('Invalid webhook token');
     }
 
     const containersToProcess = [];
@@ -111,6 +121,40 @@ export class WebhookController {
     }
 
     return true;
+  }
+
+  /**
+   * Containers of this request that may be built, by NSC__WEBHOOK_TOKEN_MODE (webhook-token.helper).
+   * `off` keeps all, `report` keeps all and logs the ones without the secret of their source,
+   * `enforce` drops those. Logs name the repository, the ref and the container, never a token.
+   */
+  private filterByWebhookToken<T extends { id?: string; source?: unknown }>(
+    containers: T[],
+    token: string | undefined,
+    request: { id: unknown; source: unknown },
+  ): T[] {
+    const mode = resolveWebhookTokenMode(process.env.NSC__WEBHOOK_TOKEN_MODE);
+    if (mode === 'off') {
+      return containers;
+    }
+
+    const accepted: T[] = [];
+    for (const container of containers) {
+      const secret = (container.source as { webhookSecret?: string } | undefined)?.webhookSecret;
+      if (isValidWebhookToken(secret, token)) {
+        accepted.push(container);
+        continue;
+      }
+
+      const reason = !token ? 'no X-Gitlab-Token' : 'a wrong X-Gitlab-Token';
+      if (mode === 'report') {
+        this.logger.warn(`Webhook for repository ${request.id} (${request.source}) came with ${reason} for container ${container.id}; accepted (report mode)`);
+        accepted.push(container);
+      } else {
+        this.logger.warn(`Webhook for repository ${request.id} (${request.source}) came with ${reason} for container ${container.id}; refused`);
+      }
+    }
+    return accepted;
   }
 
   /**

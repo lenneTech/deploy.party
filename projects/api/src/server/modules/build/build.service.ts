@@ -8,6 +8,7 @@ import {Container} from '../container/container.model';
 import {ContainerService} from '../container/container.service';
 import {Build, BuildDocument} from './build.model';
 import {BuildStatus} from './enums/build-status.enum';
+import {buildGitCloneArgs, buildGitCredentialEnv} from './git-clone.helper';
 import {ContainerStatus} from "../container/enums/container-status.enum";
 import {WebPushService} from "../web-push/web-push.service";
 import {ProjectService} from "../project/project.service";
@@ -22,6 +23,7 @@ import {DeploymentType} from "../container/enums/deployment-type.enum";
 import * as console from "node:console";
 import {promises as fs} from "fs";
 import envConfig from "../../../config.env";
+import {StackDeployVerificationError} from "../../common/helpers/stack-deploy-verification.helper";
 
 /**
  * Build service
@@ -249,10 +251,30 @@ export class BuildService extends CrudService<Build> {
               await this.checkBuildIsCancel(build);
 
               await this.updateBuildLog(build.id, 'Deploying container 🚢', 'info');
+              // Taken before the deploy: only a Swarm update that started after it belongs to this build.
+              const deployStartedAt = new Date();
               this.dockerService
                 .deploy(container)
                 .then(async () => {
                   await this.checkBuildIsCancel(build);
+
+                  // DEV-4068: `docker stack deploy` returns as soon as Swarm accepted the new specs.
+                  // A version that crashes on start used to end in SUCCESS here while Swarm rolled it
+                  // back or the stage went down. The build now waits for the outcome.
+                  if (envConfig.dockerSwarm) {
+                    await this.updateBuildLog(build.id, 'Waiting for the new version to start and become healthy 🩺', 'info');
+                    const verification = await this.dockerService.verifyStackDeploy(container, deployStartedAt, (detail) =>
+                      this.updateBuildLog(build.id, `Waiting: ${detail}`, 'info')
+                    );
+                    if (!verification.ok) {
+                      await this.updateBuildLog(build.id, ' ❌ The new version did not come up:', 'error');
+                      for (const line of verification.lines) {
+                        await this.updateBuildLog(build.id, line, 'error');
+                      }
+                      throw new StackDeployVerificationError();
+                    }
+                    await this.updateBuildLog(build.id, `New version is up: ${verification.lines.join('; ')}`, 'info');
+                  }
 
                   await this.updateBuildLog(build.id, 'Deployed 🎉', 'success');
                   await this.setBuildStatus(build.id, BuildStatus.SUCCESS, additionalInfos);
@@ -279,8 +301,12 @@ export class BuildService extends CrudService<Build> {
                 })
                 .catch(async (e: Error) => {
                   console.error(e);
-                  await this.updateBuildLog(build.id, e.message, 'error');
-                  await this.updateBuildLog(build.id, e.stack, 'error');
+                  // A failed verification has already logged its reason and the task error; its
+                  // stack trace would only bury them.
+                  if (!(e instanceof StackDeployVerificationError)) {
+                    await this.updateBuildLog(build.id, e.message, 'error');
+                    await this.updateBuildLog(build.id, e.stack, 'error');
+                  }
                   await this.updateBuildLog(build.id, ' ❌ Failed on start!', 'error');
                   await this.setBuildStatus(build.id, BuildStatus.FAILED, additionalInfos);
                   await this.checkALlBuildsOfContainerFailed(container);
@@ -368,24 +394,43 @@ export class BuildService extends CrudService<Build> {
     return runningContainer;
   }
 
-  async cloneGitLab(container: Container, build: Build, token: string) {
+  /**
+   * Clones the source into the build folder. Returns false when the clone failed; the build is then
+   * FAILED with git's error in the log and must not go on (DEV-4068): building after a failed clone
+   * used stale or empty code and could even end in SUCCESS.
+   */
+  async cloneGitLab(container: Container, build: Build, token: string, additionalInfos?: AdditionalBuildInfos): Promise<boolean> {
     await this.checkBuildIsCancel(build);
     await this.updateBuildLog(build.id, `Cloning ${container.name}:${this.containerService.getContainerSource(container)}...`, 'info');
 
-    const url = container.repositoryUrl.replace('https://', '').replace('http://', '');
     try {
       await this.checkBuildIsCancel(build);
       await this.fileService.recreateFolder(`${this.dockerService.getPath(container)}/code`);
       await this.checkBuildIsCancel(build);
+      // DEV-4027: the token goes to git as a header via the environment. It is no longer part of
+      // the URL, so it lands neither in `.git/config` (and with it in the image) nor in the build
+      // log of a failed clone.
+      // DEV-4081: no shell. The branch or tag can come from the webhook and goes to git as one
+      // argument; a name with shell or git special characters is rejected before git runs.
       await execa(
-        `git clone -b ${this.containerService.getContainerSource(container)} https://gitlab-ci-token:${token}@${url} ${this.dockerService.getPath(container)}/code`,
-        {shell: true}
+        'git',
+        buildGitCloneArgs({
+          branch: this.containerService.getContainerSource(container),
+          repositoryUrl: container.repositoryUrl,
+          target: `${this.dockerService.getPath(container)}/code`,
+        }),
+        {env: buildGitCredentialEnv(token)}
       );
+      return true;
     } catch (e) {
       console.error(e);
-      await this.updateBuildLog(build.id, JSON.stringify(e), 'error');
+      // `message` carries git's own error output; JSON.stringify drops it for a plain Error.
+      await this.updateBuildLog(build.id, e?.message ?? String(e), 'error');
       await this.updateBuildLog(build.id, ` ❌ Cloning failed!`, 'error');
-      await this.setBuildStatus(build.id, BuildStatus.FAILED);
+      // With additionalInfos the CI callback learns about the failure as well.
+      await this.setBuildStatus(build.id, BuildStatus.FAILED, additionalInfos);
+      await this.checkALlBuildsOfContainerFailed(container);
+      return false;
     }
   }
 }

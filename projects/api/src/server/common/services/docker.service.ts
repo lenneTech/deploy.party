@@ -10,6 +10,12 @@ import { BuildService } from "../../modules/build/build.service";
 import { Container } from "../../modules/container/container.model";
 import { ContainerService } from "../../modules/container/container.service";
 import { ContainerHealthStatus } from "../../modules/container/enums/container-health-status.enum";
+import {
+  dockerHealthOf,
+  hasActiveHealthcheck,
+  parseRunningContainersHealth,
+  RunningContainersHealth,
+} from "../../modules/container/helpers/container-health.helper";
 import { ContainerType } from '../../modules/container/enums/container-type.enum';
 import { DatabaseType } from '../../modules/container/enums/database-type.enum';
 import { ServiceType } from "../../modules/container/enums/service-type.enum";
@@ -28,6 +34,21 @@ import { getChouseUi } from "../../modules/container/types/service/chouse-ui/com
 import { getClickhouseUi } from "../../modules/container/types/service/clickhouse-ui/compose";
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
+import { getBuildContextDockerignore } from "../helpers/build-context-dockerignore.helper";
+import { BuildFileChange, writeBuildFile } from "../helpers/build-files.helper";
+import { RenderedBuildFiles, renderBuildFiles } from "../helpers/render-build-files.helper";
+import { addCustomComposeUpdateDefaults } from "../helpers/custom-compose-update-config.helper";
+import {
+  DeployCheck,
+  evaluateServiceDeploy,
+  FAILED_TASK_LOG_LINES,
+  parseStackServices,
+  pickFailedTask,
+  resolveDeployVerifyTimeoutMs,
+  STACK_VERIFY_POLL_MS,
+  summarizeStackDeploy,
+  tailTaskLog,
+} from "../helpers/stack-deploy-verification.helper";
 import { Registry } from "../../modules/registry/registry.model";
 import { FileService } from "./file.service";
 
@@ -69,6 +90,38 @@ export class DockerService {
     }
 
     await fs.writeFile(`${this.getPath(container)}/Dockerfile`, image);
+    await fs.writeFile(`${this.getPath(container)}/.dockerignore`, getBuildContextDockerignore());
+  }
+
+  /**
+   * Dockerfile and compose file of a container that deploy.party builds (NODE, STATIC, CUSTOM),
+   * rendered from its settings exactly as createDockerfile and createDockerComposeFile write them,
+   * but without writing anything. Other types are never built and return nothing; rendering some of
+   * them has side effects (generated secrets), so they stay out on purpose.
+   */
+  async renderBuildFiles(container: Container): Promise<RenderedBuildFiles> {
+    return renderBuildFiles(container);
+  }
+
+  /**
+   * Writes the build files from the container settings before a build (DEV-4068); a file whose
+   * content changes is kept as `<file>.prev`. See build-files.helper for why.
+   */
+  async refreshBuildFiles(container: Container): Promise<BuildFileChange[]> {
+    const { compose, dockerfile } = await this.renderBuildFiles(container);
+    const path = this.getPath(container);
+    const changes: BuildFileChange[] = [];
+
+    if (dockerfile) {
+      changes.push({ file: 'Dockerfile', state: await writeBuildFile(`${path}/Dockerfile`, dockerfile) });
+      changes.push({ file: '.dockerignore', state: await writeBuildFile(`${path}/.dockerignore`, getBuildContextDockerignore()) });
+    }
+
+    if (compose) {
+      changes.push({ file: 'docker-compose.yml', state: await writeBuildFile(`${path}/docker-compose.yml`, compose) });
+    }
+
+    return changes;
   }
 
   async createDockerComposeFile(container: Container): Promise<void> {
@@ -252,7 +305,9 @@ SMTP_HOST_SSL_ENABLED=true
         compose = getPlausible(container, this.getPath(container));
         break;
       case ContainerType.CUSTOM:
-        compose = container.customDockerCompose;
+        // DEV-4068: services without an own update_config get rollback (stop-first), so a failing
+        // new version no longer leaves the stage stopped with a paused update.
+        compose = addCustomComposeUpdateDefaults(container.customDockerCompose);
         break;
     }
 
@@ -456,6 +511,100 @@ SMTP_HOST_SSL_ENABLED=true
     return containers.length ? containers[0] : null;
   }
 
+  /**
+   * DEV-4068: waits after `docker stack deploy` until every service of the stack has settled.
+   *
+   * `docker stack deploy` returns once Swarm has accepted the new specs. Whether the new version
+   * runs, or crashed and was rolled back, only shows afterwards; until now the build reported
+   * SUCCESS either way. The decision is made by the pure functions in
+   * stack-deploy-verification.helper; this loop only runs docker (argument arrays, no shell) and
+   * polls until ok, failed or the timeout (NSC__DEPLOY_VERIFY_TIMEOUT_SECONDS).
+   *
+   * Returns the lines for the build log: on failure the reason, the error of the failed task and
+   * the end of its log.
+   */
+  async verifyStackDeploy(
+    container: Container,
+    deployStartedAt: Date,
+    onProgress?: (detail: string) => Promise<unknown>,
+  ): Promise<{ lines: string[]; ok: boolean }> {
+    const stack = container.id;
+    const timeoutMs = resolveDeployVerifyTimeoutMs(envConfig.deployVerifyTimeoutSeconds);
+    const verifyStartedAt = new Date();
+    let lastDetail = '';
+
+    for (;;) {
+      const now = new Date();
+      let checks: { check: DeployCheck; service: string }[] = [];
+
+      try {
+        const { stdout } = await execa('docker', ['stack', 'services', stack, '--format', '{{json .}}']);
+        for (const service of parseStackServices(stdout)) {
+          const { stdout: inspect } = await execa('docker', ['service', 'inspect', service.name, '--format', '{{json .}}']);
+          checks.push({
+            service: service.name,
+            check: evaluateServiceDeploy({ deployStartedAt, inspect: JSON.parse(inspect), now, replicas: service.replicas, verifyStartedAt }),
+          });
+        }
+      } catch (e) {
+        // A failing docker call is no verdict about the deploy; poll again until the timeout.
+        checks = [{ service: stack, check: { state: 'pending', detail: `docker did not answer (${e?.shortMessage ?? e?.message ?? e})` } }];
+      }
+
+      const verdict = summarizeStackDeploy({ checks, now, timeoutMs, verifyStartedAt });
+      if (verdict.state === 'ok') {
+        return { ok: true, lines: [verdict.detail] };
+      }
+      if (verdict.state === 'failed') {
+        return { ok: false, lines: [verdict.detail, ...(await this.describeFailedTasks(verdict.services.filter((s) => s !== stack)))] };
+      }
+
+      if (verdict.detail !== lastDetail) {
+        lastDetail = verdict.detail;
+        await onProgress?.(verdict.detail)?.catch(() => undefined);
+      }
+      await new Promise((resolve) => setTimeout(resolve, STACK_VERIFY_POLL_MS));
+    }
+  }
+
+  /**
+   * Error and last log lines of the most recent failed task of each service (at most three), so the
+   * build log shows why the new version did not come up, for example the stack trace of a crash on start.
+   */
+  private async describeFailedTasks(services: string[]): Promise<string[]> {
+    const lines: string[] = [];
+
+    for (const service of services.slice(0, 3)) {
+      try {
+        const { stdout } = await execa('docker', ['service', 'ps', service, '--no-trunc', '--format', '{{json .}}']);
+        const task = pickFailedTask(stdout);
+        if (!task?.ID) {
+          lines.push(`${service}: no failed task found`);
+          continue;
+        }
+
+        lines.push(`${service}: task ${task.ID.slice(0, 12)} (${task.CurrentState ?? 'unknown state'}): ${task.Error?.trim() || 'no error reported'}`);
+
+        // `all` interleaves stdout and stderr in the order the task wrote them. No reject: a missing
+        // log (log driver, removed container) must not hide the error line above.
+        const { all } = await execa('docker', ['service', 'logs', '--raw', '--tail', String(FAILED_TASK_LOG_LINES), task.ID], {
+          all: true,
+          reject: false,
+          timeout: 15000,
+        });
+        const log = tailTaskLog(all ?? '', FAILED_TASK_LOG_LINES);
+        if (log.length) {
+          lines.push(`${service}: last ${log.length} log lines of task ${task.ID.slice(0, 12)}:`);
+          lines.push(...log.map((line) => `  ${line}`));
+        }
+      } catch (e) {
+        lines.push(`${service}: task details unavailable (${e?.shortMessage ?? e?.message ?? e})`);
+      }
+    }
+
+    return lines;
+  }
+
   async stop(container: Container): Promise<string | null> {
     const { stdout: containers } = await execa(
       envConfig.dockerSwarm
@@ -517,21 +666,45 @@ SMTP_HOST_SSL_ENABLED=true
     }
   }
 
-  async getHealthStatus(source: Container): Promise<ContainerHealthStatus> {
+  /**
+   * Health of the running containers of deploy.party, by deploy.party id, with a single `docker ps`
+   * (DEV-4068); optionally for one container only. null when docker cannot be asked.
+   *
+   * Only running containers count. `docker ps -a` would also return the exited task of a crash loop,
+   * or of an update Swarm rolled back while the previous version runs fine.
+   */
+  async getRunningContainersHealth(containerId?: string): Promise<RunningContainersHealth | null> {
     try {
-      const dockerId = await this.getId(source.id);
-
-      if (!dockerId) {
-        throw new Error('Docker container not found');
-      }
-
-      const { stdout } = await execa(`docker inspect --format='{{json .State.Health.Status}}' ${dockerId}`, {
-        shell: true,
-      });
-      return stdout.replace(/"/g, '').toUpperCase() as ContainerHealthStatus;
+      const { stdout } = await execa('docker', [
+        'ps',
+        '--filter',
+        containerId ? `label=deploy.party.id=${containerId}` : 'label=deploy.party.id',
+        '--format',
+        '{{.Label "deploy.party.id"}} {{.Status}}',
+      ]);
+      return parseRunningContainersHealth(stdout);
     } catch (e) {
-      return ContainerHealthStatus.UNHEALTHY;
+      return null;
     }
+  }
+
+  /**
+   * Docker health of one container: UNHEALTHY when none of its containers runs, null when it runs
+   * without a healthcheck (the caller decides what that means).
+   */
+  async getHealthStatus(source: Container): Promise<ContainerHealthStatus | null> {
+    const id = String(source.id);
+    const running = await this.getRunningContainersHealth(id);
+    return running ? dockerHealthOf(id, running) : ContainerHealthStatus.UNHEALTHY;
+  }
+
+  /**
+   * Whether a Docker container has an active healthcheck (from its image or its service spec).
+   * Throws when the container does not exist (any more).
+   */
+  async hasHealthcheck(dockerId: string): Promise<boolean> {
+    const { stdout } = await execa('docker', ['inspect', '--format', '{{json .Config.Healthcheck}}', dockerId]);
+    return hasActiveHealthcheck(stdout);
   }
 
   getPath(container: Container) {

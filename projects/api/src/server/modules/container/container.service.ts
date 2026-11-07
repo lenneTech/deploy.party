@@ -23,6 +23,12 @@ import {ContainerKind} from "./enums/container-kind.enum";
 import {ContainerType} from "./enums/container-type.enum";
 import {DeploymentType} from "./enums/deployment-type.enum";
 import {TagMatchType} from "./enums/tag-match-type.enum";
+import {
+  isStatusRelevantDockerEvent,
+  marksContainerDeployed,
+  RunningContainersHealth
+} from "./helpers/container-health.helper";
+import { getContainerSource } from './helpers/container-source.helper';
 
 /**
  * Container service
@@ -69,29 +75,59 @@ export class ContainerService extends CrudService<Container> implements OnApplic
             const eventInfo = JSON.parse(line);
 
             if (eventInfo.Actor && eventInfo.Actor.Attributes && eventInfo.Actor.Attributes['deploy.party.id']) {
+              // `Action` carries the event name; `status` is its deprecated predecessor.
+              const action: string = eventInfo.Action ?? eventInfo.status;
+
+              // DEV-4068: drop every other event before the lookup. A healthcheck run produces exec
+              // events every 5 s; while one of them was being looked up, the in-progress guard
+              // below would swallow the `health_status: healthy` event that arrives with it.
+              if (!isStatusRelevantDockerEvent(action)) {
+                return;
+              }
+
               const containerId = eventInfo.Actor.Attributes['deploy.party.id'];
               if (this.statusChangeInProgress.includes(containerId)) {
                 return;
               }
 
-              const containerStatus = eventInfo.status;
               this.statusChangeInProgress.push(containerId);
-
-              this.mainDbModel.findOne({_id: getObjectIds(containerId)}).exec().then(async (container) => {
-                if (container) {
-                  if (container.status !== ContainerStatus.STOPPED_BY_SYSTEM) {
-                    if (containerStatus === 'start') {
-                      await this.update(containerId, {status: ContainerStatus.DEPLOYED});
-                    }
-                    this.statusChangeInProgress = this.statusChangeInProgress.filter((e) => e !== containerId);
-                  }
-                }
-              });
+              this.applyDockerStatusEvent(containerId, action, eventInfo.Actor.ID ?? eventInfo.id)
+                .catch((e) => console.error(`Docker event ${action} for container ${containerId} failed`, e))
+                .finally(() => {
+                  // Always released; before, a container in STOPPED_BY_SYSTEM stayed blocked for good.
+                  this.statusChangeInProgress = this.statusChangeInProgress.filter((e) => e !== containerId);
+                });
             }
           }
         });
       }
     });
+  }
+
+  /**
+   * DEV-4068: a container with a healthcheck (every NODE container by now) becomes DEPLOYED when it
+   * is healthy, not when it starts; a crash loop starts again and again but never becomes healthy.
+   * Containers without healthcheck keep `start` as their signal.
+   */
+  private async applyDockerStatusEvent(containerId: string, action: string, dockerId: string): Promise<void> {
+    const container = await this.mainDbModel.findOne({_id: getObjectIds(containerId)}).exec();
+    if (!container || container.status === ContainerStatus.STOPPED_BY_SYSTEM) {
+      return;
+    }
+
+    let hasHealthcheck = false;
+    if (action === 'start') {
+      try {
+        hasHealthcheck = await this.dockerService.hasHealthcheck(dockerId);
+      } catch {
+        // The container is already gone again right after its start: not deployed.
+        return;
+      }
+    }
+
+    if (marksContainerDeployed(action, hasHealthcheck)) {
+      await this.update(containerId, {status: ContainerStatus.DEPLOYED});
+    }
   }
 
   beforeApplicationShutdown(): any {
@@ -419,6 +455,14 @@ export class ContainerService extends CrudService<Container> implements OnApplic
     return this.findForce({filterQuery: {_id: {$in: getObjectIds(project.containers)}}, ...serviceOptions});
   }
 
+  /**
+   * Health of the running containers by deploy.party id, for the project overview (DEV-4068).
+   * One docker call for all containers; see resolveOverviewHealth.
+   */
+  getRunningContainersHealth(): Promise<RunningContainersHealth | null> {
+    return this.dockerService.getRunningContainersHealth();
+  }
+
   async getDockerHealthStatus(containerId: string): Promise<ContainerHealthStatus> {
     const container = await super.get(containerId);
     if (container.status !== ContainerStatus.DEPLOYED) {
@@ -471,26 +515,6 @@ export class ContainerService extends CrudService<Container> implements OnApplic
   }
 
   getContainerSource(container: Container, path = false) {
-    if (container.deploymentType === DeploymentType.BRANCH) {
-      return container.branch;
-    }
-
-    if (container.deploymentType === DeploymentType.TAG && container.tagMatchType === TagMatchType.PATTERN) {
-      if (!path) {
-        return container.tag;
-      } else {
-        // Convert tag pattern to a path-like format
-        const pattern = container.tagPattern;
-        // remove all special characters except alphanumeric, underscore, and hyphen
-        return pattern.replace(/[^a-zA-Z0-9_-]/g, '_');
-      }
-    }
-
-    if (container.deploymentType === DeploymentType.TAG) {
-      return container.tag;
-    }
-
-    // Default case if no deployment type matches
-    return 'unknown';
+    return getContainerSource(container, path);
   }
 }

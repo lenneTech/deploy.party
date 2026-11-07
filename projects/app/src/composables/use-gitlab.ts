@@ -137,6 +137,19 @@ export function useGitlab(source: Source) {
     }
     const webhookExist = await checkWebhookExist(id);
     if (webhookExist) {
+      // DEV-4068: a hook created before webhook secrets existed gets the secret of this source now.
+      // GitLab never returns the token of a hook, so it is set again; the call is idempotent.
+      if (source.webhookSecret) {
+        await useFetch(`${apiUrl}/projects/${id}/hooks/${webhookExist.id}`, {
+          body: { token: source.webhookSecret, url: webhookExist.url },
+          headers: {
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            Authorization: `Bearer ${source.token}`,
+          },
+          method: 'PUT',
+        });
+      }
       return { data: { id: webhookExist.id } };
     }
 
@@ -146,6 +159,10 @@ export function useGitlab(source: Source) {
       releases_events: true,
       url: config.public.host + '/webhook',
     };
+    // DEV-4068: GitLab sends the secret as X-Gitlab-Token; the API checks it per source.
+    if (source.webhookSecret) {
+      body.token = source.webhookSecret;
+    }
 
     return useFetch(`${apiUrl}/projects/${id}/hooks`, {
       body: body,
