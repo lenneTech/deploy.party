@@ -15,7 +15,7 @@ jest.mock('../../../../config.env', () => ({ __esModule: true, default: { buildC
 describe('build processor after the clone', () => {
   const job = { id: 'b1', name: 'build', data: { buildId: 'b1', containerId: 'c1', additionalInfos: { callbackUrl: 'https://ci.example.com/cb' } } } as any;
 
-  function setup(clone: () => Promise<boolean>) {
+  function setup(clone: () => Promise<boolean>, refreshBuildFiles = jest.fn().mockResolvedValue([{ file: 'Dockerfile', state: 'unchanged' }])) {
     const buildService = {
       cloneGitLab: jest.fn(clone),
       getForce: jest.fn().mockResolvedValue({ id: 'b1' }),
@@ -26,8 +26,9 @@ describe('build processor after the clone', () => {
     const containerService = {
       getForce: jest.fn().mockResolvedValue({ id: 'c1', source: { token: 'secret' } }),
     };
-    const processor = new BuildProcessor(buildService as any, containerService as any, {} as any, {} as any);
-    return { buildService, processor };
+    const dockerService = { refreshBuildFiles };
+    const processor = new BuildProcessor(buildService as any, containerService as any, dockerService as any, {} as any);
+    return { buildService, dockerService, processor };
   }
 
   it('does not build when the clone failed', async () => {
@@ -58,5 +59,65 @@ describe('build processor after the clone', () => {
     await processor.build(job);
 
     expect(buildService.triggerBuild).toHaveBeenCalledWith('c1', 'b1', job.data.additionalInfos);
+  });
+
+  /**
+   * DEV-4068: builds write Dockerfile and compose file from the container settings, but only on an
+   * instance that switched it on after the drift check.
+   */
+  describe('build files', () => {
+    const original = process.env.NSC__REFRESH_BUILD_FILES;
+
+    afterEach(() => {
+      if (original === undefined) {
+        delete process.env.NSC__REFRESH_BUILD_FILES;
+      } else {
+        process.env.NSC__REFRESH_BUILD_FILES = original;
+      }
+    });
+
+    it('leaves the files on disk alone while the instance has not switched it on', async () => {
+      delete process.env.NSC__REFRESH_BUILD_FILES;
+      const { buildService, dockerService, processor } = setup(async () => true);
+
+      await processor.build(job);
+
+      expect(dockerService.refreshBuildFiles).not.toHaveBeenCalled();
+      expect(buildService.triggerBuild).toHaveBeenCalled();
+    });
+
+    it('writes the files before building and logs the outcome', async () => {
+      process.env.NSC__REFRESH_BUILD_FILES = 'true';
+      const { buildService, dockerService, processor } = setup(async () => true);
+
+      await processor.build(job);
+
+      expect(dockerService.refreshBuildFiles).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1' }));
+      expect(buildService.updateBuildLog).toHaveBeenCalledWith('b1', 'Build files match the container settings', 'info');
+      expect(dockerService.refreshBuildFiles.mock.invocationCallOrder[0]).toBeLessThan(buildService.triggerBuild.mock.invocationCallOrder[0]);
+    });
+
+    it('does not touch the files when the clone failed', async () => {
+      process.env.NSC__REFRESH_BUILD_FILES = 'true';
+      const { dockerService, processor } = setup(async () => false);
+
+      await processor.build(job);
+
+      expect(dockerService.refreshBuildFiles).not.toHaveBeenCalled();
+    });
+
+    it('still builds with the files on disk when writing them fails', async () => {
+      process.env.NSC__REFRESH_BUILD_FILES = 'true';
+      const { buildService, processor } = setup(async () => true, jest.fn().mockRejectedValue(new Error('disk full')));
+
+      await processor.build(job);
+
+      expect(buildService.updateBuildLog).toHaveBeenCalledWith(
+        'b1',
+        'Could not write the build files from the container settings, building with the files on disk: disk full',
+        'error',
+      );
+      expect(buildService.triggerBuild).toHaveBeenCalledWith('c1', 'b1', job.data.additionalInfos);
+    });
   });
 });

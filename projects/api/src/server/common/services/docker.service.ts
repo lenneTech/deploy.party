@@ -35,6 +35,8 @@ import { getClickhouseUi } from "../../modules/container/types/service/clickhous
 import { getRedisUi } from "../../modules/container/types/service/redis-ui/compose";
 import { getRocketAdmin } from "../../modules/container/types/service/rocketadmin/compose";
 import { getBuildContextDockerignore } from "../helpers/build-context-dockerignore.helper";
+import { BuildFileChange, writeBuildFile } from "../helpers/build-files.helper";
+import { RenderedBuildFiles, renderBuildFiles } from "../helpers/render-build-files.helper";
 import { addCustomComposeUpdateDefaults } from "../helpers/custom-compose-update-config.helper";
 import {
   DeployCheck,
@@ -89,6 +91,37 @@ export class DockerService {
 
     await fs.writeFile(`${this.getPath(container)}/Dockerfile`, image);
     await fs.writeFile(`${this.getPath(container)}/.dockerignore`, getBuildContextDockerignore());
+  }
+
+  /**
+   * Dockerfile and compose file of a container that deploy.party builds (NODE, STATIC, CUSTOM),
+   * rendered from its settings exactly as createDockerfile and createDockerComposeFile write them,
+   * but without writing anything. Other types are never built and return nothing; rendering some of
+   * them has side effects (generated secrets), so they stay out on purpose.
+   */
+  async renderBuildFiles(container: Container): Promise<RenderedBuildFiles> {
+    return renderBuildFiles(container);
+  }
+
+  /**
+   * Writes the build files from the container settings before a build (DEV-4068); a file whose
+   * content changes is kept as `<file>.prev`. See build-files.helper for why.
+   */
+  async refreshBuildFiles(container: Container): Promise<BuildFileChange[]> {
+    const { compose, dockerfile } = await this.renderBuildFiles(container);
+    const path = this.getPath(container);
+    const changes: BuildFileChange[] = [];
+
+    if (dockerfile) {
+      changes.push({ file: 'Dockerfile', state: await writeBuildFile(`${path}/Dockerfile`, dockerfile) });
+      changes.push({ file: '.dockerignore', state: await writeBuildFile(`${path}/.dockerignore`, getBuildContextDockerignore()) });
+    }
+
+    if (compose) {
+      changes.push({ file: 'docker-compose.yml', state: await writeBuildFile(`${path}/docker-compose.yml`, compose) });
+    }
+
+    return changes;
   }
 
   async createDockerComposeFile(container: Container): Promise<void> {

@@ -1,9 +1,9 @@
-import {execa} from "execa";
 import {Container} from "../../../container.model";
 import {Build} from "../../../../build/build.model";
 import {Registry} from "../../../../registry/registry.model";
 import {DeploymentType} from "../../../enums/deployment-type.enum";
 import {ContainerVolumeType} from "../../../enums/container-volume-types.enum";
+import { getBasicAuthUsersLabelValue } from "../../../../../common/helpers/basic-auth.helper";
 
 export async function getStaticCompose(container: Container, build?: Build): Promise<string> {
   const hostOnly = container.url.replace('https://', '').replace('http://', '');
@@ -128,14 +128,10 @@ export async function getStaticCompose(container: Container, build?: Build): Pro
   }
 
   if (container.basicAuth.username && container.basicAuth.pw) {
-    // Hash password
-    const {stdout: creds} = await execa(
-      `echo $(htpasswd -nb ${container.basicAuth.username} ${container.basicAuth.pw})`,
-      {shell: true}
-    );
-    // Set password and replace all $ in hash with $$ for escaping
+    const creds = await getBasicAuthUsersLabelValue(container.id, container.basicAuth.username, container.basicAuth.pw);
+    // The value is escaped for docker-compose already
     dockerCompose.push(
-      `          - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds.replace(/\$/ig, '$$$')}`
+      `          - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds}`
     );
     middlewares.push(`${container.id}-auth`);
   }

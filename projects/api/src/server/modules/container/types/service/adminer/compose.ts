@@ -1,5 +1,5 @@
 import {Container} from "../../../container.model";
-import {execa} from "execa";
+import { getBasicAuthUsersLabelValue } from "../../../../../common/helpers/basic-auth.helper";
 
 export async function getAdminer(container: Container): Promise<string> {
   const basicAuth = !!(container?.basicAuth?.username && container?.basicAuth?.pw);
@@ -7,13 +7,9 @@ export async function getAdminer(container: Container): Promise<string> {
   const middlewares = ['secure-headers@swarm'];
 
   if (basicAuth) {
-    // Hash password
-    const {stdout: creds} = await execa(
-      `echo $(htpasswd -nb ${container.basicAuth.username} ${container.basicAuth.pw})`,
-      {shell: true}
-    );
-    // Set password and replace all $ in hash with $$ for escaping
-    additionalLabels.push(`        - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds.replace(/\$/ig, '$$$')}`);
+    const creds = await getBasicAuthUsersLabelValue(container.id, container.basicAuth.username, container.basicAuth.pw);
+    // The value is escaped for docker-compose already
+    additionalLabels.push(`        - traefik.http.middlewares.${container.id}-auth.basicauth.users=${creds}`);
     middlewares.unshift(`${container.id}-auth`);
   }
 

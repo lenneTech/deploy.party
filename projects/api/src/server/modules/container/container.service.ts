@@ -28,6 +28,7 @@ import {
   marksContainerDeployed,
   RunningContainersHealth
 } from "./helpers/container-health.helper";
+import { getContainerSource } from './helpers/container-source.helper';
 
 /**
  * Container service
@@ -514,26 +515,6 @@ export class ContainerService extends CrudService<Container> implements OnApplic
   }
 
   getContainerSource(container: Container, path = false) {
-    if (container.deploymentType === DeploymentType.BRANCH) {
-      return container.branch;
-    }
-
-    if (container.deploymentType === DeploymentType.TAG && container.tagMatchType === TagMatchType.PATTERN) {
-      if (!path) {
-        return container.tag;
-      } else {
-        // Convert tag pattern to a path-like format
-        const pattern = container.tagPattern;
-        // remove all special characters except alphanumeric, underscore, and hyphen
-        return pattern.replace(/[^a-zA-Z0-9_-]/g, '_');
-      }
-    }
-
-    if (container.deploymentType === DeploymentType.TAG) {
-      return container.tag;
-    }
-
-    // Default case if no deployment type matches
-    return 'unknown';
+    return getContainerSource(container, path);
   }
 }

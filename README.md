@@ -105,6 +105,16 @@ bash secure-registry.sh --cleanup # after the next successful deploy: remove the
 
 The script refuses on a multi-node swarm (other nodes pull from this registry) and while a push is running. `--rollback` restores the previous container. Once `secure-registry.sh` sits next to `update.sh`, every update runs it as well.
 
+### Build files from the container settings (installs before DEV-4068)
+
+A build used to take the `Dockerfile` and `docker-compose.yml` that were on disk. Only a deploy from the UI and a tag build wrote them again from the container settings, so a changed setting went live only after a deploy, and the healthcheck of NODE containers and the rollback settings of CUSTOM containers reached existing containers only that way. With `NSC__REFRESH_BUILD_FILES=true` every build writes both files from the settings first; a file whose content changes is kept as `Dockerfile.prev` or `docker-compose.yml.prev`, and the build log says which file changed. New installs set it. For an existing install, check first what the first builds would change:
+
+```bash
+docker exec $(docker ps -qf name=deploy-party_api) node dist/src/server/scripts/build-files-drift.js
+```
+
+One line per container: `UNCHANGED`, `EXPECTED` (only the healthcheck, the update and rollback settings or a basic-auth label in the new hash format) or `OTHER` with the keys that differ (never values). Settle every `OTHER` first: settings that were changed but never deployed, or a file edited by hand on the server. Then add `NSC__REFRESH_BUILD_FILES=true` to `/var/opt/deploy-party/.env` and run `update.sh`.
+
 ## URLs
 Now Traefik UI will be available at `lb.YOUR_URL` and deploy.party at `YOUR_URL`.
 Traefik has basic auth lock and can be accessed with the `USERNAME` and `PASSWORD` you set in the init.sh script.
