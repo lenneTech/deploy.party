@@ -1,3 +1,16 @@
+## [2.21.1](https://github.com/lenneTech/deploy.party/compare/v2.21.0...v2.21.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **deploy:** default healthcheck for NODE, rollback for CUSTOM composes (DEV-4068) ([d553ed1](https://github.com/lenneTech/deploy.party/commit/d553ed1e1160a18e352e13f342bb635bf6b6210c))
+* **deploy:** do not show a crash loop as deployed and healthy (DEV-4068) ([0cf3db3](https://github.com/lenneTech/deploy.party/commit/0cf3db386adb6745c2b8758a4b552b00fa51da4f))
+* **deploy:** fail the build when the new version does not come up (DEV-4068) ([f305f9f](https://github.com/lenneTech/deploy.party/commit/f305f9f793ca4b9510e211eb9c2e1a053eb0be8a))
+* **deploy:** write build files from the container settings on every build (DEV-4068) ([e8a5f7c](https://github.com/lenneTech/deploy.party/commit/e8a5f7c487a540c1ff91d45fc78804fae27ac15d))
+* **security:** clone without a shell, reject unsafe branch and tag names (DEV-4081) ([e3f2fa6](https://github.com/lenneTech/deploy.party/commit/e3f2fa6f6c353d1df1d43aaf0731bb937ddbfce9))
+* **security:** registry on localhost, no clone token in images (DEV-4027) ([ea9560a](https://github.com/lenneTech/deploy.party/commit/ea9560a6f81640a2e35e6a008ffdb2ab48d02a10))
+* **webhook:** build only for requests with the secret of the source (DEV-4068) ([88a9b11](https://github.com/lenneTech/deploy.party/commit/88a9b1117957a8bba843870df7f8ae492b13e459))
+
 # [2.21.0](https://github.com/lenneTech/deploy.party/compare/v2.20.0...v2.21.0) (2026-07-06)
 
 
