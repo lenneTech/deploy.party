@@ -134,9 +134,17 @@ describe('BackupService: /tmp of the backed-up container after a backup (DEV-439
     });
   }
 
-  function archiveEntries(): string[] {
-    const [archive] = readdirSync(s3Dir);
-    return spawnSync('tar', ['-tzf', join(s3Dir, archive)], { encoding: 'utf8' }).stdout.split('\n').filter(Boolean);
+  function archiveEntries(archive = join(s3Dir, readdirSync(s3Dir)[0])): string[] {
+    return spawnSync('tar', ['-tzf', archive], { encoding: 'utf8' }).stdout.split('\n').filter(Boolean);
+  }
+
+  /** After a failed upload only the complete archive stays in /tmp, so the backup of that night is not lost. */
+  function expectOnlyTheArchiveKept(stdout: string): string[] {
+    const kept = leftovers();
+    expect(kept).toHaveLength(1);
+    expect(kept[0]).toMatch(new RegExp(`^${containerId}-[0-9TZ-]+\\.tar\\.gz$`));
+    expect(stdout).toContain(`Backup not in S3, archive kept: /tmp/${kept[0]}`);
+    return archiveEntries(`/tmp/${kept[0]}`);
   }
 
   const s3Backup = {
@@ -169,18 +177,20 @@ describe('BackupService: /tmp of the backed-up container after a backup (DEV-439
       expect(leftovers()).toEqual([]);
     });
 
-    it('leaves nothing in /tmp when the upload fails, and the backup still fails', async () => {
+    it('keeps only the archive of the dump when the upload fails, and the backup still fails', async () => {
       const result = await run({ s3Fails: true });
 
       expect(result.status).not.toBe(0);
       expect(result.stdout).toContain('S3 upload failed');
       expect(readdirSync(s3Dir)).toEqual([]);
-      expect(leftovers()).toEqual([]);
+      const entries = expectOnlyTheArchiveKept(result.stdout);
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatch(/\.sql$/);
     });
   });
 
   describe('MongoDB', () => {
-    it('uploads the dump and leaves nothing in /tmp, also when the upload fails', async () => {
+    it('uploads the dump and leaves nothing in /tmp; when the upload fails only the archive stays', async () => {
       await service({ kind: 'DATABASE', type: 'MONGO' }).backup({ ...s3Backup, type: 'DATABASE' } as any);
       const script = dockerExecScript();
 
@@ -190,8 +200,9 @@ describe('BackupService: /tmp of the backed-up container after a backup (DEV-439
 
       rmSync(s3Dir, { recursive: true, force: true });
       mkdirSync(s3Dir);
-      expect(runInContainer(script, { s3Fails: true }).status).not.toBe(0);
-      expect(leftovers()).toEqual([]);
+      const failed = runInContainer(script, { s3Fails: true });
+      expect(failed.status).not.toBe(0);
+      expect(expectOnlyTheArchiveKept(failed.stdout).some((entry) => entry.endsWith('/db/data.bson'))).toBe(true);
     });
   });
 
@@ -224,12 +235,12 @@ describe('BackupService: /tmp of the backed-up container after a backup (DEV-439
       expect(leftovers()).toEqual([]);
     });
 
-    it('leaves nothing in /tmp when the upload fails, and the backup still fails', async () => {
+    it('keeps only the archive, not the copied folder, when the upload fails, and the backup still fails', async () => {
       const result = await run({ s3Fails: true });
 
       expect(result.status).not.toBe(0);
       expect(result.stdout).toContain('S3 upload failed');
-      expect(leftovers()).toEqual([]);
+      expect(expectOnlyTheArchiveKept(result.stdout).some((entry) => entry.endsWith('/user_upload/image.jpg'))).toBe(true);
     });
   });
 });

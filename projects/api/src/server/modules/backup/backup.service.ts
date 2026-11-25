@@ -22,7 +22,7 @@ import axios from "axios";
 import {BackupStatus} from "./enum/backup-status.enum";
 import {BackupType} from "./enum/backup-type.enum";
 import {SERVICE_BACKUP_CONFIGS, SupportedBackupServices} from "./types/service-backup-config.interface";
-import {withTmpCleanup} from "../../common/helpers/backup-tmp-cleanup.helper";
+import {BackupTmpFiles, withTmpCleanup} from "../../common/helpers/backup-tmp-cleanup.helper";
 
 /**
  * Backup service
@@ -269,11 +269,11 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       return;
     }
 
-    // Working files in /tmp of the container; withTmpCleanup removes them after the chain, also when it fails.
+    // Working files in /tmp of the container; withTmpCleanup removes them after the chain (archive kept if the upload failed).
     let commands = [];
-    let tmpPaths: string[] = [];
+    let tmpFiles: BackupTmpFiles | undefined;
     if (container.type === DatabaseType.MONGO) {
-      tmpPaths = [`/tmp/${fileName}`, `/tmp/${fileName}.tar.gz`];
+      tmpFiles = {staging: [`/tmp/${fileName}`], archive: `/tmp/${fileName}.tar.gz`};
       commands = [
         'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
         `aws configure set aws_access_key_id ${backup.key}`,
@@ -292,7 +292,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         `echo 'Finished'`,
       ];
     } else if (container.type === DatabaseType.MARIA_DB) {
-      tmpPaths = [`/tmp/${fileName}.sql`, `/tmp/${fileName}.tar.gz`];
+      tmpFiles = {staging: [`/tmp/${fileName}.sql`], archive: `/tmp/${fileName}.tar.gz`};
       commands = [
         'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
         `aws configure set aws_access_key_id ${backup.key}`,
@@ -315,7 +315,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const {spawn} = require('child_process');
-    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', withTmpCleanup(commands.join(' && '), tmpPaths)]);
+    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', withTmpCleanup(commands.join(' && '), tmpFiles)]);
     spawnProcess.stdout.on('data', async (data) => {
       if (data.toString()) {
         const lines = data.toString().split('\n');
@@ -651,7 +651,7 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const {spawn} = require('child_process');
-    const script = withTmpCleanup(commands.join(' && '), [`/tmp/${fileName}`, `/tmp/${fileName}.tar.gz`]);
+    const script = withTmpCleanup(commands.join(' && '), {staging: [`/tmp/${fileName}`], archive: `/tmp/${fileName}.tar.gz`});
     const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', script]);
     spawnProcess.stdout.on('data', async (data) => {
       if (data.toString()) {
