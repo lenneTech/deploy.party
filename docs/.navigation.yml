@@ -1,0 +1,4 @@
+# Section of this repository on docs.lennetech.app
+title: deploy.party
+icon: i-lucide-party-popper
+description: Self-hosted deployment tool on Docker Swarm, with builds from GitLab or GitHub, databases, SSL, backups and logs.
