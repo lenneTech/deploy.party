@@ -1,3 +1,10 @@
+## [2.21.3](https://github.com/lenneTech/deploy.party/compare/v2.21.2...v2.21.3) (2026-11-26)
+
+
+### Bug Fixes
+
+* **backup:** clean up /tmp after backups and keep the archive when the S3 upload fails (DEV-4397) ([#14](https://github.com/lenneTech/deploy.party/issues/14)) ([7c162fc](https://github.com/lenneTech/deploy.party/commit/7c162fc0cc693e0735e63852d957371c62796f01))
+
 ## [2.21.2](https://github.com/lenneTech/deploy.party/compare/v2.21.1...v2.21.2) (2026-11-07)
 
 
