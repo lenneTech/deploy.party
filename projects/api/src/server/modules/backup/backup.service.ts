@@ -22,6 +22,7 @@ import axios from "axios";
 import {BackupStatus} from "./enum/backup-status.enum";
 import {BackupType} from "./enum/backup-type.enum";
 import {SERVICE_BACKUP_CONFIGS, SupportedBackupServices} from "./types/service-backup-config.interface";
+import {BackupTmpFiles, withTmpCleanup} from "../../common/helpers/backup-tmp-cleanup.helper";
 
 /**
  * Backup service
@@ -268,8 +269,11 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
       return;
     }
 
+    // Working files in /tmp of the container; withTmpCleanup removes them after the chain (archive kept if the upload failed).
     let commands = [];
+    let tmpFiles: BackupTmpFiles | undefined;
     if (container.type === DatabaseType.MONGO) {
+      tmpFiles = {staging: [`/tmp/${fileName}`], archive: `/tmp/${fileName}.tar.gz`};
       commands = [
         'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
         `aws configure set aws_access_key_id ${backup.key}`,
@@ -285,10 +289,10 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         `echo 'Verifying S3 upload...'`,
         `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
         `echo 'Finished uploading'`,
-        `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
         `echo 'Finished'`,
       ];
     } else if (container.type === DatabaseType.MARIA_DB) {
+      tmpFiles = {staging: [`/tmp/${fileName}.sql`], archive: `/tmp/${fileName}.tar.gz`};
       commands = [
         'apt-get update && apt-get install -y --no-install-recommends apt-utils awscli',
         `aws configure set aws_access_key_id ${backup.key}`,
@@ -305,14 +309,13 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
         `aws s3 cp /tmp/${fileName}.tar.gz s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'S3 upload successful' || (echo 'S3 upload failed' && exit 1)`,
         `echo 'Verifying S3 upload...'`,
         `aws s3 ls s3://${backup.bucket}/${folderName}/${fileName}.tar.gz --region ${backup.region} --endpoint-url ${backup.host} && echo 'File verified in S3' || (echo 'File not found in S3 after upload' && exit 1)`,
-        `rm -rf /tmp/${fileName} && rm -rf /tmp/${fileName}.tar.gz`,
         `echo 'Finished'`,
       ];
     }
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const {spawn} = require('child_process');
-    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', withTmpCleanup(commands.join(' && '), tmpFiles)]);
     spawnProcess.stdout.on('data', async (data) => {
       if (data.toString()) {
         const lines = data.toString().split('\n');
@@ -648,7 +651,8 @@ export class BackupService extends CrudService<Backup, BackupCreateInput, Backup
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const {spawn} = require('child_process');
-    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', commands.join(' && ')]);
+    const script = withTmpCleanup(commands.join(' && '), {staging: [`/tmp/${fileName}`], archive: `/tmp/${fileName}.tar.gz`});
+    const spawnProcess = spawn('docker', ['exec', dockerId, 'sh', '-c', script]);
     spawnProcess.stdout.on('data', async (data) => {
       if (data.toString()) {
         const lines = data.toString().split('\n');
